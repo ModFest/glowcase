@@ -68,8 +68,8 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 			double dX = switch (entity.textAlignment) {
 				case LEFT -> -maxLength / 2D;
 				case CENTER -> (maxLength - width) / 2D - maxLength / 2D;
-				case CENTER_LEFT -> (-maxLength / 2D) - (width / 2D);
-				case CENTER_RIGHT -> (maxLength / 2D) - (width / 2D);
+				case CENTER_LEFT -> -50D - (width / 2D);
+				case CENTER_RIGHT -> 50D - (width / 2D);
 				case RIGHT -> maxLength - width - maxLength / 2D;
 			};
 
