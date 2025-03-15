@@ -69,7 +69,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 		this.changeAlignment = ButtonWidget.builder(Text.stringifiedTranslatable("gui.glowcase.alignment", this.popupBlockEntity.textAlignment), action -> {
 			switch (popupBlockEntity.textAlignment) {
 				case LEFT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
-				case CENTER -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
 				case RIGHT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
 			}
 			this.popupBlockEntity.renderDirty = true;
@@ -115,7 +115,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 				int lineWidth = this.textRenderer.getWidth(text);
 				switch (this.popupBlockEntity.textAlignment) {
 					case LEFT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 10, i * 12, this.popupBlockEntity.color);
-					case CENTER -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
+					case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
 					case RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
 				}
 			}
@@ -133,7 +133,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 
 				float push = switch (this.popupBlockEntity.textAlignment) {
 					case LEFT -> this.width / 10F;
-					case CENTER -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
+					case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
 					case RIGHT -> this.width - this.width / 10F - this.textRenderer.getWidth(line);
 				};
 
@@ -290,7 +290,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 					contentsStart = this.width / 10;
 					contentsEnd = contentsStart + baseContentsWidth;
 				}
-				case CENTER -> {
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> {
 					int midpoint = this.width / 2;
 					int textMidpoint = baseContentsWidth / 2;
 					contentsStart = midpoint - textMidpoint;

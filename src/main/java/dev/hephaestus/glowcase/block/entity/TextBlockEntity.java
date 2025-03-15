@@ -109,7 +109,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public enum TextAlignment {
-		LEFT, CENTER, RIGHT
+		LEFT, CENTER, CENTER_LEFT, CENTER_RIGHT, RIGHT
 	}
 
 	public enum ZOffset {

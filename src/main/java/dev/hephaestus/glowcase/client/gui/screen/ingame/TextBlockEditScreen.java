@@ -76,7 +76,9 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.changeAlignment = ButtonWidget.builder(Text.stringifiedTranslatable("gui.glowcase.alignment", this.textBlockEntity.textAlignment), action -> {
 			switch (textBlockEntity.textAlignment) {
 				case LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
-				case CENTER -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
+				case CENTER -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_LEFT;
+				case CENTER_LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_RIGHT;
+				case CENTER_RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
 				case RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
 			}
 			this.textBlockEntity.renderDirty = true;
@@ -158,7 +160,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				int lineWidth = this.textRenderer.getWidth(text);
 				switch (this.textBlockEntity.textAlignment) {
 					case LEFT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 10, i * 12, this.textBlockEntity.color);
-					case CENTER -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
+					case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
 					case RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
 				}
 			}
@@ -176,7 +178,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 				float push = switch (this.textBlockEntity.textAlignment) {
 					case LEFT -> this.width / 10F;
-					case CENTER -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
+					case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
 					case RIGHT -> this.width - this.width / 10F - this.textRenderer.getWidth(line);
 				};
 
@@ -386,7 +388,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 					contentsStart = this.width / 10;
 					contentsEnd = contentsStart + baseContentsWidth;
 				}
-				case CENTER -> {
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> {
 					int midpoint = this.width / 2;
 					int textMidpoint = baseContentsWidth / 2;
 					contentsStart = midpoint - textMidpoint;
