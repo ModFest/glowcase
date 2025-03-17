@@ -97,7 +97,7 @@ public class ItemAcceptorBlock extends GlowcaseBlock implements BlockEntityProvi
 			}
 
 			// Schedule redstone pulse
-			world.scheduleBlockTick(pos, this, 2);
+			if(be.getPulse() > 0) world.scheduleBlockTick(pos, this, 2);
 		}
 		return ItemActionResult.SUCCESS;
 	}
