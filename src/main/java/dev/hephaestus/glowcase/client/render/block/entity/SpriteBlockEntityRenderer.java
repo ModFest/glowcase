@@ -12,6 +12,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.resource.ResourceManager;
@@ -43,32 +44,39 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 			case BACK -> matrices.translate(0D, 0D, -0.4D);
 		}
 
+		matrices.scale(entity.scale, entity.scale, entity.scale);
+
 		var entry = matrices.peek();
-		Identifier identifier = Identifier.tryParse(Glowcase.MODID, "textures/sprite/" + entity.sprite + ".png");
-		if (identifier == null) {
-			identifier = Glowcase.id("textures/sprite/invalid.png");
+		if (entity.getRenderItem() != null) {
+			MinecraftClient.getInstance().getItemRenderer().renderItem(entity.getRenderItem(),
+				ModelTransformationMode.FIXED, light, overlay, matrices, vertexConsumers, entity.getWorld(), 0);
 		} else {
-			TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
-			ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();
-			if (resourceManager.getResource(identifier).isEmpty()) {
+			Identifier identifier = Identifier.tryParse(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
+			if (identifier == null) {
+				identifier = Glowcase.id("textures/sprite/invalid.png");
+			} else {
+				TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
+				ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();
+				if (resourceManager.getResource(identifier).isEmpty()) {
 				/*
 				If the texture (file) does not exist, just replace it.
 				This happens a lot when editing a sprite block, so I'm adding it to avoid log spam
 				- SkyNotTheLimit
 				 */
-				identifier = Glowcase.id("textures/sprite/invalid.png");
+					identifier = Glowcase.id("textures/sprite/invalid.png");
+				}
 			}
-		}
-		var vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(identifier));
+			var vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(identifier));
 
-		vertex(entry, vertexConsumer, vertices[0], 0, 1, entity.color);
-		vertex(entry, vertexConsumer, vertices[1], 1, 1, entity.color);
-		vertex(entry, vertexConsumer, vertices[2], 1, 0, entity.color);
-		vertex(entry, vertexConsumer, vertices[3], 0, 0, entity.color);
+			vertex(entry, vertexConsumer, vertices[0], 0, 1, entity.color);
+			vertex(entry, vertexConsumer, vertices[1], 1, 1, entity.color);
+			vertex(entry, vertexConsumer, vertices[2], 1, 0, entity.color);
+			vertex(entry, vertexConsumer, vertices[3], 0, 0, entity.color);
+		}
 
 		matrices.pop();
 
-		if (entity.sprite.isEmpty() || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getPos())) BlockEntityRenderUtil.renderFacingPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers);
+		if (entity.getSprite().isEmpty() || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getPos())) BlockEntityRenderUtil.renderFacingPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers);
 	}
 
 	private void vertex(

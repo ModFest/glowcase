@@ -5,6 +5,7 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Identifier;
@@ -16,6 +17,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private ButtonWidget rotationWidget;
 	private ButtonWidget zOffsetToggle;
 	private TextFieldWidget colorEntryWidget;
+	private TextFieldWidget scaleEntryWidget;
 
 	public SpriteBlockEditScreen(SpriteBlockEntity spriteBlockEntity) {
 		this.spriteBlockEntity = spriteBlockEntity;
@@ -28,10 +30,11 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		if (this.client == null) return;
 
 		this.spriteWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 - 55, 150, 20, Text.empty());
-		this.spriteWidget.setText(spriteBlockEntity.sprite);
+		this.spriteWidget.setText(spriteBlockEntity.getSprite());
 		this.spriteWidget.setChangedListener(string -> {
-			if (Identifier.isPathValid(this.spriteWidget.getText())) {
-				this.spriteBlockEntity.sprite = this.spriteWidget.getText();
+			if (Identifier.isPathValid(this.spriteWidget.getText()) ||
+				this.spriteWidget.getText().contains(":") && Registries.ITEM.containsId(Identifier.tryParse(this.spriteWidget.getText()))) {
+				this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
 			}
 		});
 
@@ -57,15 +60,25 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 			});
 		});
 
+		this.scaleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 + 65, 150, 20, Text.empty());
+		this.scaleEntryWidget.setText(String.valueOf(this.spriteBlockEntity.scale));
+		this.scaleEntryWidget.setChangedListener(string -> {
+			 try {
+				 this.spriteBlockEntity.scale = Float.parseFloat(string);
+			 } catch (NumberFormatException ignored) {}
+		});
+
 		this.addDrawableChild(this.spriteWidget);
 		this.addDrawableChild(this.rotationWidget);
 		this.addDrawableChild(this.zOffsetToggle);
 		this.addDrawableChild(this.colorEntryWidget);
+		this.addDrawableChild(this.scaleEntryWidget);
 	}
 
 	@Override
 	public void close() {
 		spriteBlockEntity.setSprite(spriteWidget.getText());
+		spriteBlockEntity.markDirty();
 		C2SEditSpriteBlock.of(spriteBlockEntity).send();
 		super.close();
 	}
