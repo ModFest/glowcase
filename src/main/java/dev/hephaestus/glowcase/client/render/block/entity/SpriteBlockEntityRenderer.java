@@ -3,7 +3,10 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.ModMetaUtil;
 import dev.hephaestus.glowcase.mixin.client.TextureManagerAccessor;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
@@ -13,6 +16,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.resource.ResourceManager;
@@ -21,8 +25,13 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Vector3f;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
 public record SpriteBlockEntityRenderer(BlockEntityRendererFactory.Context context) implements BlockEntityRenderer<SpriteBlockEntity> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/sprite_block.png");
+	private static final Map<String, Identifier> modIconCache = new ConcurrentHashMap<>();
 
 	private static final Vector3f[] vertices = new Vector3f[] {
 		new Vector3f(-0.5F, -0.5F, 0.0F),
@@ -46,28 +55,44 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 
 		matrices.scale(entity.scale, entity.scale, entity.scale);
 
+		MinecraftClient client = MinecraftClient.getInstance();
 		var entry = matrices.peek();
 		if (entity.getRenderItem() != null) {
-			MinecraftClient.getInstance().getItemRenderer().renderItem(entity.getRenderItem(),
+			client.getItemRenderer().renderItem(entity.getRenderItem(),
 				ModelTransformationMode.FIXED, light, overlay, matrices, vertexConsumers, entity.getWorld(), 0);
 		} else {
 			Identifier identifier = Identifier.tryParse(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
 			if (identifier == null) {
-				identifier = Identifier.tryParse(entity.getSprite());
+				// Identifiers ending in / are always invalid, but tryParse logs an error when attempting to parse.
+				identifier = entity.getSprite().endsWith("/") ? null : Identifier.tryParse(entity.getSprite());
 				if (identifier == null) {
 					identifier = Glowcase.id("textures/sprite/invalid.png");
+				} else if (identifier.getNamespace().equals("mod")) {
+					String modId = identifier.getPath();
+					if (!modIconCache.containsKey(modId)) {
+						modIconCache.put(modId, Identifier.of(Glowcase.MODID, modId + "_icon"));
+						Optional<ModContainer> mod = FabricLoader.getInstance().getModContainer(modId)
+							.or(() -> FabricLoader.getInstance().getModContainer(modId.replace("_", "-")))
+							.or(() -> FabricLoader.getInstance().getModContainer(modId.replace("_", "")));
+						NativeImageBackedTexture icon = mod.map(modContainer -> ModMetaUtil.getIcon(modContainer, 64 * client.options.getGuiScale().getValue())).orElse(null);
+						if (icon != null) {
+							client.getTextureManager().registerTexture(modIconCache.get(modId), icon);
+						}
+					}
+					identifier = modIconCache.get(modId);
 				}
-			} else {
-				TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
-				ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();
-				if (resourceManager.getResource(identifier).isEmpty()) {
+			}
+			TextureManager textureManager = client.getTextureManager();
+			ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();
+			// TODO: Non-image resources, invalid mod IDs, and invalid items in the glowcase namespace show vanilla's
+			// TODO: missing texture icon rather than Glowcase's.
+			if (resourceManager.getResource(identifier).isEmpty() && !identifier.getNamespace().equals("glowcase")) {
 				/*
 				If the texture (file) does not exist, just replace it.
 				This happens a lot when editing a sprite block, so I'm adding it to avoid log spam
 				- SkyNotTheLimit
 				 */
-					identifier = Glowcase.id("textures/sprite/invalid.png");
-				}
+				identifier = Glowcase.id("textures/sprite/invalid.png");
 			}
 			var vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(identifier));
 

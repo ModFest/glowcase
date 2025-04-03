@@ -33,10 +33,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		this.spriteWidget.setMaxLength(255);
 		this.spriteWidget.setText(spriteBlockEntity.getSprite());
 		this.spriteWidget.setChangedListener(string -> {
-			if (Identifier.isPathValid(this.spriteWidget.getText()) ||
-				this.spriteWidget.getText().contains(":") && Registries.ITEM.containsId(Identifier.tryParse(this.spriteWidget.getText()))) {
-				this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
-			}
+			this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
 		});
 
 		this.rotationWidget = ButtonWidget.builder(Text.translatable("gui.glowcase.rotate"), (action) -> {
