@@ -53,7 +53,10 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 		} else {
 			Identifier identifier = Identifier.tryParse(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
 			if (identifier == null) {
-				identifier = Glowcase.id("textures/sprite/invalid.png");
+				identifier = Identifier.tryParse(entity.getSprite());
+				if (identifier == null) {
+					identifier = Glowcase.id("textures/sprite/invalid.png");
+				}
 			} else {
 				TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
 				ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();

@@ -30,6 +30,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		if (this.client == null) return;
 
 		this.spriteWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 - 55, 150, 20, Text.empty());
+		this.spriteWidget.setMaxLength(255);
 		this.spriteWidget.setText(spriteBlockEntity.getSprite());
 		this.spriteWidget.setChangedListener(string -> {
 			if (Identifier.isPathValid(this.spriteWidget.getText()) ||
