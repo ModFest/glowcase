@@ -75,6 +75,7 @@
 	"gui.glowcase.screen.hint.902": "Make sure you have an internet connection.",
 	"gui.glowcase.screen.hint.903": "Image format is not supported.",
 	"gui.glowcase.screen.eink": "Use E-Ink technology",
+	"gui.glowcase.screen.sprite_edit.sprite": "The first text box is the sprite to display on this block. Can be one of the following options:\n\n- The name of a built-in sprite, such as 'arrow'.\n- The ID of an item, such as 'minecraft:iron_sword'.\n- The namespaced path to a texture, such as 'minecraft:textures/item/iron_sword.png'.\n- A mod's icon, by using the mod ID in the special 'mod' namespace, such as 'mod:glowcase'.",
 	"gui.glowcase.screen.stretch": "Stretch image to fill the screen",
 	"gui.glowcase.updated_linked_screen": "Screen Tablet now linked to Screen at [%s].",
 	"gui.glowcase.linking_denied": "No permission to link to a screen.",

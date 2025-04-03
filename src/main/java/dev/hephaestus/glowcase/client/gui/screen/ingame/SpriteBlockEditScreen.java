@@ -3,12 +3,20 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.client.gui.tooltip.TooltipPositioner;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.registry.Registries;
+import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Identifier;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+
+import java.util.List;
 
 public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private final SpriteBlockEntity spriteBlockEntity;
@@ -18,6 +26,9 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private ButtonWidget zOffsetToggle;
 	private TextFieldWidget colorEntryWidget;
 	private TextFieldWidget scaleEntryWidget;
+
+	private TooltipPositioner spriteHelpTooltipPositioner;
+	private List<OrderedText> spriteHelpTooltipText;
 
 	public SpriteBlockEditScreen(SpriteBlockEntity spriteBlockEntity) {
 		this.spriteBlockEntity = spriteBlockEntity;
@@ -35,6 +46,12 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		this.spriteWidget.setChangedListener(string -> {
 			this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
 		});
+
+		this.spriteHelpTooltipPositioner = new ConstantTooltipPositioner(new Vector2i(
+			SpriteBlockEditScreen.this.spriteWidget.getX() + SpriteBlockEditScreen.this.spriteWidget.getWidth() + 8,
+			SpriteBlockEditScreen.this.spriteWidget.getY() - 16
+		));
+		this.spriteHelpTooltipText = this.client.textRenderer.wrapLines(Text.translatable("gui.glowcase.screen.sprite_edit.sprite"), 125);
 
 		this.rotationWidget = ButtonWidget.builder(Text.translatable("gui.glowcase.rotate"), (action) -> {
 			this.spriteBlockEntity.rotation = (this.spriteBlockEntity.rotation + 45) % 360;
@@ -74,10 +91,23 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
+	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+		super.render(context, mouseX, mouseY, delta);
+		context.drawTooltip(this.textRenderer, this.spriteHelpTooltipText, this.spriteHelpTooltipPositioner, 0, 0);
+	}
+
+	@Override
 	public void close() {
 		spriteBlockEntity.setSprite(spriteWidget.getText());
 		spriteBlockEntity.markDirty();
 		C2SEditSpriteBlock.of(spriteBlockEntity).send();
 		super.close();
+	}
+
+	record ConstantTooltipPositioner(Vector2ic position) implements TooltipPositioner {
+		@Override
+		public Vector2ic getPosition(int screenWidth, int screenHeight, int x, int y, int width, int height) {
+			return position;
+		}
 	}
 }
