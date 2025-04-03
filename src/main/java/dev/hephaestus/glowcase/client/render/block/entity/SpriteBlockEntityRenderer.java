@@ -62,31 +62,40 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 				ModelTransformationMode.FIXED, light, overlay, matrices, vertexConsumers, entity.getWorld(), 0);
 		} else {
 			Identifier identifier = Identifier.tryParse(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
+			boolean isMod = false; // Used for the invalid texture check further down
 			if (identifier == null) {
 				// Identifiers ending in / are always invalid, but tryParse logs an error when attempting to parse.
+				// Just force the identifier to null here instead.
 				identifier = entity.getSprite().endsWith("/") ? null : Identifier.tryParse(entity.getSprite());
 				if (identifier == null) {
 					identifier = Glowcase.id("textures/sprite/invalid.png");
-				} else if (identifier.getNamespace().equals("mod")) {
+				} else if (identifier.getNamespace().equals("mod")) { // Special mod namespace uses mod icon.
 					String modId = identifier.getPath();
 					if (!modIconCache.containsKey(modId)) {
-						modIconCache.put(modId, Identifier.of(Glowcase.MODID, modId + "_icon"));
+						// Attempt to register mod icon and put it into the cache. Invalid icons will fall to
+						// the else branch and use the invalid icon.
 						Optional<ModContainer> mod = FabricLoader.getInstance().getModContainer(modId)
 							.or(() -> FabricLoader.getInstance().getModContainer(modId.replace("_", "-")))
 							.or(() -> FabricLoader.getInstance().getModContainer(modId.replace("_", "")));
 						NativeImageBackedTexture icon = mod.map(modContainer -> ModMetaUtil.getIcon(modContainer, 64 * client.options.getGuiScale().getValue())).orElse(null);
 						if (icon != null) {
+							// Needs to end in .png for the missing texture check further below.
+							modIconCache.put(modId, Identifier.of(Glowcase.MODID, modId + "_icon.png"));
 							client.getTextureManager().registerTexture(modIconCache.get(modId), icon);
+							identifier = modIconCache.get(modId);
+						} else {
+							identifier = Glowcase.id("textures/sprite/invalid.png");
 						}
+					} else {
+						// Mod is in the cache, just grab the identifier for it.
+						identifier = modIconCache.get(modId);
+						isMod = true;
 					}
-					identifier = modIconCache.get(modId);
 				}
 			}
 			TextureManager textureManager = client.getTextureManager();
 			ResourceManager resourceManager = ((TextureManagerAccessor) textureManager).glowcase$getResourceManager();
-			// TODO: Non-image resources, invalid mod IDs, and invalid items in the glowcase namespace show vanilla's
-			// TODO: missing texture icon rather than Glowcase's.
-			if (resourceManager.getResource(identifier).isEmpty() && !identifier.getNamespace().equals("glowcase")) {
+			if (resourceManager.getResource(identifier).isEmpty() && !isMod || !identifier.getPath().endsWith(".png")) {
 				/*
 				If the texture (file) does not exist, just replace it.
 				This happens a lot when editing a sprite block, so I'm adding it to avoid log spam
