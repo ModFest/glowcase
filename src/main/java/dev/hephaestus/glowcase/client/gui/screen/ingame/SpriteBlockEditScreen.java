@@ -23,12 +23,12 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private final SpriteBlockEntity spriteBlockEntity;
 
 	private TextFieldWidget spriteWidget;
+	private ButtonWidget spriteWidgetHelpButton;
 	private ButtonWidget rotationWidget;
 	private ButtonWidget zOffsetToggle;
 	private TextFieldWidget colorEntryWidget;
 	private TextFieldWidget scaleEntryWidget;
 
-	private TooltipPositioner spriteHelpTooltipPositioner;
 	private List<OrderedText> spriteHelpTooltipText;
 
 	public SpriteBlockEditScreen(SpriteBlockEntity spriteBlockEntity) {
@@ -48,11 +48,12 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 			this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
 		});
 
-		this.spriteHelpTooltipPositioner = new ConstantTooltipPositioner(new Vector2i(
-			SpriteBlockEditScreen.this.spriteWidget.getX() + SpriteBlockEditScreen.this.spriteWidget.getWidth() + 8,
-			SpriteBlockEditScreen.this.spriteWidget.getY() - 16
-		));
-		this.spriteHelpTooltipText = this.client.textRenderer.wrapLines(Text.translatable("gui.glowcase.screen.sprite_edit.sprite"), 125);
+		this.spriteWidgetHelpButton = ButtonWidget.builder(Text.literal("?"), action -> {})
+			.dimensions(spriteWidget.getX() + spriteWidget.getWidth() + 4, spriteWidget.getY(),
+				spriteWidget.getHeight(), spriteWidget.getHeight())
+			.build();
+
+		this.spriteHelpTooltipText = Tooltip.wrapLines(this.client, Text.translatable("gui.glowcase.screen.sprite_edit.sprite"));
 
 		this.rotationWidget = ButtonWidget.builder(Text.translatable("gui.glowcase.rotate"), (action) -> {
 			this.spriteBlockEntity.rotation = (this.spriteBlockEntity.rotation + 45) % 360;
@@ -85,6 +86,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		});
 
 		this.addDrawableChild(this.spriteWidget);
+		this.addDrawableChild(this.spriteWidgetHelpButton);
 		this.addDrawableChild(this.rotationWidget);
 		this.addDrawableChild(this.zOffsetToggle);
 		this.addDrawableChild(this.colorEntryWidget);
@@ -94,8 +96,10 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
-		if (this.spriteWidget.isHovered() || (this.spriteWidget.isFocused() && this.client.getNavigationType().isKeyboard())) {
-			setTooltip(this.spriteHelpTooltipText, this.spriteHelpTooltipPositioner, this.spriteWidget.isFocused());
+		// Tooltip is handled this way, since setting the tooltip directly on the help button widget causes the tooltip
+		// to clip off-screen at higher GUI scales.
+		if (this.spriteWidgetHelpButton.isHovered() || (this.spriteWidgetHelpButton.isFocused() && this.client.getNavigationType().isKeyboard())) {
+			setTooltip(this.spriteHelpTooltipText);
 		}
 	}
 
@@ -105,12 +109,5 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		spriteBlockEntity.markDirty();
 		C2SEditSpriteBlock.of(spriteBlockEntity).send();
 		super.close();
-	}
-
-	record ConstantTooltipPositioner(Vector2ic position) implements TooltipPositioner {
-		@Override
-		public Vector2ic getPosition(int screenWidth, int screenHeight, int x, int y, int width, int height) {
-			return position;
-		}
 	}
 }
