@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipPositioner;
@@ -93,7 +94,9 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
-		context.drawTooltip(this.textRenderer, this.spriteHelpTooltipText, this.spriteHelpTooltipPositioner, 0, 0);
+		if (this.spriteWidget.isHovered() || (this.spriteWidget.isFocused() && this.client.getNavigationType().isKeyboard())) {
+			setTooltip(this.spriteHelpTooltipText, this.spriteHelpTooltipPositioner, this.spriteWidget.isFocused());
+		}
 	}
 
 	@Override
