@@ -20,12 +20,17 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public DisplayBlockSettings toSettings() {
-		return new DisplayBlockSettings(offset, scale, pitch, yaw);
+		return new DisplayBlockSettings(
+			new Vector3f(offset.x(), offset.y(), offset.z()),
+			new Vector3f(scale.x(), scale.y(), scale.z()),
+			pitch,
+			yaw
+		);
 	}
 
 	public void loadSettings(DisplayBlockSettings settings) {
-		this.offset = settings.offset();
-		this.scale = settings.scale();
+		this.offset.set(settings.offset().x(), settings.offset().y(), settings.offset().z());
+		this.scale.set(settings.scale().x(), settings.scale().y(), settings.scale().z());
 		this.pitch = settings.pitch();
 		this.yaw = settings.yaw();
 		markDirty();
