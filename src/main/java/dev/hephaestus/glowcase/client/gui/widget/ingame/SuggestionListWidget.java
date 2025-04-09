@@ -5,14 +5,18 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
+
 import org.jetbrains.annotations.NotNull;
 
 public class SuggestionListWidget<T> extends ClickableWidget {
     private final TextRenderer textRenderer;
+    private final MinecraftClient client;
 
     private final List<T> suggestions = new ArrayList<>();
 	private @NotNull String filter = "";
@@ -35,6 +39,8 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 
     public SuggestionListWidget(TextRenderer textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
         super(x, y, width, height, Text.empty());
+
+        this.client = MinecraftClient.getInstance();
 
         this.baseLineHeight = baseLineHeight;
         this.padding = padding;
@@ -75,13 +81,6 @@ public class SuggestionListWidget<T> extends ClickableWidget {
         scrollOffset = 0;
     }
 
-    private void drawOutline(DrawContext context, int x, int y, int width, int height, int color) {
-        context.fill(x, y, x + width, y + 1, color);
-        context.fill(x, y + height - 1, x + width, y + height, color);
-        context.fill(x, y, x + 1, y + height, color);
-        context.fill(x + width - 1, y, x + width, y + height, color);
-    }
-
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         if (suggestions.isEmpty()) return;
@@ -100,6 +99,13 @@ public class SuggestionListWidget<T> extends ClickableWidget {
         int listWidth = scrollable ? this.getWidth() - 5 - 10 : this.getWidth();
 
         context.enableScissor(this.getX(), this.getY(), this.getX() + listWidth, this.getY() + dynamicHeight);
+        
+        float blurValue = (float) MinecraftClient.getInstance().options.getMenuBackgroundBlurrinessValue();
+        if (blurValue >= 1.0F) {
+            client.gameRenderer.renderBlur(delta);
+        }
+
+        client.getFramebuffer().beginWrite(false);
         context.fill(this.getX(), this.getY(), this.getX() + listWidth, this.getY() + dynamicHeight, 0x90000000);
 
         drawOutline(context, this.getX(), this.getY(), listWidth, dynamicHeight, 0xFFFFFFFF);
@@ -123,14 +129,12 @@ public class SuggestionListWidget<T> extends ClickableWidget {
                 drawOutline(context, this.getX(), suggestionY, listWidth, adjustedLineHeight, 0xFFFFFFFF);
             }
 
-			// Detect if the text is too long, and cut it off so more relevant things are visible
-			if (filter.length() > 5) {
-				if (textRenderer.getWidth(suggestionText) > this.width) {
-					suggestionText = "…"+suggestionText.substring(Math.min(filter.length(), suggestionText.length()-characterWidth/2));
-				}
-			}
-
-            context.drawTextWithShadow(textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding + 1, 0xFFFFFF);
+            boolean suggestionHovered = (mouseX >= this.getX() && mouseX <= this.getX() + listWidth && mouseY >= suggestionY && mouseY < suggestionY + adjustedLineHeight);
+            if (textRenderer.getWidth(suggestionText) > (this.getWidth() - padding)) {
+                drawOverflowText(context, textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding - 2, this.getX() + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFF, suggestionHovered);
+            } else {
+                context.drawTextWithShadow(textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding + 1, 0xFFFFFF);
+            }
         }
 
         context.disableScissor();
@@ -145,7 +149,17 @@ public class SuggestionListWidget<T> extends ClickableWidget {
             int scrollbarHeight = dynamicHeight;
             int scrollBarBgColor = 0x90000000;
 
+            context.enableScissor(sbX, sbY, sbX + scrollbarWidth, sbY + scrollbarHeight);
+
+            float blurScrollbar = (float) client.options.getMenuBackgroundBlurrinessValue();
+            if (blurScrollbar >= 1.0F) {
+                client.gameRenderer.renderBlur(delta);
+            }
+            client.getFramebuffer().beginWrite(false);
+
             context.fill(sbX, sbY, sbX + scrollbarWidth, sbY + scrollbarHeight, scrollBarBgColor);
+            context.disableScissor();
+
             drawOutline(context, sbX, sbY, scrollbarWidth, scrollbarHeight, 0xFFFFFFFF);
 
             float visibleRatio = (float) rows / totalLines;
@@ -268,4 +282,38 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 
         return overList || overScrollbar;
     }
+
+    private void drawOutline(DrawContext context, int x, int y, int width, int height, int color) {
+        context.fill(x, y, x + width, y + 1, color);
+        context.fill(x, y + height - 1, x + width, y + height, color);
+        context.fill(x, y, x + 1, y + height, color);
+        context.fill(x + width - 1, y, x + width, y + height, color);
+    }
+
+    // similar to drawScrollableText but not centered
+    private void drawOverflowText(DrawContext context, TextRenderer textRenderer, Text text, int startX, int startY, int endX, int endY, int color, boolean hovered) {
+        int textRendererWidth = textRenderer.getWidth(text);
+        int availableWidth = endX - startX;
+        int y = startY + ((endY - startY) - 9) / 2;
+
+        if (textRendererWidth > availableWidth) {
+            if (hovered) {
+                int extra = textRendererWidth - availableWidth;
+
+                double time = Util.getMeasuringTimeMs() / 1000.0;
+                double period = Math.max(extra / 8.0, 2.0);
+                double scroll = 0.5 - 0.5 * Math.cos(2 * Math.PI * time / period);
+
+                int offset = (int)(scroll * extra);
+                
+                context.enableScissor(startX, startY, endX, endY);
+                context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
+                context.disableScissor();
+            } else {
+                context.drawTextWithShadow(textRenderer, text, startX, y + 1, color);
+            }
+        } else {
+            context.drawTextWithShadow(textRenderer, text, startX, y + 1, color);
+        }
+    }    
 }
