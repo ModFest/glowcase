@@ -66,7 +66,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		// region Particle ID
 		particleId = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 60,
+			width / 10, height / 2 - 110,
 			8 * width / 10, 20,
 			Text.empty()
 		);
@@ -94,7 +94,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		// region Position
 		positionMean = new Vec3FieldsWidget(
-			width / 10, 110,
+			width / 10, height / 2 - 60,
 			(4 * width / 10) - 6, 20,
 			this.client,
 			blockEntity.position.mean()
@@ -103,7 +103,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		this.addDrawableChild(positionMean);
 
 		positionStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, 110,
+			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
 			(4 * width / 10) - 6, 20,
 			this.client,
 			blockEntity.position.stdDev()
@@ -114,7 +114,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		// region Velocity
 		velocityMean = new Vec3FieldsWidget(
-			width / 10, 160,
+			width / 10, (height / 2) - 10,
 			(4 * width / 10) - 6, 20,
 			this.client,
 			blockEntity.velocity.mean()
@@ -123,7 +123,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		this.addDrawableChild(velocityMean);
 
 		velocityStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, 160,
+			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
 			(4 * width / 10) - 6, 20,
 			this.client,
 			blockEntity.velocity.stdDev()
@@ -135,7 +135,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		// region Count
 		countMean = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 210,
+			width / 10, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
 			Text.empty()
 		);
@@ -147,7 +147,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		countStdDev = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10 + (4 * width / 10) + 6, 210,
+			width / 10 + (4 * width / 10) + 6, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
 			Text.empty()
 		);
@@ -161,7 +161,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		// region Tick Rate
 		tickRateMean = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 260,
+			width / 10, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
 			Text.empty()
 		);
@@ -173,7 +173,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		tickRateStdDev = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10 + (4 * width / 10) + 6, 260,
+			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
 			Text.empty()
 		);
@@ -194,56 +194,56 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.position_mean"),
-			width / 10, 90,
+			width / 10, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.position_std_dev"),
-			width / 10 + (4 * width / 10) + 6, 90,
+			width / 10 + (4 * width / 10) + 6, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.velocity_mean"),
-			width / 10, 140,
+			width / 10, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.velocity_std_dev"),
-			width / 10 + (4 * width / 10) + 6, 140,
+			width / 10 + (4 * width / 10) + 6, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.count_mean"),
-			width / 10, 190,
+			width / 10, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.count_std_dev"),
-			width / 10 + (4 * width / 10) + 6, 190,
+			width / 10 + (4 * width / 10) + 6, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.tick_rate_mean"),
-			width / 10, 240,
+			width / 10, (height / 2 + 90) - 20,
 			0xFFFFFFFF
 		);
 
 		context.drawTextWithShadow(
 			client.textRenderer,
 			Text.translatable("gui.glowcase.tick_rate_std_dev"),
-			width / 10 + (4 * width / 10) + 6, 240,
+			width / 10 + (4 * width / 10) + 6, (height / 2 + 90) - 20,
 			0xFFFFFFFF
 		);
 
