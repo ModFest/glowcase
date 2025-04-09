@@ -131,7 +131,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 
             // detect if the text is too long AND if the item is hovered, then scroll, otherwise don't
             boolean suggestionHovered = (mouseX >= this.getX() && mouseX <= this.getX() + listWidth && mouseY >= suggestionY && mouseY < suggestionY + adjustedLineHeight);
-            if (textRenderer.getWidth(suggestionText) > (this.getWidth() - padding)) {
+            if (textRenderer.getWidth(suggestionText) > (this.getWidth() - padding - 20)) {
                 drawOverflowText(context, textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding - 2, this.getX() + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFF, suggestionHovered);
             } else {
                 context.drawTextWithShadow(textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding + 1, 0xFFFFFF);
@@ -296,25 +296,35 @@ public class SuggestionListWidget<T> extends ClickableWidget {
         int textRendererWidth = textRenderer.getWidth(text);
         int availableWidth = endX - startX;
         int y = startY + ((endY - startY) - 9) / 2;
-
-        if (textRendererWidth > availableWidth) {
-            if (hovered) {
-                int extra = textRendererWidth - availableWidth;
-
-                double time = Util.getMeasuringTimeMs() / 1000.0;
-                double period = Math.max(extra / 8.0, 2.0);
-                double scroll = 0.5 - 0.5 * Math.cos(2 * Math.PI * time / period);
-
-                int offset = (int)(scroll * extra);
-                
-                context.enableScissor(startX, startY, endX, endY);
-                context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
-                context.disableScissor();
-            } else {
-                context.drawTextWithShadow(textRenderer, text, startX, y, color);
-            }
+    
+        // if hovered, we scroll
+        if (hovered) {
+            int extra = textRendererWidth - availableWidth;
+            double time = Util.getMeasuringTimeMs() / 1000.0;
+            double period = Math.max(extra / 8.0, 2.0);
+            double scroll = 0.5 - 0.5 * Math.cos(2 * Math.PI * time / period);
+            int offset = (int)(scroll * extra);
+            
+            context.enableScissor(startX, startY, endX, endY);
+            context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
+            context.disableScissor();
         } else {
-            context.drawTextWithShadow(textRenderer, text, startX, y, color);
+            // otherwise clip text with "..."
+            String rawText = text.getString();
+            int maxWidth = availableWidth - textRenderer.getWidth("...");
+            int trimIndex = rawText.length();
+            
+            while (trimIndex > 0 && textRenderer.getWidth(rawText.substring(0, trimIndex)) > maxWidth) {
+                trimIndex--;
+            }
+
+            if (trimIndex < rawText.length()) {
+                rawText = rawText.substring(0, trimIndex) + "...";
+            }
+
+            context.enableScissor(startX, startY, endX, endY);
+            context.drawTextWithShadow(textRenderer, Text.literal(rawText), startX, y, color);
+            context.disableScissor();
         }
-    }    
+    }
 }
