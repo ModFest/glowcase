@@ -311,10 +311,10 @@ public class SuggestionListWidget<T> extends ClickableWidget {
                 context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
                 context.disableScissor();
             } else {
-                context.drawTextWithShadow(textRenderer, text, startX, y + 1, color);
+                context.drawTextWithShadow(textRenderer, text, startX, y, color);
             }
         } else {
-            context.drawTextWithShadow(textRenderer, text, startX, y + 1, color);
+            context.drawTextWithShadow(textRenderer, text, startX, y, color);
         }
     }    
 }
