@@ -2,7 +2,9 @@ package dev.hephaestus.glowcase.util;
 
 public class ParseUtil {
 	public static boolean canParseInt(String string) {
-		if (string.isEmpty()) return true;
+		if (string.isEmpty() || string.equals("-")) {
+            return true;
+        }
 
 		try {
 			Integer.valueOf(string);
@@ -19,7 +21,9 @@ public class ParseUtil {
 	}
 
 	public static boolean canParseDouble(String string) {
-		if (string.isEmpty()) return true;
+		if (string.isEmpty() || string.equals("-")) {
+            return true;
+        }
 
 		try {
 			Double.valueOf(string);
