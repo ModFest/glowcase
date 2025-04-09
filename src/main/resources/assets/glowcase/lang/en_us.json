@@ -35,7 +35,7 @@
 	"gui.glowcase.pitch": "Pitch",
 	"gui.glowcase.repeat_delay": "Repeat Delay",
 	"gui.glowcase.distance": "Distance",
-	"gui.glowcase.sound_category": "Sound Category: %s",
+	"gui.glowcase.sound_category": "%s",
 	"gui.glowcase.sound_positioning_no_arg": "Sound Positioning",
 	"gui.glowcase.sound_positioning": "Relative: %s",
 	"gui.glowcase.none": "(None)",
