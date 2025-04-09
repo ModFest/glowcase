@@ -129,6 +129,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
                 drawOutline(context, this.getX(), suggestionY, listWidth, adjustedLineHeight, 0xFFFFFFFF);
             }
 
+            // detect if the text is too long AND if the item is hovered, then scroll, otherwise don't
             boolean suggestionHovered = (mouseX >= this.getX() && mouseX <= this.getX() + listWidth && mouseY >= suggestionY && mouseY < suggestionY + adjustedLineHeight);
             if (textRenderer.getWidth(suggestionText) > (this.getWidth() - padding)) {
                 drawOverflowText(context, textRenderer, Text.literal(suggestionText), this.getX() + padding, suggestionY + padding - 2, this.getX() + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFF, suggestionHovered);
