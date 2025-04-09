@@ -47,8 +47,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 
 		this.soundId = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 60,
-			5 * width / 10, 20,
+			width / 10, height / 2 - 110,
+			8 * width / 10, 20,
 			Text.empty());
 		this.soundId.setMaxLength(1024);
 		this.soundId.setText(soundBlock.soundId.toString());
@@ -57,19 +57,19 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		this.categoryButton = new ButtonWidget.Builder(Text.stringifiedTranslatable("gui.glowcase.sound_category", this.soundBlock.category.getName()), (action) -> {
 			soundBlock.cycleCategory();
 			this.categoryButton.setMessage(Text.stringifiedTranslatable("gui.glowcase.sound_category", this.soundBlock.category.getName()));
-		}).dimensions(7 * width / 10, 20, 2 * width / 10, 20).build();
+		}).dimensions(width / 10, height / 2 - 60, (4 * width / 10) - 6, 20).build();
 		this.addDrawableChild(this.categoryButton);
 
 		this.cancelOthersButton = new ButtonWidget.Builder(Text.of(Boolean.toString(soundBlock.cancelOthers)), (action) -> {
 			soundBlock.cancelOthers = !soundBlock.cancelOthers;
 			this.cancelOthersButton.setMessage(Text.of(Boolean.toString(soundBlock.cancelOthers)));
-		}).dimensions(7 * width / 10, 50, 2 * width / 10, 20).build();
+		}).dimensions(width / 10 + (4 * width / 10) + 6, height / 2 - 60, (4 * width / 10) - 6, 20).build();
 		this.addDrawableChild(this.cancelOthersButton);
 
 		this.volume = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 110,
-			2 * width / 10, 20,
+			width / 10, height / 2 - 10,
+			(4 * width / 10) - 6, 20,
 			Text.empty());
 		this.volume.setMaxLength(16);
 		this.volume.setText(String.valueOf(soundBlock.volume));
@@ -78,8 +78,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 
 		this.pitch = new TextFieldWidget(
 			this.client.textRenderer,
-			4 * width / 10, 110,
-			2 * width / 10, 20,
+			width / 10 + (4 * width / 10) + 6, height / 2 - 10,
+			(4 * width / 10) - 6, 20,
 			Text.empty());
 		this.pitch.setMaxLength(16);
 		this.pitch.setText(String.valueOf(soundBlock.pitch));
@@ -88,8 +88,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 
 		this.repeatDelay = new TextFieldWidget(
 			this.client.textRenderer,
-			7 * width / 10, 110,
-			2 * width / 10, 20,
+			width / 10, height / 2 + 40,
+			(4 * width / 10) - 6, 20,
 			Text.empty());
 		this.repeatDelay.setMaxLength(16);
 		this.repeatDelay.setText(String.valueOf(soundBlock.repeatDelay));
@@ -98,8 +98,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 
 		this.distance = new TextFieldWidget(
 			this.client.textRenderer,
-			width / 10, 160,
-			2 * width / 10, 20,
+			width / 10 + (4 * width / 10) + 6, height / 2 + 40,
+			(4 * width / 10) - 6, 20,
 			Text.empty());
 		this.distance.setMaxLength(16);
 		this.distance.setText(String.valueOf(soundBlock.distance));
@@ -109,12 +109,12 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		this.relativeButton = new ButtonWidget.Builder(Text.stringifiedTranslatable("gui.glowcase.sound_positioning", soundBlock.relative), (action) -> {
 			soundBlock.relative = !soundBlock.relative;
 			this.relativeButton.setMessage(Text.stringifiedTranslatable("gui.glowcase.sound_positioning", soundBlock.relative));
-		}).dimensions(6 * width / 10, 160, 150, 20).build();
+		}).dimensions(width / 10, height / 2 + 90, (4 * width / 10) - 6, 20).build();
 		this.addDrawableChild(this.relativeButton);
 
 		this.offset = new Vec3FieldsWidget(
-			width / 10, 210,
-			8 * width / 10, 20,
+			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
+			(4 * width / 10) - 6, 20,
 			this.client,
 			soundBlock.offset);
 		this.addDrawableChild(this.offset);
@@ -135,6 +135,69 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	@Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.sound_id"),
+			this.soundId.getX(), this.soundId.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.sound_category_no_arg"),
+			this.categoryButton.getX(), this.categoryButton.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.cancel_others"),
+			this.cancelOthersButton.getX(), this.cancelOthersButton.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.volume"),
+			this.volume.getX(), this.volume.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.pitch"),
+			this.pitch.getX(), this.pitch.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.repeat_delay"),
+			this.repeatDelay.getX(), this.repeatDelay.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.distance"),
+			this.distance.getX(), this.distance.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.sound_positioning_no_arg"),
+			this.relativeButton.getX(), this.relativeButton.getY() - 20,
+			0xFFFFFFFF
+		);
+
+		context.drawTextWithShadow(
+			this.client.textRenderer,
+			Text.translatable("gui.glowcase.offset"),
+			this.offset.getX(), this.offset.getY() - 20,
+			0xFFFFFFFF
+		);
 
 		// render the list over everything
         suggestionWidget.renderWidget(context, mouseX, mouseY, delta);
