@@ -29,7 +29,6 @@
 	"gui.glowcase.show_name": "Show Name: %s",
 	"gui.glowcase.offset_value": "Offset: %s",
 	"gui.glowcase.tick_entity": "Tick Entity: %s",
-	"gui.glowcase.sound_id": "Sound ID",
 	"gui.glowcase.sound_category_no_arg": "Sound Category",
 	"gui.glowcase.cancel_others": "Cancel other sounds",
 	"gui.glowcase.volume": "Volume",

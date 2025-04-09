@@ -138,13 +138,6 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 
 		context.drawTextWithShadow(
 			this.client.textRenderer,
-			Text.translatable("gui.glowcase.sound_id"),
-			this.soundId.getX(), this.soundId.getY() - 20,
-			0xFFFFFFFF
-		);
-
-		context.drawTextWithShadow(
-			this.client.textRenderer,
 			Text.translatable("gui.glowcase.sound_category_no_arg"),
 			this.categoryButton.getX(), this.categoryButton.getY() - 20,
 			0xFFFFFFFF
