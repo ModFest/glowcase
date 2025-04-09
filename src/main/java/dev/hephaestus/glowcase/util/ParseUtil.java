@@ -16,7 +16,10 @@ public class ParseUtil {
 	}
 
 	public static int parseOrDefault(String string, int value) {
-		if (string.isEmpty() || !canParseInt(string)) return value;
+		if (string.isEmpty() || string.equals("-") || !canParseInt(string)) {
+			return value;
+		}
+		
 		return Integer.parseInt(string);
 	}
 
@@ -35,7 +38,10 @@ public class ParseUtil {
 	}
 
 	public static double parseOrDefault(String string, double value) {
-		if (string.isEmpty() || !canParseDouble(string)) return value;
+		if (string.isEmpty() || string.equals("-") || !canParseDouble(string)) {
+			return value;
+		}
+
 		return Double.parseDouble(string);
 	}
 }
