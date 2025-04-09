@@ -48,7 +48,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
 		if (this.client == null) return;
 
-		this.spriteWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 - 55, 150, 20, Text.empty());
+		this.spriteWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 - 55, 180, 20, Text.empty());
 		this.spriteWidget.setMaxLength(255);
 		this.spriteWidget.setText(spriteBlockEntity.getSprite());
 		this.spriteWidget.setChangedListener(string -> {
@@ -64,7 +64,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
 		this.rotationWidget = ButtonWidget.builder(Text.translatable("gui.glowcase.rotate"), (action) -> {
 			this.spriteBlockEntity.rotation = (this.spriteBlockEntity.rotation + 45) % 360;
-		}).dimensions(width / 2 - 75, height / 2 - 25, 150, 20).build();
+		}).dimensions(width / 2 - 90, height / 2 - 25, 180, 20).build();
 
 		this.zOffsetToggle = ButtonWidget.builder(Text.literal(this.spriteBlockEntity.zOffset.name()), action -> {
 			switch (spriteBlockEntity.zOffset) {
@@ -74,9 +74,9 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 			}
 
 			this.zOffsetToggle.setMessage(Text.literal(this.spriteBlockEntity.zOffset.name()));
-		}).dimensions(width / 2 - 75, height / 2 + 5, 150, 20).build();
+		}).dimensions(width / 2 - 90, height / 2 + 5, 180, 20).build();
 
-		this.colorEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 + 35, 150, 20, Text.empty());
+		this.colorEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 + 35, 180, 20, Text.empty());
 		this.colorEntryWidget.setText("#" + String.format("%1$06X", this.spriteBlockEntity.color & 0x00FFFFFF));
 		this.colorEntryWidget.setChangedListener(string -> {
 			TextColor.parse(this.colorEntryWidget.getText()).ifSuccess(color -> {
@@ -84,7 +84,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 			});
 		});
 
-		this.scaleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 75, height / 2 + 65, 150, 20, Text.empty());
+		this.scaleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 + 65, 180, 20, Text.empty());
 		this.scaleEntryWidget.setText(String.valueOf(this.spriteBlockEntity.scale));
 		this.scaleEntryWidget.setChangedListener(string -> {
 			 try {
