@@ -34,6 +34,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 	public float preciseY = 0f;
 	public float preciseZ = 0f;
 
+	public boolean renderBackface = false;
 	public boolean stretch = false;
 	public boolean eink = true;
 
@@ -80,6 +81,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		nbt.putFloat("width", width);
 		nbt.putFloat("height", height);
 
+		nbt.putBoolean("renderBackface", renderBackface);
 		nbt.putBoolean("stretch", stretch);
 		nbt.putBoolean("eink", eink);
 
@@ -106,6 +108,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		width = nbt.getFloat("width");
 		height = nbt.getFloat("height");
 
+		renderBackface = nbt.getBoolean("renderBackface");
 		stretch = nbt.getBoolean("stretch");
 		eink = nbt.getBoolean("eink");
 
@@ -138,7 +141,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		markDirty();
 	}
 
-	public void setupScreen(float width, float height, Offset xOffset, Offset yOffset, Offset zOffset, boolean eink, boolean stretch) {
+	public void setupScreen(float width, float height, Offset xOffset, Offset yOffset, Offset zOffset, boolean eink, boolean stretch, boolean renderBackface) {
 		this.width = Math.clamp(width, 0.05f, Integer.MAX_VALUE);
 		this.height = Math.clamp(height, 0.05f, Integer.MAX_VALUE);
 		this.xOffset = xOffset;
@@ -146,6 +149,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		this.zOffset = zOffset;
 		this.eink = eink;
 		this.stretch = stretch;
+		this.renderBackface = renderBackface;
 	}
 
 	// returns a combined offset 
