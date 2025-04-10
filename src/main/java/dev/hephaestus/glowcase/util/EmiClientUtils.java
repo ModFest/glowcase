@@ -27,11 +27,14 @@ import net.minecraft.util.math.BlockPos;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class EmiClientUtils {
 	private static final BufferBuilderStorage SORRY = new BufferBuilderStorage(1);
+	private static Map<String, Framebuffer> FB_CACHE = new HashMap<>();
 
 	public static void displayRecipe(Identifier rid) {
 		if (rid == null) {
@@ -70,7 +73,6 @@ public class EmiClientUtils {
 		builder.vertex(entry, xMax, yMin, 0).color(255, 255, 255, 255).texture(0, 0);
 		builder.vertex(entry, xMin, yMin, 0).color(255, 255, 255, 255).texture(1, 0);
 		BufferRenderer.drawWithGlobalProgram(builder.end());
-		fb.delete();
 		MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
 		return true;
 	}
@@ -105,12 +107,23 @@ public class EmiClientUtils {
 
 	private static Framebuffer createFramebuffer(EmiRecipe recipe) {
 		MinecraftClient client = MinecraftClient.getInstance();
+
 		int width = recipe.getDisplayWidth() + 8;
 		int height = recipe.getDisplayHeight() + 8;
 		int scale = 4;
-		Framebuffer framebuffer = new SimpleFramebuffer(width * scale, height * scale, true, MinecraftClient.IS_SYSTEM_MAC);
-		framebuffer.setClearColor(0f, 0f, 0f, 0f);
-		framebuffer.clear(MinecraftClient.IS_SYSTEM_MAC);
+
+		String key = width * scale + "x" + height * scale;
+		Framebuffer framebuffer = FB_CACHE.get(key);
+
+		if (framebuffer == null) {
+			framebuffer = new SimpleFramebuffer(width * scale, height * scale, true, MinecraftClient.IS_SYSTEM_MAC);
+			framebuffer.setClearColor(0f, 0f, 0f, 0f);
+
+			FB_CACHE.put(key, framebuffer);
+		} else {
+			framebuffer.clear(MinecraftClient.IS_SYSTEM_MAC);
+		}
+
 		framebuffer.beginWrite(true);
 
 		Matrix4fStack view = RenderSystem.getModelViewStack();
