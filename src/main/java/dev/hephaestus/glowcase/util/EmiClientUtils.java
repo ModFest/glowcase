@@ -9,6 +9,7 @@ import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.widget.Widget;
 import dev.emi.emi.api.widget.WidgetHolder;
 import dev.emi.emi.widget.RecipeBackground;
+import dev.hephaestus.glowcase.Glowcase;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.SimpleFramebuffer;
@@ -27,14 +28,37 @@ import net.minecraft.util.math.BlockPos;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class EmiClientUtils {
 	private static final BufferBuilderStorage SORRY = new BufferBuilderStorage(1);
-	private static Map<String, Framebuffer> FB_CACHE = new HashMap<>();
+	private static final ConcurrentMap<String, CachedBuffer> FB_CACHE = new ConcurrentHashMap<>();
+
+	// a container to hold the buffer
+	private static class CachedBuffer {
+        public final Framebuffer fb;
+        public volatile boolean dirty;
+
+        public CachedBuffer(Framebuffer fb, boolean dirty) {
+            this.fb = fb;
+            this.dirty = dirty;
+        }
+    }
+
+	public static void disposeCache() {
+        for (CachedBuffer cached : FB_CACHE.values()) {
+            try {
+                cached.fb.delete();
+            } catch (Exception e) {
+                Glowcase.LOGGER.error("Error disposing: " + e.getMessage());
+            }
+        }
+
+        FB_CACHE.clear();
+    }
 
 	public static void displayRecipe(Identifier rid) {
 		if (rid == null) {
@@ -57,24 +81,34 @@ public class EmiClientUtils {
 		int fullHeight = recipe.getDisplayHeight() + 8;
 		Framebuffer fb = createFramebuffer(recipe);
 
-		fb.beginRead();
-		RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
-		RenderSystem.setShaderTexture(0, fb.getColorAttachment());
-		RenderSystem.enableDepthTest();
-		Tessellator tess = Tessellator.getInstance();
-		BufferBuilder builder = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-		MatrixStack.Entry entry = matrices.peek();
-		float xMin = -0.15f / 16 * fullWidth;
-		float xMax =  0.15f / 16 * fullWidth;
-		float yMin = -0.15f / 16 * fullHeight;
-		float yMax =  0.15f / 16 * fullHeight;
-		builder.vertex(entry, xMin, yMax, 0).color(255, 255, 255, 255).texture(1, 1);
-		builder.vertex(entry, xMax, yMax, 0).color(255, 255, 255, 255).texture(0, 1);
-		builder.vertex(entry, xMax, yMin, 0).color(255, 255, 255, 255).texture(0, 0);
-		builder.vertex(entry, xMin, yMin, 0).color(255, 255, 255, 255).texture(1, 0);
-		BufferRenderer.drawWithGlobalProgram(builder.end());
-		MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
-		return true;
+        try {
+            fb.beginRead();
+            RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
+            RenderSystem.setShaderTexture(0, fb.getColorAttachment());
+            RenderSystem.enableDepthTest();
+
+            Tessellator tess = Tessellator.getInstance();
+            BufferBuilder builder = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+            MatrixStack.Entry entry = matrices.peek();
+            float xMin = -0.15f / 16 * fullWidth;
+            float xMax =  0.15f / 16 * fullWidth;
+            float yMin = -0.15f / 16 * fullHeight;
+            float yMax =  0.15f / 16 * fullHeight;
+
+            builder.vertex(entry, xMin, yMax, 0).color(255, 255, 255, 255).texture(1, 1);
+            builder.vertex(entry, xMax, yMax, 0).color(255, 255, 255, 255).texture(0, 1);
+            builder.vertex(entry, xMax, yMin, 0).color(255, 255, 255, 255).texture(0, 0);
+            builder.vertex(entry, xMin, yMin, 0).color(255, 255, 255, 255).texture(1, 0);
+
+            BufferRenderer.drawWithGlobalProgram(builder.end());
+        } catch (Exception e) {
+            Glowcase.LOGGER.error("Error rendering framebuffer: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
+        }
+		
+        return true;
 	}
 
 	public static EmiRecipe getRecipeToDisplay(String recipeString, BlockPos pos) {
@@ -112,57 +146,75 @@ public class EmiClientUtils {
 		int height = recipe.getDisplayHeight() + 8;
 		int scale = 4;
 
-		String key = width * scale + "x" + height * scale;
-		Framebuffer framebuffer = FB_CACHE.get(key);
+		String recipeId = recipe.getId() != null ? recipe.getId().toString() : "unknown";
+		String key = recipeId + "_" + (width * scale) + "x" + (height * scale);
 
-		if (framebuffer == null) {
-			framebuffer = new SimpleFramebuffer(width * scale, height * scale, true, MinecraftClient.IS_SYSTEM_MAC);
-			framebuffer.setClearColor(0f, 0f, 0f, 0f);
+		CachedBuffer cached = FB_CACHE.get(key);
+        if (cached == null) {
+            Framebuffer fb = new SimpleFramebuffer(width * scale, height * scale, true, MinecraftClient.IS_SYSTEM_MAC);
+            fb.setClearColor(0f, 0f, 0f, 0f);
 
-			FB_CACHE.put(key, framebuffer);
-		} else {
+            cached = new CachedBuffer(fb, true);
+            FB_CACHE.put(key, cached);
+        }
+
+		if (!cached.dirty) {
+            return cached.fb;
+        }
+
+		Framebuffer framebuffer = cached.fb;
+
+		try {
 			framebuffer.clear(MinecraftClient.IS_SYSTEM_MAC);
+			framebuffer.beginWrite(true);
+
+			Matrix4fStack view = RenderSystem.getModelViewStack();
+			view.pushMatrix();
+			view.identity();
+			view.translate(-1.0f, 1.0f, 0.0f);
+			view.scale(2f / width, -2f / height, -1f / 1000f);
+			view.translate(0.0f, 0.0f, 10.0f);
+			RenderSystem.applyModelViewMatrix();
+
+			float originalFogEnd = RenderSystem.getShaderFogEnd();
+			RenderSystem.setShaderFogEnd(Float.MAX_VALUE);
+
+			Matrix4f backupProj = RenderSystem.getProjectionMatrix();
+			RenderSystem.setProjectionMatrix(new Matrix4f().identity(), VertexSorter.BY_Z);
+			GlowcaseWidgetHolder holder = new GlowcaseWidgetHolder(recipe.getDisplayWidth(), recipe.getDisplayHeight());
+			holder.widgets.add(new RecipeBackground(-4, -4, recipe.getDisplayWidth() + 8, recipe.getDisplayHeight() + 8));
+			recipe.addWidgets(holder);
+			// getEffectVertexConsumers doesn't cause random rendering issues like getEntityVertexConsumers
+			DrawContext context = new DrawContext(client, SORRY.getEntityVertexConsumers());
+			context.getMatrices().translate(4, 4, 0);
+			for (Widget widget : holder.widgets) {
+				widget.render(context, -9999, -9999, 0);
+			}
+			// Magic incantation/desperate prayer
+			RenderSystem.enableDepthTest();
+			RenderSystem.disableBlend();
+			RenderSystem.enableCull();
+			RenderSystem.setShaderColor(1, 1, 1, 1);
+			DiffuseLighting.enableForLevel();
+
+			RenderSystem.setProjectionMatrix(backupProj, VertexSorter.BY_DISTANCE);
+			view.popMatrix();
+			RenderSystem.applyModelViewMatrix();
+			SORRY.getEntityVertexConsumers().draw();
+
+			framebuffer.endWrite();
+			RenderSystem.setShaderFogEnd(originalFogEnd);
+			client.getFramebuffer().beginWrite(true);
+
+			cached.dirty = false;
+		} catch (Exception e) {
+			Glowcase.LOGGER.error("Error during framebuffer creation: " + e.getMessage());
+			e.printStackTrace();
+
+			// if an error occurs during framebuffer creation, mark the cache as dirty to refresh
+			cached.dirty = true;
 		}
 
-		framebuffer.beginWrite(true);
-
-		Matrix4fStack view = RenderSystem.getModelViewStack();
-		view.pushMatrix();
-		view.identity();
-		view.translate(-1.0f, 1.0f, 0.0f);
-		view.scale(2f / width, -2f / height, -1f / 1000f);
-		view.translate(0.0f, 0.0f, 10.0f);
-		RenderSystem.applyModelViewMatrix();
-
-		float originalFogEnd = RenderSystem.getShaderFogEnd();
-		RenderSystem.setShaderFogEnd(Float.MAX_VALUE);
-
-		Matrix4f backupProj = RenderSystem.getProjectionMatrix();
-		RenderSystem.setProjectionMatrix(new Matrix4f().identity(), VertexSorter.BY_Z);
-		GlowcaseWidgetHolder holder = new GlowcaseWidgetHolder(recipe.getDisplayWidth(), recipe.getDisplayHeight());
-		holder.widgets.add(new RecipeBackground(-4, -4, recipe.getDisplayWidth() + 8, recipe.getDisplayHeight() + 8));
-		recipe.addWidgets(holder);
-		// getEffectVertexConsumers doesn't cause random rendering issues like getEntityVertexConsumers
-		DrawContext context = new DrawContext(client, SORRY.getEntityVertexConsumers());
-		context.getMatrices().translate(4, 4, 0);
-		for (Widget widget : holder.widgets) {
-			widget.render(context, -9999, -9999, 0);
-		}
-		// Magic incantation/desperate prayer
-		RenderSystem.enableDepthTest();
-		RenderSystem.disableBlend();
-		RenderSystem.enableCull();
-		RenderSystem.setShaderColor(1, 1, 1, 1);
-		DiffuseLighting.enableForLevel();
-
-		RenderSystem.setProjectionMatrix(backupProj, VertexSorter.BY_DISTANCE);
-		view.popMatrix();
-		RenderSystem.applyModelViewMatrix();
-		SORRY.getEntityVertexConsumers().draw();
-
-		framebuffer.endWrite();
-		RenderSystem.setShaderFogEnd(originalFogEnd);
-		client.getFramebuffer().beginWrite(true);
 		return framebuffer;
 	}
 
