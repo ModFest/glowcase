@@ -16,6 +16,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 	private ButtonWidget zOffsetToggle;
 	private ButtonWidget[] alignment;
 
+	private CheckboxWidget renderBackfaceWidget;
 	private CheckboxWidget einkCheckWidget;
 	private CheckboxWidget stretchCheckWidget;
 
@@ -142,16 +143,22 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 				}
 		}
 
+		this.renderBackfaceWidget = CheckboxWidget.builder(Text.translatable("gui.glowcase.screen.backface"), this.client.textRenderer)
+			.checked(this.screenBlockEntity.renderBackface)
+			.callback((checkbox, checked) -> this.screenBlockEntity.renderBackface = checked)
+			.pos(width / 10, height / 2 - 30)
+			.build();
+
 		this.einkCheckWidget = CheckboxWidget.builder(Text.translatable("gui.glowcase.screen.eink"), this.client.textRenderer)
 			.checked(this.screenBlockEntity.eink)
 			.callback((checkbox, checked) -> this.screenBlockEntity.eink = checked)
-			.pos(width / 10, height / 2 - 25)
+			.pos(width / 10, height / 2 - 10)
 			.build();
 
 		this.stretchCheckWidget = CheckboxWidget.builder(Text.translatable("gui.glowcase.screen.stretch"), this.client.textRenderer)
 			.checked(this.screenBlockEntity.stretch)
 			.callback((checkbox, checked) -> this.screenBlockEntity.stretch = checked)
-			.pos(width / 10, height / 2)
+			.pos(width / 10, height / 2 + 10)
 			.build();
 
 		this.urlEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, height / 2 + 45, 7 * width / 10, 20, Text.empty());
@@ -189,6 +196,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		for (ButtonWidget buttonWidget : alignment)
 			this.addDrawableChild(buttonWidget);
 
+		this.addDrawableChild(this.renderBackfaceWidget);
 		this.addDrawableChild(this.einkCheckWidget);
 		this.addDrawableChild(this.stretchCheckWidget);
 
