@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
@@ -9,6 +10,8 @@ import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.RenderLayer.MultiPhaseParameters;
+import net.minecraft.client.render.VertexFormat.DrawMode;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
@@ -16,6 +19,7 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +27,21 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public record ScreenBlockEntityRenderer(BlockEntityRendererFactory.Context context) implements BlockEntityRenderer<ScreenBlockEntity> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/screen_block.png");
+	
+	// custom render layer for no culling
+	public static final Function<Identifier, RenderLayer> TEXT_NO_CULL = Util.memoize((texture) -> {
+		return RenderLayer.of("glowcase_text_no_cull", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT, DrawMode.QUADS, 786432, false, true, MultiPhaseParameters.builder()
+			.program(RenderPhase.TEXT_PROGRAM)
+			.texture(new RenderPhase.Texture(texture, false, false))
+			.transparency(RenderPhase.TRANSLUCENT_TRANSPARENCY)
+			.cull(RenderPhase.DISABLE_CULLING)
+			.lightmap(RenderPhase.ENABLE_LIGHTMAP)
+			.build(false));
+	});
 
 	public static final int COLOR_SCR_OFF = 0xFF111111;
 	public static final int COLOR_SCR_ON = 0xFFFFFFFF;
@@ -61,6 +77,8 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 		int brightness = entity.eink ? light : LightmapTextureManager.MAX_LIGHT_COORDINATE;
 
 		String url = entity.url;
+
+		boolean renderBackface = entity.renderBackface;
 
 		// Screen width.height
 		float width = entity.width;
@@ -99,7 +117,7 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 				}
 
 				// Actual picture
-				renderPicture(texture, x1, x2, y1, y2, vertexConsumers, matrices, brightness);
+				renderPicture(texture, x1, x2, y1, y2, vertexConsumers, matrices, brightness, renderBackface);
 			} else if (code/100 == 1) {
 				// Loading screen
 				renderFilledRectangle(COLOR_SCR_ON, x1, x2, y1, y2, vertexConsumers, matrices, brightness);
@@ -121,8 +139,8 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 		matrices.pop();
 	}
 
-	public static void renderPicture(@NotNull Identifier texture, float x1, float x2, float y1, float y2, VertexConsumerProvider vertexConsumers, MatrixStack matrices, int light) {
-		RenderLayer renderLayer = RenderLayer.getText(texture);
+	public static void renderPicture(@NotNull Identifier texture, float x1, float x2, float y1, float y2, VertexConsumerProvider vertexConsumers, MatrixStack matrices, int light, boolean renderBackface) {
+		RenderLayer renderLayer = renderBackface ? TEXT_NO_CULL.apply(texture) : RenderLayer.getText(texture);
 		VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
 		MatrixStack.Entry matrix = matrices.peek();
