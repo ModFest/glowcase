@@ -309,22 +309,95 @@ public class SuggestionListWidget<T> extends ClickableWidget {
             context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
             context.disableScissor();
         } else {
-            // otherwise clip text with "..."
+            // otherwise try to shorten the text as much as possible
             String rawText = text.getString();
-            int maxWidth = availableWidth - textRenderer.getWidth("...");
-            int trimIndex = rawText.length();
-            
-            while (trimIndex > 0 && textRenderer.getWidth(rawText.substring(0, trimIndex)) > maxWidth) {
-                trimIndex--;
+
+            String collapsedText;
+            int colonIndex = rawText.indexOf(':');
+
+            // if no colon, prob nothing to collapse
+            if (colonIndex == -1) {
+                collapsedText = rawText;
+            } else {
+                int lastSlashIndex = rawText.lastIndexOf('/');
+
+                // if no slash after colon, leave as-is
+                if (lastSlashIndex == -1 || lastSlashIndex < colonIndex) {
+                    collapsedText = rawText;
+                } else {
+                    String namespace = rawText.substring(0, colonIndex + 1);
+                    String lastPart = rawText.substring(lastSlashIndex + 1);
+
+                    collapsedText = namespace + ".../" + lastPart;
+                }
             }
 
-            if (trimIndex < rawText.length()) {
-                rawText = rawText.substring(0, trimIndex) + "...";
+            String finalText;
+            if (filter.trim().isEmpty()) {
+                finalText = collapsedText;  
+            } else if (filter.length() >= (rawText.indexOf(':') + 1)) {
+                if (rawText.lastIndexOf('/') == -1) {
+                    //... and no slash, put ... before
+                    finalText = "..." + collapsedText.substring(rawText.indexOf(':') + 1);
+                } else {
+                    // no namespace
+                    finalText = collapsedText.substring(rawText.indexOf(':') + 1);
+                }
+            } else if (filter.length() > 1) {
+                int removeCount = Math.min(filter.length(), collapsedText.length());
+                finalText = "..." + collapsedText.substring(removeCount);
+            } else {
+                finalText = collapsedText;
+            }
+
+            if (filter.trim().isEmpty()) {
+                int slashIndex = collapsedText.lastIndexOf("/");
+
+                if (slashIndex != -1) {
+                    String prefix = collapsedText.substring(0, slashIndex + 1);
+                    String lastPart = collapsedText.substring(slashIndex + 1);
+
+                    if (textRenderer.getWidth(collapsedText) > availableWidth) {
+                        int prefixWidth = textRenderer.getWidth(prefix);
+                        int allowedForLast = availableWidth - prefixWidth;
+
+                        if (allowedForLast < 0) {
+                            finalText = trimToWidth(collapsedText, availableWidth, textRenderer);
+                        } else {
+                            if (textRenderer.getWidth(lastPart) > allowedForLast) {
+                                lastPart = trimToWidth(lastPart, allowedForLast, textRenderer);
+                            }
+
+                            finalText = prefix + lastPart;
+                        }
+                    }
+                } else {
+                    finalText = trimToWidth(collapsedText, availableWidth, textRenderer);
+                }
+            } else {
+                if (textRenderer.getWidth(finalText) > availableWidth) {
+                    finalText = trimToWidth(finalText, availableWidth, textRenderer);
+                }
             }
 
             context.enableScissor(startX, startY, endX, endY);
-            context.drawTextWithShadow(textRenderer, Text.literal(rawText), startX, y, color);
+            context.drawTextWithShadow(textRenderer, Text.literal(finalText), startX, y, color);
             context.disableScissor();
         }
+    }
+
+    private String trimToWidth(String rawText, int availableWidth, TextRenderer textRenderer) {
+        if (textRenderer.getWidth(rawText) <= availableWidth) {
+            return rawText;
+        }
+
+        int maxWidth = availableWidth - textRenderer.getWidth("...");
+        int trimIndex = rawText.length();
+
+        while (trimIndex > 0 && textRenderer.getWidth(rawText.substring(0, trimIndex)) > maxWidth) {
+            trimIndex--;
+        }
+        
+        return rawText.substring(0, trimIndex) + "...";
     }
 }
