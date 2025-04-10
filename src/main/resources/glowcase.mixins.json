@@ -14,7 +14,8 @@
 		"client.MixinHeldItemRenderer",
 		"client.MixinInGameHud",
 		"client.RenderSystemAccessor",
-		"client.TextureManagerAccessor"
+		"client.TextureManagerAccessor",
+		"client.GeneratedSlotWidgetMixin"
 	],
 	"server": [],
 	"injectors": {

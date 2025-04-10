@@ -60,6 +60,12 @@ public class EmiClientUtils {
         FB_CACHE.clear();
     }
 
+	public static void markAllDirty() {
+        for (CachedBuffer cached : FB_CACHE.values()) {
+            cached.dirty = true;
+        }
+    }
+
 	public static void displayRecipe(Identifier rid) {
 		if (rid == null) {
 			return;
