@@ -164,9 +164,10 @@ public class EmiClientUtils {
             FB_CACHE.put(key, cached);
         }
 
-		if (!cached.dirty) {
-            return cached.fb;
-        }
+		// rerender every frame so dont
+		// if (!cached.dirty) {
+        //     return cached.fb;
+        // }
 
 		Framebuffer framebuffer = cached.fb;
 
@@ -212,7 +213,8 @@ public class EmiClientUtils {
 			RenderSystem.setShaderFogEnd(originalFogEnd);
 			client.getFramebuffer().beginWrite(true);
 
-			cached.dirty = false;
+			cached.dirty = true;
+			// cached.dirty = false;
 		} catch (Exception e) {
 			Glowcase.LOGGER.error("Error during framebuffer creation: " + e.getMessage());
 			e.printStackTrace();
