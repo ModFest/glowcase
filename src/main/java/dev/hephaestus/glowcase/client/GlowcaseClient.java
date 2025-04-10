@@ -14,7 +14,9 @@ import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.ScrollableItem;
 import dev.hephaestus.glowcase.mixin.HandledScreenInvoker;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
+import dev.hephaestus.glowcase.util.EmiClientUtils;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
@@ -128,6 +130,12 @@ public class GlowcaseClient implements ClientModInitializer {
 				ScreenMouseEvents.allowMouseScroll(hs).register((screen, x, y, h, v) -> allowMouseScroll((HandledScreen<?>) screen, x, y, v));
 			}
 		}));
+
+		if (EMI_LOADED) {
+			ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+				EmiClientUtils.disposeCache();
+			});
+		}
 	}
 
 	/**
