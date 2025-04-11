@@ -23,6 +23,7 @@
 	"gui.glowcase.pitch_value": "Pitch: %d",
 	"gui.glowcase.yaw_value": "Yaw: %d",
 	"gui.glowcase.alignment": "Alignment: %s",
+	"gui.glowcase.mirror_item": "Mirror Item: %s",
 	"gui.glowcase.gives_item": "Gives Item: %s",
 	"gui.glowcase.shadow_type": "Shadow Type: %s",
 	"gui.glowcase.rotation_type": "Rotation Type: %s",

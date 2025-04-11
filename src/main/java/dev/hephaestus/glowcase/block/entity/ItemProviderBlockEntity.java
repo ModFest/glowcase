@@ -9,6 +9,8 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +21,7 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 	protected ItemStack stack = ItemStack.EMPTY;
 	protected GivesItem givesItem = GivesItem.ALWAYS;
 	public long cooldown = 0;
+	public boolean mirrorItem = false;
 	protected final Map<UUID, Long> givenTimes = new HashMap<>();
 
 	public ItemProviderBlockEntity(BlockPos pos, BlockState state) {
@@ -66,6 +69,7 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 		NbtCompound timesNbt = new NbtCompound();
 		givenTimes.forEach((id, tick) -> timesNbt.putLong(id.toString(), tick));
 		tag.put("given_times", timesNbt);
+		tag.putBoolean("mirror_item", mirrorItem);
 	}
 
 	@Override
@@ -84,6 +88,8 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 		for (String key : given.getKeys()) {
 			givenTimes.put(UUID.fromString(key), given.getLong(key));
 		}
+		// true by default for compatibility with pre-existing BC25 builds
+		this.mirrorItem = tag.contains("mirror_item",  NbtElement.BYTE_TYPE) ? tag.getBoolean("mirror_item") : true;
 	}
 
 	public void cycleGiveType() {

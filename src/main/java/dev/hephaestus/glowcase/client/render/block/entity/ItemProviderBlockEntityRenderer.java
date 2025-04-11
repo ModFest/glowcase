@@ -77,7 +77,12 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context
 		matrices.translate(0, 0.5, 0);
 		matrices.scale(0.5F, 0.5F, 0.5F);
 		matrices.multiply(RotationAxis.POSITIVE_X.rotation(pitch));
+		matrices.push();
+		if (!entity.mirrorItem && facing.getAxis() != Direction.Axis.Y) {
+			matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180f));
+		}
 		context.getItemRenderer().renderItem(entity.getStack(), ModelTransformationMode.FIXED, light, OverlayTexture.DEFAULT_UV, matrices, vertexConsumers, entity.getWorld(), 0);
+		matrices.pop();
 
 		HitResult hitResult = MinecraftClient.getInstance().crosshairTarget;
 		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(entity.getPos())) {
