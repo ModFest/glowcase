@@ -91,7 +91,9 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 			givenTimes.put(UUID.fromString(key), given.getLong(key));
 		}
 
-		this.shouldRenderItem = tag.getBoolean("should_render");
+		if (tag.contains("should_render", NbtElement.NUMBER_TYPE)) {
+			this.shouldRenderItem = tag.getBoolean("should_render");
+		}
 	}
 
 	public void cycleGiveType() {
