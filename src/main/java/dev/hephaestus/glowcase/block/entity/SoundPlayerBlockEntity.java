@@ -2,6 +2,7 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.logging.LogUtils;
 import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.client.util.SoundPlayerProxy;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
@@ -110,8 +111,8 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 
 		final PositionedSoundLoop oldInstance = entity.nowPlaying;
 		if (oldInstance != null) {
-			if (oldInstance.isCompatible() && soundManager.isPlaying(oldInstance)) {
-				// no-op when already playing something
+			if (oldInstance.isCompatible() && ((SoundPlayerProxy) soundManager).glowcase$isQueuedOrPlaying(oldInstance)) {
+				// no-op when already playing something, or waiting to be played
 				return;
 			}
 

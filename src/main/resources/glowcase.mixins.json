@@ -16,7 +16,9 @@
 		"client.RenderSystemAccessor",
 		"client.TextRendererAccessor",
 		"client.TextureManagerAccessor",
-		"client.compat.DynamicBufferShardCompatMixin"
+		"client.compat.DynamicBufferShardCompatMixin",
+		"client.sound.SoundManagerMixin",
+		"client.sound.SoundSystemMixin"
 	],
 	"server": [],
 	"injectors": {
