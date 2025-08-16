@@ -5,6 +5,7 @@ import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
 import dev.hephaestus.glowcase.client.util.EmiClientUtils;
@@ -56,7 +57,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		}
 
 
-		this.recipeWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 150, baseY + 10, 300, 20, Text.empty());
+		this.recipeWidget = new GlowcaseTextFieldWidget(this.client.textRenderer, width / 2 - 150, baseY + 10, 300, 20, Text.empty());
 		this.recipeWidget.setMaxLength(1024);
 		this.recipeWidget.setText(recipeBlockEntity.recipe);
 
@@ -96,7 +97,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			}
 
 			if (GlowcaseClient.EMI_LOADED) {
-				suggestionWidget.updateSuggestions(EmiUtils.RECIPE_LIST.get(), text, false);
+				suggestionWidget.updateSuggestions(EmiUtils.RECIPE_LIST.get(), text, false, this);
 
 				EmiClientUtils.updateWidgetHolder(recipeWidget.getText(), glowcaseWidgetHolder);
 			}
@@ -172,7 +173,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && recipeWidget.isFocused()) {
 			return suggestionWidget.mouseClicked(mouseX, mouseY, button);
 		} else {
-			suggestionWidget.updateSuggestions(NO_SUGGESTIONS, "");
+			suggestionWidget.updateSuggestions(NO_SUGGESTIONS, "", this);
 		}
 
 		return super.mouseClicked(mouseX, mouseY, button);
@@ -196,6 +197,14 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		}
 
 		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+	}
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+			return true;
+		}
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.text.PlainTextContent;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -23,7 +24,6 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class PopupBlock extends WaterloggableGlowcaseBlock {
@@ -57,7 +57,7 @@ public class PopupBlock extends WaterloggableGlowcaseBlock {
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof PopupBlockEntity be)) return ActionResult.CONSUME;
-		if (world.isClient) {
+		if (world.isClient && !(be.lines.size() == 1 && be.lines.getFirst().getContent().equals(PlainTextContent.EMPTY))) {
 			Glowcase.proxy.openPopupBlockViewScreen(pos);
 		}
 		return ActionResult.SUCCESS;

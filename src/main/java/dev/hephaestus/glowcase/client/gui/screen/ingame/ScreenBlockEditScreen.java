@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditScreenBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.widget.*;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -48,7 +49,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 
 		this.widthEntryWidget = new TextFieldWidget(this.client.textRenderer, leftX, fieldY + 40 + 20 + 5, 2 * leftX, 20, Text.empty());
 		this.widthEntryWidget.setText(""+this.screenBlockEntity.width);
-		this.widthEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.width"));
+		this.widthEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.width"));
 		this.widthEntryWidget.setChangedListener(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed)
 				screenBlockEntity.width = parsed;
@@ -59,7 +60,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 
 		this.heightEntryWidget = new TextFieldWidget(this.client.textRenderer, 3 * leftX + 10 + textRenderer.getWidth(timesLiteral), fieldY + 40 + 20 + 5, 2 * leftX, 20, Text.empty());
 		this.heightEntryWidget.setText(""+this.screenBlockEntity.height);
-		this.heightEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.height"));
+		this.heightEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.height"));
 		this.heightEntryWidget.setChangedListener(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed)
 				screenBlockEntity.height = parsed;
@@ -68,7 +69,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		this.yawEntryWidget = new TextFieldWidget(this.client.textRenderer, leftX, fieldY + 40, (4 * leftX + 10 + textRenderer.getWidth(timesLiteral)) / 2 - 5, 20, Text.empty());
         if (this.screenBlockEntity.yaw == 0.0f) {
             this.yawEntryWidget.setText("");
-            this.yawEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.yaw"));
+            this.yawEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.yaw"));
         } else {
             this.yawEntryWidget.setText(String.valueOf(this.screenBlockEntity.yaw));
         }
@@ -83,7 +84,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
         this.pitchEntryWidget = new TextFieldWidget(this.client.textRenderer, leftX + (4 * leftX + 10 + textRenderer.getWidth(timesLiteral)) / 2, fieldY + 40, (4 * leftX + 10 + textRenderer.getWidth(timesLiteral)) / 2, 20, Text.empty());
         if (this.screenBlockEntity.pitch == 0.0f) {
             this.pitchEntryWidget.setText("");
-            this.pitchEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.pitch"));
+            this.pitchEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.pitch"));
         } else {
             this.pitchEntryWidget.setText(String.valueOf(this.screenBlockEntity.pitch));
         }
@@ -209,13 +210,13 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		this.urlEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, height / 2 + 45, 7 * width / 10, 20, Text.empty());
 		this.urlEntryWidget.setMaxLength(ScreenBlockEntity.URL_MAX_LENGTH);
 		this.urlEntryWidget.setText(this.screenBlockEntity.url);
-		this.urlEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.url"));
+		this.urlEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.url"));
 		// We don't change the url on the fly here as that would cause many fetch requests which we don't want
 
 		this.altEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, height / 2 + 65 + 5, 7 * width / 10, 40, Text.empty());
 		this.altEntryWidget.setMaxLength(ScreenBlockEntity.ALT_MAX_LENGTH);
 		this.altEntryWidget.setText(this.screenBlockEntity.alt);
-		this.altEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.alt"));
+		this.altEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.alt"));
 		this.altEntryWidget.setChangedListener(string -> screenBlockEntity.alt = string);
 
 		if (this.client.options.advancedItemTooltips)

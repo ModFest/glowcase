@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.ConfigLinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditConfigLinkBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
@@ -26,12 +27,12 @@ public class ConfigLinkBlockEditScreen extends GlowcaseScreen {
         this.titleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, height / 2 - 30, 8 * width / 10, 20, Text.empty());
         this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
         this.titleEntryWidget.setText(this.configLinkBlockEntity.getTitle());
-        this.titleEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.title"));
+        this.titleEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.title"));
 
         this.urlEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, height / 2 + 10, 8 * width / 10, 20, Text.empty());
         this.urlEntryWidget.setMaxLength(HyperlinkBlockEntity.URL_MAX_LENGTH);
         this.urlEntryWidget.setText(this.configLinkBlockEntity.getUrl());
-        this.urlEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.url"));
+        this.urlEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.url"));
 
         this.addDrawableChild(this.titleEntryWidget);
         this.addDrawableChild(this.urlEntryWidget);

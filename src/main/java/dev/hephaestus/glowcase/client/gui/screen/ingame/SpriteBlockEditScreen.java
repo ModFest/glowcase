@@ -2,6 +2,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
@@ -45,7 +46,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
 		if (this.client == null) return;
 
-		this.spriteWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 - 55, 180, 20, Text.empty());
+		this.spriteWidget = new GlowcaseTextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 - 55, 180, 20, Text.empty());
 		this.spriteWidget.setMaxLength(255);
 		this.spriteWidget.setText(spriteBlockEntity.getSprite());
 		this.spriteWidget.setChangedListener(string -> {
@@ -99,7 +100,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		ResourceManager resourceManager = this.client.getResourceManager();
 		validSprites = allValidSprites(resourceManager);
 
-		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(spriteWidget, client.textRenderer, validSprites, Function.identity());
+		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(spriteWidget, client.textRenderer, validSprites, Function.identity(), this);
 	}
 
 	/**
@@ -152,7 +153,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
         if (suggestionWidget.isMouseOver(mouseX, mouseY) && spriteWidget.isFocused()) {
             return suggestionWidget.mouseClicked(mouseX, mouseY, button);
         } else {
-            suggestionWidget.updateSuggestions(new ArrayList<>(), "");
+            suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -177,6 +178,14 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+			return true;
+		}
+		return super.keyPressed(keyCode, scanCode, modifiers);
+	}
 
 	@Override
 	public void close() {

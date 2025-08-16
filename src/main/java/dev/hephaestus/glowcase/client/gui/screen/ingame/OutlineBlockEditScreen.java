@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.OutlineBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditOutlineBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TextWidget;
 import net.minecraft.text.Text;
@@ -99,12 +100,12 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 			}
 		});
 
-		this.xOffsetWidget.setPlaceholder(Text.translatable("gui.glowcase.x"));
-		this.yOffsetWidget.setPlaceholder(Text.translatable("gui.glowcase.y"));
-		this.zOffsetWidget.setPlaceholder(Text.translatable("gui.glowcase.z"));
-		this.xScaleWidget.setPlaceholder(Text.translatable("gui.glowcase.x"));
-		this.yScaleWidget.setPlaceholder(Text.translatable("gui.glowcase.y"));
-		this.zScaleWidget.setPlaceholder(Text.translatable("gui.glowcase.z"));
+		this.xOffsetWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.x"));
+		this.yOffsetWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.y"));
+		this.zOffsetWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.z"));
+		this.xScaleWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.x"));
+		this.yScaleWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.y"));
+		this.zScaleWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.z"));
 
 		this.colorEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 25, height / 2 + 35, 50, 20, Text.empty());
 		this.colorEntryWidget.setText("#" + String.format("%1$06X", this.outlineBlockEntity.color & 0x00FFFFFF));

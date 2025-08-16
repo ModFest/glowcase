@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
@@ -64,7 +65,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 
 		// region Particle ID
-		particleId = new TextFieldWidget(
+		particleId = new GlowcaseTextFieldWidget(
 			this.client.textRenderer,
 			width / 10, height / 2 - 110,
 			8 * width / 10, 20,
@@ -84,10 +85,10 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 			.map(Registries.PARTICLE_TYPE::getId)
 			.collect(Collectors.toList());
 
-		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, client.textRenderer, validParticles, Identifier::toString);
+		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, client.textRenderer, validParticles, Identifier::toString, this);
 
 		particleId.setChangedListener((text) -> {
-			suggestionWidget.updateSuggestions(validParticles, text);
+			suggestionWidget.updateSuggestions(validParticles, text, this);
 		});
 		// endregion
 
@@ -275,10 +276,18 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && particleId.isFocused()) {
 			return suggestionWidget.mouseClicked(mouseX, mouseY, button);
 		} else {
-			suggestionWidget.updateSuggestions(new ArrayList<>(), "");
+			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 		}
 
 		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+			return true;
+		}
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

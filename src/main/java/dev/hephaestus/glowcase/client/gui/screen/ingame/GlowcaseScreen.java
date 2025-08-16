@@ -12,6 +12,7 @@ public abstract class GlowcaseScreen extends Screen {
 	@Override
 	public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
 		this.renderInGameBackground(context);
+		context.applyBlur();
 	}
 
 	@Override

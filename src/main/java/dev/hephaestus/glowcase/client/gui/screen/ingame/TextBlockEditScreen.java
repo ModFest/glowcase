@@ -201,7 +201,6 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		if (this.client != null) {
 			super.render(context, mouseX, mouseY, delta);
-			context.applyBlur();
 
 			context.getMatrices().pushMatrix();
 			context.getMatrices().translate(0, 40 + 2 * this.width / 100F);

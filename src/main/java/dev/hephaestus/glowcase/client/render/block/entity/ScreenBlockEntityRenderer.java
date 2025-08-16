@@ -222,11 +222,11 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererFactory.Context conte
 	}
 
 	@SuppressWarnings("SameParameterValue")
-	private void renderTextCentered(MutableText text, int color, float scr_width, float scr_height, MatrixStack matrices, VertexConsumerProvider vertexConsumers, TextRenderer textRenderer, int light) {
-		renderTextCentered(text.getString(), color, scr_width, scr_height, matrices, vertexConsumers, textRenderer, light);
+	public static void renderTextCentered(String text, int color, float scr_width, float scr_height, MatrixStack matrices, VertexConsumerProvider vertexConsumers, TextRenderer textRenderer, int light) {
+		renderTextCentered(Text.literal(text), color, scr_width, scr_height, matrices, vertexConsumers, textRenderer, light);
 	}
 
-	private void renderTextCentered(String text, int color, float scr_width, float scr_height, MatrixStack matrices, VertexConsumerProvider vertexConsumers, TextRenderer textRenderer, int light) {
+	public static void renderTextCentered(MutableText text, int color, float scr_width, float scr_height, MatrixStack matrices, VertexConsumerProvider vertexConsumers, TextRenderer textRenderer, int light) {
 		// Scale font
 		float max_font_width = scr_width / textRenderer.getWidth(text);
 		float max_font_height = scr_height / textRenderer.fontHeight;

@@ -141,6 +141,7 @@
 	"gui.glowcase.previous": "Previous",
 	"gui.glowcase.next": "Next",
 	"gui.glowcase.progress": "%s/%s",
+	"gui.glowcase.warning.no_content": "No content!",
 	"gui.glowcase.screen.blank": "Glowcase",
 	"gui.glowcase.screen.alt": "Alt-Text: \"%s\"",
 	"gui.glowcase.screen.error": "Oopsie woopsie! Failed to load image! (%s).",

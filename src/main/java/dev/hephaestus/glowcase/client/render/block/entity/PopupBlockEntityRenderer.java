@@ -11,6 +11,9 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.PlainTextContent;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.RotationAxis;
@@ -26,6 +29,13 @@ public record PopupBlockEntityRenderer(BlockEntityRendererFactory.Context contex
 
 		matrices.push();
 		if (MinecraftClient.getInstance().crosshairTarget instanceof BlockHitResult bhr && bhr.getBlockPos().equals(entity.getPos())) {
+			Text title;
+			if (entity.lines.size() == 1 && entity.lines.getFirst().getContent().equals(PlainTextContent.EMPTY)) {
+				title = Text.translatable("gui.glowcase.warning.no_content").formatted(Formatting.RED);
+			} else {
+				title = Text.literal(entity.title);
+			}
+
 			matrices.translate(0.5D, 0.5D, 0.5D);
 			matrices.scale(0.5F, 0.5F, 0.5F);
 			float n = -camera.getYaw();
@@ -34,10 +44,10 @@ public record PopupBlockEntityRenderer(BlockEntityRendererFactory.Context contex
 			float scale = 0.025F;
 			matrices.scale(scale, scale, scale);
 			matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(180));
-			matrices.translate(-context.getTextRenderer().getWidth(entity.title) / 2F, -4, -scale);
+			matrices.translate(-context.getTextRenderer().getWidth(title) / 2F, -4, -scale);
 			// Fixes shadow being rendered in front of actual text
 			matrices.scale(1, 1, -1);
-			context.getTextRenderer().draw(entity.title, 0, 0, 0xFFFFFFFF, true, matrices.peek().getPositionMatrix(), vertexConsumers, TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+			context.getTextRenderer().draw(title, 0, 0, 0xFFFFFFFF, true, matrices.peek().getPositionMatrix(), vertexConsumers, TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 		}
 		matrices.pop();
 	}

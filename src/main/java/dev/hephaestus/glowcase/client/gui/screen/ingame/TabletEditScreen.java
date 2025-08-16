@@ -6,6 +6,7 @@ import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.ScreenImageCache.ScreenTexture;
 import dev.hephaestus.glowcase.packet.C2SEditTabletItem;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -90,12 +91,12 @@ public class TabletEditScreen extends GlowcaseScreen {
 
 		this.urlEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 30 - 1, BG_WIDTH - 10 - 55, 20, Text.empty());
 		this.urlEntryWidget.setMaxLength(ScreenBlockEntity.URL_MAX_LENGTH);
-		this.urlEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.url"));
+		this.urlEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.url"));
 		this.urlEntryWidget.setChangedListener((value) -> slide_dirty = true);
 
 		this.altEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 55 - 1, BG_WIDTH - 10, 20, Text.empty());
 		this.altEntryWidget.setMaxLength(ScreenBlockEntity.ALT_MAX_LENGTH);
-		this.altEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.alt"));
+		this.altEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.alt"));
 		this.altEntryWidget.setChangedListener((value) -> slide_dirty = true);
 
 		ButtonWidget updateButton = ButtonWidget.builder(

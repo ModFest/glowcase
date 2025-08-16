@@ -4,6 +4,7 @@ import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -48,7 +49,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 		this.titleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, 0, 8 * width / 10, 20, Text.empty());
 		this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
 		this.titleEntryWidget.setText(this.popupBlockEntity.title);
-		this.titleEntryWidget.setPlaceholder(Text.translatable("gui.glowcase.title"));
+		this.titleEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.title"));
 		this.titleEntryWidget.setChangedListener(string -> {
 			this.popupBlockEntity.title = this.titleEntryWidget.getText();
 			this.popupBlockEntity.renderDirty = true;
@@ -92,59 +93,59 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 
 	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		if (this.client != null) {
-			super.render(context, mouseX, mouseY, delta);
+		if (this.client == null) return;
 
-			context.getMatrices().pushMatrix();
-			context.getMatrices().translate(0, 40 + 2 * this.width / 100F);
-			for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
-				var text = this.currentRow == i ? Text.literal(this.popupBlockEntity.getRawLine(i)) : this.popupBlockEntity.lines.get(i);
+		super.render(context, mouseX, mouseY, delta);
 
-				int lineWidth = this.textRenderer.getWidth(text);
-				switch (this.popupBlockEntity.textAlignment) {
-					case LEFT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 10, i * 12, this.popupBlockEntity.color);
-					case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
-					case RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
-				}
+		context.getMatrices().pushMatrix();
+		context.getMatrices().translate(0, 40 + 2 * this.width / 100F);
+		for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
+			var text = this.currentRow == i ? Text.literal(this.popupBlockEntity.getRawLine(i)) : this.popupBlockEntity.lines.get(i);
+
+			int lineWidth = this.textRenderer.getWidth(text);
+			switch (this.popupBlockEntity.textAlignment) {
+				case LEFT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 10, i * 12, this.popupBlockEntity.color);
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
+				case RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
 			}
-
-			int caretStart = this.selectionManager.getSelectionStart();
-			int caretEnd = this.selectionManager.getSelectionEnd();
-
-			if (caretStart >= 0) {
-				String line = this.popupBlockEntity.getRawLine(this.currentRow);
-				int selectionStart = MathHelper.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-				int selectionEnd = MathHelper.clamp(Math.max(caretStart, caretEnd), 0, line.length());
-
-				String preSelection = line.substring(0, MathHelper.clamp(line.length(), 0, selectionStart));
-				int startX = this.client.textRenderer.getWidth(preSelection);
-
-				float push = switch (this.popupBlockEntity.textAlignment) {
-					case LEFT -> this.width / 10F;
-					case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
-					case RIGHT -> this.width - this.width / 10F - this.textRenderer.getWidth(line);
-				};
-
-				startX += (int) push;
-
-
-				int caretStartY = this.currentRow * 12;
-				if (this.ticksSinceOpened / 6 % 2 == 0 && !this.titleEntryWidget.isActive() && !this.colorEntryWidget.isActive()) {
-					if (selectionStart < line.length()) {
-						context.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
-					} else {
-						context.drawText(client.textRenderer, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
-					}
-				}
-
-				if (caretStart != caretEnd) {
-					int endX = startX + this.client.textRenderer.getWidth(line.substring(selectionStart, selectionEnd));
-					context.drawSelection(startX, caretStartY, endX, caretStartY + 9);
-				}
-			}
-
-			context.getMatrices().popMatrix();
 		}
+
+		int caretStart = this.selectionManager.getSelectionStart();
+		int caretEnd = this.selectionManager.getSelectionEnd();
+
+		if (caretStart >= 0) {
+			String line = this.popupBlockEntity.getRawLine(this.currentRow);
+			int selectionStart = MathHelper.clamp(Math.min(caretStart, caretEnd), 0, line.length());
+			int selectionEnd = MathHelper.clamp(Math.max(caretStart, caretEnd), 0, line.length());
+
+			String preSelection = line.substring(0, MathHelper.clamp(line.length(), 0, selectionStart));
+			int startX = this.client.textRenderer.getWidth(preSelection);
+
+			float push = switch (this.popupBlockEntity.textAlignment) {
+				case LEFT -> this.width / 10F;
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
+				case RIGHT -> this.width - this.width / 10F - this.textRenderer.getWidth(line);
+			};
+
+			startX += (int) push;
+
+
+			int caretStartY = this.currentRow * 12;
+			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.titleEntryWidget.isActive() && !this.colorEntryWidget.isActive()) {
+				if (selectionStart < line.length()) {
+					context.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
+				} else {
+					context.drawText(client.textRenderer, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
+				}
+			}
+
+			if (caretStart != caretEnd) {
+				int endX = startX + this.client.textRenderer.getWidth(line.substring(selectionStart, selectionEnd));
+				context.drawSelection(startX, caretStartY, endX, caretStartY + 9);
+			}
+		}
+
+		context.getMatrices().popMatrix();
 	}
 
 	@Override

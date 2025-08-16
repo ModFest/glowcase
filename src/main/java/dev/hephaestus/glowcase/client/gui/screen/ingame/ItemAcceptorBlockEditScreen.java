@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditItemAcceptorBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TextWidget;
@@ -34,12 +35,12 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 		if (!item.equals(Identifier.ofVanilla("air"))) {
 			this.itemWidget.setText((this.itemAcceptorBlockEntity.isItemTag ? "#" : "") + item);
 		}
-		this.itemWidget.setPlaceholder(Text.translatable("gui.glowcase.item_or_tag"));
+		this.itemWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.item_or_tag"));
 		this.itemWidget.setTextPredicate(s -> s.matches("#?[a-z0-9_.-]*:?[a-z0-9_./-]*"));
 
 		this.countWidget = new TextFieldWidget(this.textRenderer, width / 2 + 60, height / 2 - 25, 40, 20, Text.empty());
 		this.countWidget.setText(String.valueOf(this.itemAcceptorBlockEntity.count));
-		this.countWidget.setPlaceholder(Text.translatable("gui.glowcase.count"));
+		this.countWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.count"));
 		this.countWidget.setTextPredicate(s -> s.matches("\\d*"));
 
 		this.outputDirectionToggle = ButtonWidget.builder(Text.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()), action -> {
@@ -54,7 +55,7 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 
 		this.pulseWidget = new TextFieldWidget(this.textRenderer, width / 2 + 60, height / 2 + 5, 40, 20, Text.empty());
 		this.pulseWidget.setText(String.valueOf(this.itemAcceptorBlockEntity.pulse));
-		this.pulseWidget.setPlaceholder(Text.translatable("gui.glowcase.pulse"));
+		this.pulseWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.pulse"));
 		this.pulseWidget.setTextPredicate(s -> s.matches("\\d*"));
 
 		this.addDrawableChild(this.itemWidget);

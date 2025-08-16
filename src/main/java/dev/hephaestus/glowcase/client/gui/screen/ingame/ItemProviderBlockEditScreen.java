@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Longs;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditItemProviderBlock;
+import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TextWidget;
@@ -33,7 +34,7 @@ public class ItemProviderBlockEditScreen extends GlowcaseScreen {
 
 			this.cooldownWidget = new TextFieldWidget(this.textRenderer, width / 2 - 30, height / 2 + 5, 60, 20, Text.empty());
 			this.cooldownWidget.setText(this.providerBlock.cooldown == 0 ? "" : String.valueOf(this.providerBlock.cooldown));
-			this.cooldownWidget.setPlaceholder(Text.translatable("gui.glowcase.cooldown"));
+			this.cooldownWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.cooldown"));
 			this.cooldownWidget.setTextPredicate(s -> s.matches("\\d*"));
 			this.cooldownWidget.setVisible(this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED);
 

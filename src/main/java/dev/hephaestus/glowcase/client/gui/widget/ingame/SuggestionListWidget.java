@@ -6,12 +6,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import dev.hephaestus.glowcase.util.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ParentElement;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -26,6 +28,7 @@ import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
+import org.lwjgl.glfw.GLFW;
 
 public class SuggestionListWidget<T> extends ClickableWidget {
 	public static final Identifier BLUR_ID = Identifier.ofVanilla("blur");
@@ -35,6 +38,8 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 	private final MinecraftClient client;
 
 	private final List<T> suggestions = new ArrayList<>();
+	private int selectedItem = -1;
+	private final @Nullable TextFieldWidget textFieldWidget;
 	private @NotNull String filter = "";
     private int scrollOffset = 0;
 
@@ -53,10 +58,12 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     private int scrollbarDragStartY = 0;
     private int initialScrollOffset = 0;
 
-    public SuggestionListWidget(TextRenderer textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
+    public SuggestionListWidget(@Nullable TextFieldWidget widget, TextRenderer textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
         super(x, y, width, height, Text.empty());
 
-        this.client = MinecraftClient.getInstance();
+		this.textFieldWidget = widget;
+
+		this.client = MinecraftClient.getInstance();
 
         this.baseLineHeight = baseLineHeight;
         this.padding = padding;
@@ -69,17 +76,19 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     }
 
 	public static <T> SuggestionListWidget<T> forTextField(TextFieldWidget textField, TextRenderer textRenderer, Function<T, String> toStringFunction) {
-		return new SuggestionListWidget<>(textRenderer, textField.getX(), textField.getY() + textField.getHeight() + 5, textField.getWidth(), 100, 10, 4, 5,
-			a -> textField.setText(toStringFunction.apply(a)), toStringFunction);
+		return new SuggestionListWidget<>(
+			textField, textRenderer,
+			textField.getX(),
+			textField.getY() + textField.getHeight() + 5, textField.getWidth(),
+			100, 10, 4, 5,
+			a -> textField.setText(toStringFunction.apply(a)),
+			toStringFunction
+		);
 	}
 
-	public static <T> SuggestionListWidget<T> forTextFieldWithStaticSuggestions(TextFieldWidget textField, TextRenderer textRenderer, List<T> suggestions, Function<T, String> toStringFunction) {
+	public static <T> SuggestionListWidget<T> forTextFieldWithStaticSuggestions(TextFieldWidget textField, TextRenderer textRenderer, List<T> suggestions, Function<T, String> toStringFunction, @Nullable ParentElement parent) {
 		var suggestionWidget = forTextField(textField, textRenderer, toStringFunction);
-
-		textField.setChangedListener((text) -> {
-			suggestionWidget.updateSuggestions(suggestions, text);
-		});
-
+		textField.setChangedListener((text) -> suggestionWidget.updateSuggestions(suggestions, text, parent));
 		return suggestionWidget;
 	}
 
@@ -91,12 +100,12 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 		}
 	}
 
-	public void updateSuggestions(List<T> newSuggestions, String filter) {
-		updateSuggestions(newSuggestions, filter, true);
+	public void updateSuggestions(List<T> newSuggestions, String filter, @Nullable ParentElement parent) {
+		updateSuggestions(newSuggestions, filter, true, parent);
 	}
 
 	// update the suggestion list based on filter
-    public void updateSuggestions(List<T> newSuggestions, String filter, boolean strict) {
+    public void updateSuggestions(List<T> newSuggestions, String filter, boolean strict, @Nullable ParentElement parent) {
         suggestions.clear();
 		this.filter = filter;
 
@@ -121,11 +130,18 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 		if (suggestions.isEmpty()) {
 			FRAMEBUFFER.resize(1, 1);
 		}
+
+		this.setFocused(!suggestions.isEmpty());
     }
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         if (suggestions.isEmpty()) return;
+
+		if (textFieldWidget != null && !textFieldWidget.isFocused()) {
+			this.suggestions.clear();
+			this.setFocused(false);
+		}
 
 		context.createNewRootLayer();
 		context.state.addSimpleElement(new SimpleGuiElementRenderState() {
@@ -197,7 +213,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
             
             // highlight hovered suggestion
 			boolean hover = mouseX >= x && mouseX <= x + listWidth && mouseY >= suggestionY && mouseY < suggestionY + adjustedLineHeight;
-			if (hover) {
+			if (hover || suggestionIndex == selectedItem) {
                 context.fill(x, suggestionY, x + listWidth, suggestionY + adjustedLineHeight, 0xFF217C08);
                 drawOutline(context, x, suggestionY, listWidth, adjustedLineHeight, 0xFFFFFFFF);
             }
@@ -464,4 +480,64 @@ public class SuggestionListWidget<T> extends ClickableWidget {
         
         return rawText.substring(0, trimIndex) + "...";
     }
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (suggestions.isEmpty()) {
+			return false;
+		}
+
+		int rows = Math.min(suggestions.size(), maxRows);
+
+		boolean affected = switch (keyCode) {
+			case GLFW.GLFW_KEY_UP -> {
+				if (this.selectedItem == -1) this.selectedItem = 0;
+				this.selectedItem--;
+				yield true;
+			}
+			case GLFW.GLFW_KEY_DOWN -> {
+				this.selectedItem++;
+				yield true;
+			}
+			case GLFW.GLFW_KEY_PAGE_UP -> {
+				if (this.selectedItem == -1) this.selectedItem = 0;
+				this.selectedItem = Math.max(this.selectedItem - rows, 0);
+				yield true;
+			}
+			case GLFW.GLFW_KEY_PAGE_DOWN -> {
+				if (this.selectedItem == -1) this.selectedItem = 0;
+				this.selectedItem = Math.min(this.selectedItem + rows, suggestions.size() - 1);
+				yield true;
+			}
+			case GLFW.GLFW_KEY_ENTER -> {
+				if (this.selectedItem == -1) yield false;
+				onSelect.accept(suggestions.get(selectedItem));
+				yield true;
+			}
+			default -> false;
+		};
+
+		if (affected) {
+			if (!this.suggestions.isEmpty()) {
+				this.selectedItem = MathUtils.clampWrap(this.selectedItem, 0, this.suggestions.size() - 1);
+				this.scrollOffset = Math.max(this.selectedItem - rows + 1, 0);
+			}
+			return true;
+		}
+
+		if (textFieldWidget != null) {
+			return textFieldWidget.keyPressed(keyCode, scanCode, modifiers);
+		}
+
+		return super.keyPressed(keyCode, scanCode, modifiers);
+	}
+
+	@Override
+	public void setFocused(boolean focused) {
+		if (!focused) {
+			this.selectedItem = -1;
+		}
+
+		super.setFocused(focused);
+	}
 }
