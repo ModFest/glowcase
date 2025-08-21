@@ -26,6 +26,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.ColorHelper;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context context) implements BlockEntityRenderer<ItemProviderBlockEntity> {
@@ -105,7 +106,7 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context
 
 			ItemStack stack = entity.getStack();
 			Text name = stack.isEmpty() ? Text.translatable("gui.glowcase.none") : (Text.literal("")).append(stack.getName()).formatted(stack.getRarity().getFormatting());
-			int color = name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getRgb();
+			int color = ColorHelper.fullAlpha(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getRgb());
 			matrices.push();
 			matrices.translate(-context.getTextRenderer().getWidth(name) / 2F, -4, 0);
 			context.getTextRenderer().draw(name, 0, 0, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
