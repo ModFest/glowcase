@@ -120,6 +120,8 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 		for (int i = 0; i < entity.lines.size(); ++i) {
 			Text line = entity.lines.get(i);
 			double width = textRenderer.getWidth(line);
+			if (width == 0) continue;
+
 			double dX = switch (entity.textAlignment) {
 				case LEFT -> -maxLength / 2D;
 				case CENTER -> (maxLength - width) / 2D - maxLength / 2D;
@@ -131,16 +133,33 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 			matrices.push();
 			matrices.translate(dX, 0, 0);
 
-			boolean lineEmpty = line.getContent().equals(PlainTextContent.EMPTY);
-			TextRenderer.Drawer drawer = (TextRenderer.Drawer) textRenderer.prepare(line.asOrderedText(), 0, i * 12, entity.color, entity.shadow, lineEmpty ? 0 : entity.backgroundColor);
+			TextRenderer.Drawer drawer = (TextRenderer.Drawer) textRenderer.prepare(line.asOrderedText(), 0, i * 12, entity.color, entity.shadow, entity.backgroundColor);
 
 			// TODO: use the light param and add a toggle to make it glow (use LightmapTextureManager.MAX_LIGHT_COORDINATE)
-			drawer.draw(TextRenderer.GlyphDrawer.drawing(vertexConsumers, matrices.peek().getPositionMatrix(), TextLayerType.NORMAL, LightmapTextureManager.MAX_LIGHT_COORDINATE));
+			TextRenderer.GlyphDrawer glyphDrawer = getGlyphDrawer(matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+
+			drawer.draw(glyphDrawer);
 
 			matrices.pop();
 		}
 
 		matrices.pop();
+	}
+
+	private static TextRenderer.@NotNull GlyphDrawer getGlyphDrawer(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+		return new TextRenderer.GlyphDrawer() {
+			public void drawGlyph(BakedGlyph.DrawnGlyph glyph) {
+				BakedGlyph bakedGlyph = glyph.glyph();
+				VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(TextLayerType.NORMAL));
+				bakedGlyph.draw(glyph, matrices.peek().getPositionMatrix(), vertexConsumer, light, false);
+			}
+
+			public void drawRectangle(BakedGlyph bakedGlyph, BakedGlyph.Rectangle rect) {
+				rect = new BakedGlyph.Rectangle(rect.minX() - 4, rect.minY() - 2, rect.maxX() + 4, rect.maxY() + 2, rect.zIndex(), rect.color(), rect.shadowColor(), rect.shadowOffset());
+				VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(TextLayerType.NORMAL));
+				bakedGlyph.drawRectangle(rect, matrices.peek().getPositionMatrix(), vertexConsumer, light, false);
+			}
+		};
 	}
 
 	@SuppressWarnings("SameParameterValue")
