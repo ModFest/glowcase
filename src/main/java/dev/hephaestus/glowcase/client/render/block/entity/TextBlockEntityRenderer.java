@@ -4,19 +4,27 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.font.TextRenderer.TextLayerType;
 import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.state.property.Properties;
+import net.minecraft.text.PlainTextContent;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockEntity> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
@@ -110,7 +118,8 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 
 		matrices.translate(0, -((entity.lines.size() - 0.25) * 12) / 2D, 0D);
 		for (int i = 0; i < entity.lines.size(); ++i) {
-			double width = textRenderer.getWidth(entity.lines.get(i));
+			Text line = entity.lines.get(i);
+			double width = textRenderer.getWidth(line);
 			double dX = switch (entity.textAlignment) {
 				case LEFT -> -maxLength / 2D;
 				case CENTER -> (maxLength - width) / 2D - maxLength / 2D;
@@ -122,21 +131,11 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 			matrices.push();
 			matrices.translate(dX, 0, 0);
 
-			TextRenderer.Drawer drawer = (TextRenderer.Drawer) textRenderer.prepare(entity.lines.get(i).asOrderedText(), 0, i * 12, entity.color, entity.shadow, entity.backgroundColor);
+			boolean lineEmpty = line.getContent().equals(PlainTextContent.EMPTY);
+			TextRenderer.Drawer drawer = (TextRenderer.Drawer) textRenderer.prepare(line.asOrderedText(), 0, i * 12, entity.color, entity.shadow, lineEmpty ? 0 : entity.backgroundColor);
 
-			if (entity.backgroundColor != 0 && width > 0) {
-				matrices.push();
-				// Annoyingly, it kept getting rendered backwards.
-				// I thought the vertexes were misordered but that didn't do anything.
-				matrices.multiply(new Quaternionf().rotateLocalY(MathHelper.PI));
-				matrices.translate(-width, 0, -0.025D);
-
-				//drawFillRect(matrices, vertexConsumers, (int) width + 5, (i + 1) * 12 - 2, -5, i * 12 - 2, entity.backgroundColor);
-				matrices.pop();
-			}
-
+			// TODO: use the light param and add a toggle to make it glow (use LightmapTextureManager.MAX_LIGHT_COORDINATE)
 			drawer.draw(TextRenderer.GlyphDrawer.drawing(vertexConsumers, matrices.peek().getPositionMatrix(), TextLayerType.NORMAL, LightmapTextureManager.MAX_LIGHT_COORDINATE));
-			//textRenderer.draw(entity.lines.get(i), 0, i * 12, entity.color, entity.shadow, matrices.peek().getPositionMatrix(), vertexConsumers, TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
 
 			matrices.pop();
 		}
