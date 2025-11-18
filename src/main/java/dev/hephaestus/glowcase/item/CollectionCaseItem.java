@@ -106,18 +106,18 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 	}
 
 	private void playRetrieveSound(Entity entity) {
-		entity.playSound(SoundEvents.ITEM_BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.getWorld().getRandom().nextFloat() * 0.4F);
+		entity.playSound(SoundEvents.ITEM_BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.getEntityWorld().getRandom().nextFloat() * 0.4F);
 	}
 
 	private void playRemoveSound(Entity entity) {
-		entity.playSound(SoundEvents.BLOCK_CHISELED_BOOKSHELF_INSERT, 0.8F, 0.8F + entity.getWorld().getRandom().nextFloat() * 0.4F);
+		entity.playSound(SoundEvents.BLOCK_CHISELED_BOOKSHELF_INSERT, 0.8F, 0.8F + entity.getEntityWorld().getRandom().nextFloat() * 0.4F);
 	}
 
 	private void playAddSound(Entity entity) {
-		entity.playSound(SoundEvents.BLOCK_CHISELED_BOOKSHELF_PICKUP, 0.8F, 0.8F + entity.getWorld().getRandom().nextFloat() * 0.4F);
+		entity.playSound(SoundEvents.BLOCK_CHISELED_BOOKSHELF_PICKUP, 0.8F, 0.8F + entity.getEntityWorld().getRandom().nextFloat() * 0.4F);
 	}
 
 	private void playCollectSound(Entity entity) {
-		entity.playSound(SoundEvents.ITEM_BUNDLE_INSERT, 0.8F, 0.8F + entity.getWorld().getRandom().nextFloat() * 0.4F);
+		entity.playSound(SoundEvents.ITEM_BUNDLE_INSERT, 0.8F, 0.8F + entity.getEntityWorld().getRandom().nextFloat() * 0.4F);
 	}
 }

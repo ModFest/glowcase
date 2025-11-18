@@ -3,7 +3,7 @@ package dev.hephaestus.glowcase.block.entity;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.util.SoundPlayerProxy;
+//import dev.hephaestus.glowcase.client.util.SoundPlayerProxy;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
@@ -91,10 +91,11 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 
 		final PositionedSoundLoop oldInstance = entity.nowPlaying;
 		if (oldInstance != null) {
-			if (oldInstance.isCompatible() && ((SoundPlayerProxy) soundManager).glowcase$isQueuedOrPlaying(oldInstance)) {
+			// Todo
+			//if (oldInstance.isCompatible() && ((SoundPlayerProxy) soundManager).glowcase$isQueuedOrPlaying(oldInstance)) {
 				// no-op when already playing something, or waiting to be played
-				return;
-			}
+			//	return;
+			//}
 
 			soundManager.stop(oldInstance);
 		}
@@ -151,7 +152,7 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 				if (client.player == null) {
 					return Vec3d.ZERO;
 				}
-				return client.player.getPos();
+				return client.player.getEntityPos();
 			}
 		};
 

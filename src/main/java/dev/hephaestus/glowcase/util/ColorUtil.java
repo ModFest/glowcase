@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.client.util;
+package dev.hephaestus.glowcase.util;
 
 import com.mojang.serialization.DataResult;
 import net.minecraft.util.Formatting;

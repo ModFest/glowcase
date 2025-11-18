@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.util.ColorUtil;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
@@ -17,7 +17,6 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class TextBlockEntity extends GlowcaseBlockEntity {
 	public static final NodeParser PARSER = TagParser.DEFAULT;

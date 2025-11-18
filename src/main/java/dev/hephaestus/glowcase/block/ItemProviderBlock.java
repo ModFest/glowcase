@@ -49,7 +49,7 @@ public class ItemProviderBlock extends StackInteractableBlock {
 	}
 
 	public boolean canPickup(PlayerEntity player, BlockPos pos) {
-		return ((player.getWorld().getBlockEntity(pos) instanceof ItemProviderBlockEntity be && be.canGiveTo(player) && !player.isCreative() && be.canGiveTo(player) && (player.getMainHandStack().isEmpty() || (be.matchesStack(player.getMainHandStack()) && player.getMainHandStack().getCount() < player.getMainHandStack().getMaxCount()))));
+		return ((player.getEntityWorld().getBlockEntity(pos) instanceof ItemProviderBlockEntity be && be.canGiveTo(player) && !player.isCreative() && be.canGiveTo(player) && (player.getMainHandStack().isEmpty() || (be.matchesStack(player.getMainHandStack()) && player.getMainHandStack().getCount() < player.getMainHandStack().getMaxCount()))));
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class ItemProviderBlock extends StackInteractableBlock {
 		if (!(world.getBlockEntity(pos) instanceof ItemProviderBlockEntity be)) return ActionResult.CONSUME;
 
 		if (be.canGiveTo(player)) {
-			if (!world.isClient) be.giveTo(player);
+			if (!world.isClient()) be.giveTo(player);
 			return ActionResult.SUCCESS;
 		}
 

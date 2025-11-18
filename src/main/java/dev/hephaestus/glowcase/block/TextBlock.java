@@ -65,9 +65,9 @@ public class TextBlock extends RotatableBlock {
 		textConsumer.accept(Text.translatable("block.glowcase.text_block.tooltip.0").formatted(Formatting.GRAY));
 		textConsumer.accept(Text.translatable("block.glowcase.generic.tooltip").formatted(Formatting.DARK_GRAY));
 		textConsumer.accept(Text.translatable("block.glowcase.text_block.tooltip.1").formatted(Formatting.DARK_GRAY));
-		NbtComponent component = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
+		var component = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
 		if (component == null) return;
-		NbtCompound nbt = component.getNbt(); //TODO: use codecs
+		NbtCompound nbt = component.copyNbtWithoutId(); //TODO: use codecs
 		if (nbt == null) return;
 		for (NbtElement element : nbt.getList("lines").orElse(new NbtList())) {
 			Optional<String> line = element.asString();

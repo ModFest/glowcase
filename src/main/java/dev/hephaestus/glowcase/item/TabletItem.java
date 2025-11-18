@@ -114,12 +114,12 @@ public class TabletItem extends Item {
 				// Ensure linked screen is correct before we send the client a wrong connection
 				Pair<UUID, BlockPos> linkedScreen = stack.get(Glowcase.LINKED_SCREEN_COMPONENT.get());
 				assert linkedScreen != null;
-				if (!(player.getWorld().getBlockEntity(linkedScreen.getSecond()) instanceof ScreenBlockEntity screen && screen.macaddress.equals(linkedScreen.getFirst()))) {
+				if (!(player.getEntityWorld().getBlockEntity(linkedScreen.getSecond()) instanceof ScreenBlockEntity screen && screen.macaddress.equals(linkedScreen.getFirst()))) {
 					stack.remove(Glowcase.LINKED_SCREEN_COMPONENT.get());
 				}
 			}
 
-			if (player.getWorld().isClient())
+			if (player.getEntityWorld().isClient())
 				Glowcase.proxy.openTabletEditScreen(stack);
 
 			return true;

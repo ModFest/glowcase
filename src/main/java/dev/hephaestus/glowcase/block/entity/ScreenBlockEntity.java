@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.GlowcaseClient;
+//import dev.hephaestus.glowcase.client.GlowcaseClient;
 import net.minecraft.block.BlockState;
 import net.minecraft.storage.ReadView;
 import net.minecraft.storage.WriteView;
@@ -136,7 +136,8 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		// Cache preview before needed for smooth experience
 		preview = view.getString("preview", "");
 		if (this.getWorld() != null && this.getWorld().isClient()) {
-			GlowcaseClient.screenImageCache.getImage(preview, null);
+			// Todo
+			//GlowcaseClient.screenImageCache.getImage(preview, null);
 		}
 
 		markDirty();

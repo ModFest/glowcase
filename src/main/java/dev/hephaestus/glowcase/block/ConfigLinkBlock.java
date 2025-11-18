@@ -58,7 +58,7 @@ public class ConfigLinkBlock extends WaterloggableGlowcaseBlock {
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof ConfigLinkBlockEntity be)) return ActionResult.CONSUME;
-		if (world.isClient) {
+		if (world.isClient()) {
 			Glowcase.proxy.openConfigScreen(be.getUrl());
 		}
 		return ActionResult.SUCCESS;

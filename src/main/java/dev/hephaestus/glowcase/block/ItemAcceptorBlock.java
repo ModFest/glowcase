@@ -80,7 +80,7 @@ public class ItemAcceptorBlock extends GlowcaseBlock {
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof ItemAcceptorBlockEntity be)) return ActionResult.CONSUME;
 		if (canEditGlowcase(player, pos)) {
-			if (world.isClient) {
+			if (world.isClient()) {
 				openEditScreen(pos);
 			}
 			return ActionResult.SUCCESS;

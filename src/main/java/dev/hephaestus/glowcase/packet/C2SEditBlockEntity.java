@@ -18,7 +18,7 @@ public interface C2SEditBlockEntity extends CustomPayload {
 
 	default void receive(ServerPlayNetworking.Context context) {
 		if (!canEdit(context.player())) return;
-		receive(context.player().getWorld(), context.player().getWorld().getBlockEntity(this.pos()));
+		receive(context.player().getEntityWorld(), context.player().getEntityWorld().getBlockEntity(this.pos()));
 	}
 
 	default void send() {
@@ -26,8 +26,8 @@ public interface C2SEditBlockEntity extends CustomPayload {
 	}
 
 	default boolean canEdit(ServerPlayerEntity player) {
-		if (!player.getWorld().isChunkLoaded(ChunkPos.toLong(pos()))) return false;
+		if (!player.getEntityWorld().isChunkLoaded(ChunkPos.toLong(pos()))) return false;
 		if (player.squaredDistanceTo(pos().toCenterPos()) > (12 * 12)) return false;
-		return player.getWorld().getBlockState(pos()).getBlock() instanceof GlowcaseBlock block && GlowcaseBlock.canEditGlowcase(player, pos());
+		return player.getEntityWorld().getBlockState(pos()).getBlock() instanceof GlowcaseBlock block && GlowcaseBlock.canEditGlowcase(player, pos());
 	}
 }

@@ -20,7 +20,7 @@ public abstract class StackInteractableBlock extends WaterloggableGlowcaseBlock 
 
 	@Override
 	boolean canTarget(PlayerEntity player, BlockPos pos) {
-		if (!(player.getWorld().getBlockEntity(pos) instanceof StackInteractable be)) return false;
+		if (!(player.getEntityWorld().getBlockEntity(pos) instanceof StackInteractable be)) return false;
 		return canEditGlowcase(player, pos) && (be.matchesStack(ItemStack.EMPTY) || be.matchesStack(player.getMainHandStack()) || player.getMainHandStack().isIn(Glowcase.ITEM_TAG));
 	}
 
@@ -38,13 +38,13 @@ public abstract class StackInteractableBlock extends WaterloggableGlowcaseBlock 
 			boolean holdingSameAsDisplay = be.matchesStack(stack);
 
 			if (be.matchesStack(ItemStack.EMPTY)) {
-				if (!world.isClient) be.setFromStack(stack);
+				if (!world.isClient()) be.setFromStack(stack);
 				return ActionResult.SUCCESS;
 			} else if (holdingSameAsDisplay) {
-				if (world.isClient) openEditScreen(pos);
+				if (world.isClient()) openEditScreen(pos);
 				return ActionResult.SUCCESS;
 			} else if (holdingGlowcaseItem) {
-				if (!world.isClient) be.unsetFromStack();
+				if (!world.isClient()) be.unsetFromStack();
 				return ActionResult.SUCCESS;
 			}
 		}

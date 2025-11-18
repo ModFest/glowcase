@@ -3,7 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
-import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.MinecraftClient;

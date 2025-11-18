@@ -55,7 +55,7 @@ public class EntityDisplayBlock extends StackInteractableBlock {
 
 	@Override
 	boolean canTarget(PlayerEntity player, BlockPos pos) {
-		if (!(player.getWorld().getBlockEntity(pos) instanceof StackInteractable be)) return false;
+		if (!(player.getEntityWorld().getBlockEntity(pos) instanceof StackInteractable be)) return false;
 		return canEditGlowcase(player, pos) && ((be.matchesStack(ItemStack.EMPTY) && player.getMainHandStack().getItem() instanceof SpawnEggItem) || be.matchesStack(player.getMainHandStack()) || player.getMainHandStack().isIn(Glowcase.ITEM_TAG));
 	}
 

@@ -50,8 +50,8 @@ public abstract class GlowcaseBlock extends BlockWithEntity {
 	abstract protected boolean openEditScreen(BlockPos pos);
 
 	protected void loadClientSideNBT(World world, BlockPos pos, LivingEntity placer, ItemStack stack) {
-		if (world.isClient && placer instanceof PlayerEntity player && canEditGlowcase(player, pos)) {
-			NbtComponent blockEntityTag = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
+		if (world.isClient() && placer instanceof PlayerEntity player && canEditGlowcase(player, pos)) {
+			var blockEntityTag = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
 			if (blockEntityTag != null && world.getBlockEntity(pos) instanceof BlockEntity be) {
 				blockEntityTag.applyToBlockEntity(be, world.getRegistryManager());
 			}
@@ -62,7 +62,7 @@ public abstract class GlowcaseBlock extends BlockWithEntity {
 	@Override
 	public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		loadClientSideNBT(world, pos, placer, stack);
-		if (world.isClient && placer instanceof PlayerEntity player && canEditGlowcase(player, pos)) {
+		if (world.isClient() && placer instanceof PlayerEntity player && canEditGlowcase(player, pos)) {
 			openEditScreen(pos);
 		}
 	}
@@ -74,7 +74,7 @@ public abstract class GlowcaseBlock extends BlockWithEntity {
 		}
 
 		if (player.getStackInHand(hand).isIn(Glowcase.ITEM_TAG) && canEditGlowcase(player, pos)) {
-			if (world.isClient) {
+			if (world.isClient()) {
 				openEditScreen(pos);
 			}
 
@@ -109,7 +109,7 @@ public abstract class GlowcaseBlock extends BlockWithEntity {
 		if (entity == null) return false;
 
 		if (entity instanceof PlayerEntity player) {
-			if (player.getWorld() instanceof ServerWorld serverWorld) {
+			if (player.getEntityWorld() instanceof ServerWorld serverWorld) {
 				return player.isCreative() && player.canModifyAt(serverWorld, pos);
 			}
 

@@ -36,7 +36,7 @@ public class LockItem extends Item {
 	public ActionResult useOnBlock(ItemUsageContext context) {
 		World world = context.getWorld();
 		PlayerEntity player = context.getPlayer();
-		if (world.isClient ||
+		if (world.isClient() ||
 			player == null ||
 			!player.isCreative() ||
 			!(world.getBlockEntity(context.getBlockPos()) instanceof LockableContainerBlockEntity be)) {

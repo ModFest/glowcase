@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.datagen.client;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.ItemAcceptorBlock;
-import dev.hephaestus.glowcase.client.render.item.tint.GlowcaseTintSource;
+//import dev.hephaestus.glowcase.client.render.item.tint.GlowcaseTintSource;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.block.Block;
@@ -84,6 +84,7 @@ public class GlowcaseModelGenerator extends FabricModelProvider {
 
 	public final void registerGlowcaseDyeable(ItemModelGenerator generator, Item item, int defaultColor) {
 		Identifier identifier = generator.upload(item, Models.GENERATED);
-		generator.output.accept(item, ItemModels.tinted(identifier, new GlowcaseTintSource(defaultColor)));
+		// Todo
+		generator.output.accept(item, ItemModels.tinted(identifier/*,/* new GlowcaseTintSource(defaultColor)*/));
 	}
 }

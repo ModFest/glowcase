@@ -27,13 +27,13 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 
 	@Override
 	public boolean matchesStack(ItemStack stack) {
-		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && eggItem.isOfSameEntityType(world.getRegistryManager(), stack, entityType));
+		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && eggItem.isOfSameEntityType(stack, entityType));
 	}
 
 	@Override
 	public void setFromStack(ItemStack stack) {
 		if (stack.getItem() instanceof SpawnEggItem eggItem) {
-			setDisplayEntity(eggItem.getEntityType(world.getRegistryManager(), stack).create(world, SpawnReason.EVENT));
+			setDisplayEntity(eggItem.getEntityType(stack).create(world, SpawnReason.EVENT));
 			setScale(new Vector3f(Math.clamp(Math.round(Math.min(1F / displayEntity.getHeight(), 1F / displayEntity.getWidth()) * 8F) / 8F, 0.125F, 10F)));
 		}
 	}

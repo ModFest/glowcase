@@ -59,7 +59,7 @@ public class RecipeBlock extends RotatableBlock {
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof RecipeBlockEntity be)) return ActionResult.CONSUME;
 
-		if (world.isClient) {
+		if (world.isClient()) {
 			be.openRecipe();
 			return ActionResult.SUCCESS;
 		}
