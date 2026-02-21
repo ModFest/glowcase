@@ -7,7 +7,9 @@ plugins {
 }
 
 version = "$baseVersion+$branch"
-archivesBaseName = project.slug
+base {
+	archivesName = project.slug
+}
 
 repositories {
 	maven { url "https://maven.nucleoid.xyz/" }
@@ -22,25 +24,24 @@ repositories {
 
 dependencies {
 	minecraft libs.mc
-	mappings loom.officialMojangMappings()
 
-	modImplementation libs.fl
-	modImplementation libs.fapi
+	implementation libs.fl
+	implementation libs.fapi
 
-	modImplementation libs.placeholder
-	modCompileOnly libs.polydex
-
-	include libs.placeholder
-	modLocalRuntime libs.polydex
+//	implementation libs.placeholder
+//	compileOnly libs.polydex
+//
+//	include libs.placeholder
+//	localRuntime libs.polydex
 
 	implementation libs.kaleidoConfig
 	include libs.kaleidoConfig
 
-	/*modCompileOnly libs.emi
-	modLocalRuntime libs.emi*/
+	/*compileOnly libs.emi
+	localRuntime libs.emi*/
 
-	modCompileOnly libs.modmenu
-	modLocalRuntime libs.modmenu
+	compileOnly libs.modmenu
+	localRuntime libs.modmenu
 }
 
 loom {
@@ -54,29 +55,29 @@ loom {
 			source sourceSets.main
 			vmArg "-Dmixin.debug.export=true"
 
-			try {
-				afterEvaluate {
-					def mixinDep = this.configurations.compileClasspath
-						.allDependencies
-						.findAll { it.name == "sponge-mixin" }
-						.first()
-
-					if (mixin != null) {
-						def mixinPath = this.configurations.compileClasspath.files(mixinDep).first().path;
-
-						println(mixinPath)
-
-						vmArg("-javaagent:\"${mixinPath}\"")
-
-						println("[Info]: Mixin Hotswap Run should be working")
-					} else {
-						println("[Warning]: Unable to locate file path for Mixin Jar, HotSwap Run will not work!")
-					}
-				}
-			} catch (Exception e) {
-				println("[Error]: MixinHotswap Run had a issue!")
-				e.printStackTrace()
-			}
+//			try {
+//				afterEvaluate {
+//					def mixinDep = this.configurations.compileClasspath
+//						.allDependencies
+//						.findAll { it.name == "sponge-mixin" }
+//						.first()
+//
+//					if (mixin != null) {
+//						def mixinPath = this.configurations.compileClasspath.files(mixinDep).first().path;
+//
+//						println(mixinPath)
+//
+//						vmArg("-javaagent:\"${mixinPath}\"")
+//
+//						println("[Info]: Mixin Hotswap Run should be working")
+//					} else {
+//						println("[Warning]: Unable to locate file path for Mixin Jar, HotSwap Run will not work!")
+//					}
+//				}
+//			} catch (Exception e) {
+//				println("[Error]: MixinHotswap Run had a issue!")
+//				e.printStackTrace()
+//			}
 		}
 	}
 }
@@ -103,8 +104,8 @@ processResources {
 		mc            : compatibleVersions.split(", ")[0],
 		fl            : libs.versions.fl.get(),
 		fapi          : libs.versions.fapi.get(),
-		placeholder   : libs.versions.placeholder.get(),
-		polydex       : libs.versions.polydex.get()
+//		placeholder   : libs.versions.placeholder.get(),
+//		polydex       : libs.versions.polydex.get()
 	]
 	inputs.properties meta
 	filesMatching("*.mod.json") { expand(meta) }
@@ -113,13 +114,13 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
-	it.options.release = 21
+	it.options.release = 25
 }
 
 java {
 	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
@@ -140,14 +141,14 @@ modrinth {
 	token = "$System.env.MODRINTH_TOKEN"
 	projectId = slug
 	versionNumber = project.version
-	uploadFile = remapJar
+	uploadFile = jar
 	gameVersions = compatibleVersions.split(", ").toList()
 	loaders = compatibleLoaders.split(", ").toList()
 	changelog = "$System.env.CHANGELOG"
 	syncBodyFrom = "<!--DO NOT EDIT MANUALLY: synced from gh readme-->\n" + rootProject.file("README.md").text
 	dependencies {
 		required.version "fabric-api", libs.versions.fapi.get()
-		embedded.version "placeholder-api", libs.versions.placeholder.get()
-		optional.version "polydex", libs.versions.polydex.get()
+//		embedded.version "placeholder-api", libs.versions.placeholder.get()
+//		optional.version "polydex", libs.versions.polydex.get()
 	}
 }
