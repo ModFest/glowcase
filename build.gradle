@@ -20,6 +20,17 @@ repositories {
 		name = 'BlameJared Maven (CrT / Bookshelf)'
 		url = 'https://maven.blamejared.com'
 	}
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 dependencies {
@@ -28,10 +39,11 @@ dependencies {
 	implementation libs.fl
 	implementation libs.fapi
 
-//	implementation libs.placeholder
+	implementation libs.placeholder
+	include libs.placeholder
+
 //	compileOnly libs.polydex
 //
-//	include libs.placeholder
 //	localRuntime libs.polydex
 
 	implementation libs.kaleidoConfig

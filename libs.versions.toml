@@ -22,7 +22,8 @@ mc = { group = "mojang", name = "minecraft", version.ref = "mc" }
 fl = { group = "net.fabricmc", name = "fabric-loader", version.ref = "fl" }
 fapi = { group = "net.fabricmc.fabric-api", name = "fabric-api", version.ref = "fapi" }
 
-placeholder = { group = "eu.pb4", name = "placeholder-api", version.ref = "placeholder" }
+#placeholder = { group = "eu.pb4", name = "placeholder-api", version.ref = "placeholder" } // not available on its maven? using Modrinth one:
+placeholder = { group = "maven.modrinth", name = "placeholder-api", version.ref = "placeholder" }
 #polydex = { group = "eu.pb4", name = "polydex", version.ref = "polydex" }
 kaleidoConfig = { group = "folk.sisby", name = "kaleido-config", version.ref = "kaleidoConfig" }
 
