@@ -1,8 +1,8 @@
 package dev.hephaestus.glowcase.mixin.client;
 
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.font.FontSet;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
  * @author Ampflower
  * @since ${version}
  **/
-@Mixin(TextRenderer.class)
+@Mixin(Font.class)
 public interface TextRendererAccessor {
-	@Invoker FontStorage invokeGetFontStorage(Identifier id);
+	@Invoker("getFontSet") FontSet invokeGetFontStorage(ResourceLocation id);
 }

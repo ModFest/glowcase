@@ -3,12 +3,12 @@ package dev.hephaestus.glowcase.block.entity;
 import dev.hephaestus.glowcase.Glowcase;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.ComponentsAccess;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class RecipeBlockEntity extends GlowcaseBlockEntity {
 	public String recipe = "diamond_sword";
@@ -24,7 +24,7 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 
 	@Environment(EnvType.CLIENT)
 	public void openRecipe() {
-		Identifier rid = Identifier.tryParse(recipe);
+		ResourceLocation rid = ResourceLocation.tryParse(recipe);
 		/*if (GlowcaseClient.EMI_LOADED) {
 			EmiClientUtils.displayRecipe(rid);
 		}*/
@@ -32,31 +32,31 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 
 	public void setRecipe(String newRecipe) {
 		recipe = newRecipe;
-		markDirty();
+		setChanged();
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
 		view.putString("recipe", this.recipe);
-		view.put("z_offset", TextBlockEntity.ZOffset.CODEC, this.zOffset);
+		view.store("z_offset", TextBlockEntity.ZOffset.CODEC, this.zOffset);
 		view.putFloat("rotationX", this.rotationX);
 		view.putFloat("rotationY", this.rotationY);
 	}
 
 	@Override
-	protected void readComponents(ComponentsAccess components) {
-		super.readComponents(components);
+	protected void applyImplicitComponents(DataComponentGetter components) {
+		super.applyImplicitComponents(components);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		this.recipe = view.getString("recipe", "diamond_sword");
+		this.recipe = view.getStringOr("recipe", "diamond_sword");
 		this.zOffset = view.read("z_offset", TextBlockEntity.ZOffset.CODEC).orElse(TextBlockEntity.ZOffset.CENTER);
-		this.rotationX = view.getFloat("rotationX", 0);
-		this.rotationY = view.getFloat("rotationY", 0);
+		this.rotationX = view.getFloatOr("rotationX", 0);
+		this.rotationY = view.getFloatOr("rotationY", 0);
 	}
 }

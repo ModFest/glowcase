@@ -2,20 +2,16 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Hand;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements InfiniteInventory, StackInteractable {
 	protected ItemStack stack = ItemStack.EMPTY;
@@ -30,20 +26,20 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 
 	@Override
 	public boolean matchesStack(ItemStack stack) {
-		return ItemStack.areItemsEqual(this.stack, stack);
+		return ItemStack.isSameItem(this.stack, stack);
 	}
 
 	@Override
 	public void setFromStack(ItemStack stack) {
 		this.stack = stack.copy();
 		this.givenTimes.clear();
-		this.markDirty();
+		this.setChanged();
 	}
 
 	@Override
 	public void unsetFromStack() {
 		this.stack = ItemStack.EMPTY;
-		this.markDirty();
+		this.setChanged();
 	}
 
 	@Override
@@ -61,83 +57,83 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 
 	public void setGivesItem(GivesItem givesItem) {
 		this.givesItem = givesItem;
-		markDirty();
+		setChanged();
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
-		if (!this.stack.isEmpty()) view.put("item", ItemStack.CODEC, this.stack);
-		view.put("gives_item", GivesItem.CODEC, this.givesItem);
+		if (!this.stack.isEmpty()) view.store("item", ItemStack.CODEC, this.stack);
+		view.store("gives_item", GivesItem.CODEC, this.givesItem);
 		view.putLong("cooldown", this.cooldown);
-		view.put("given_times", Codec.unboundedMap(Uuids.CODEC, Codec.LONG), givenTimes);
+		view.store("given_times", Codec.unboundedMap(UUIDUtil.AUTHLIB_CODEC, Codec.LONG), givenTimes);
 
 		view.putBoolean("invisible", this.invisible);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
 		this.stack = view.read("item", ItemStack.CODEC).orElse(ItemStack.EMPTY);
 		this.givesItem = view.read("gives_item", GivesItem.CODEC).orElse(GivesItem.ALWAYS);
-		this.cooldown = view.getLong("cooldown", 0);
-		this.givenTimes = new HashMap<>(view.read("given_times", Codec.unboundedMap(Uuids.CODEC, Codec.LONG)).orElseGet(() -> Map.of()));
-		this.invisible = view.getBoolean("invisible", false);
+		this.cooldown = view.getLongOr("cooldown", 0);
+		this.givenTimes = new HashMap<>(view.read("given_times", Codec.unboundedMap(UUIDUtil.AUTHLIB_CODEC, Codec.LONG)).orElseGet(() -> Map.of()));
+		this.invisible = view.getBooleanOr("invisible", false);
 	}
 
 	public void cycleGiveType() {
 		this.givesItem = GivesItem.values()[(this.givesItem.ordinal() + 1) % GivesItem.values().length];
 		givenTimes.clear();
-		markDirty();
+		setChanged();
 	}
 
-	public long getCooldownTicks(PlayerEntity player) {
-		return givenTimes.containsKey(player.getUuid()) ? givenTimes.get(player.getUuid()) + this.cooldown * 20 - world.getTime() : 0;
+	public long getCooldownTicks(Player player) {
+		return givenTimes.containsKey(player.getUUID()) ? givenTimes.get(player.getUUID()) + this.cooldown * 20 - level.getGameTime() : 0;
 	}
 
-	public boolean canGiveTo(PlayerEntity player) {
+	public boolean canGiveTo(Player player) {
 		if (!hasItem()) return false;
 		else return switch (this.givesItem) {
 			case ALWAYS -> true;
 			case TIMED -> player.isCreative() || getCooldownTicks(player) <= 0;
-			case ONE -> player.isCreative() || !player.getInventory().containsAny(Set.of(stack.getItem()));
+			case ONE -> player.isCreative() || !player.getInventory().hasAnyOf(Set.of(stack.getItem()));
 		};
 	}
 
-	public void giveTo(PlayerEntity player) {
-		ItemStack itemStack = player.getStackInHand(Hand.MAIN_HAND);
-		boolean holdingSameAsDisplay = ItemStack.areItemsAndComponentsEqual(getStack(), itemStack);
+	public void giveTo(Player player) {
+		ItemStack itemStack = player.getItemInHand(InteractionHand.MAIN_HAND);
+		boolean holdingSameAsDisplay = ItemStack.isSameItemSameComponents(getStack(), itemStack);
 
 		if (itemStack.isEmpty()) {
 			ItemStack stackToGive = getStack().copy();
-			if (player.isSneaking()) {
-				stackToGive.setCount(stackToGive.getMaxCount());
+			if (player.isShiftKeyDown()) {
+				stackToGive.setCount(stackToGive.getMaxStackSize());
 			}
 
-			player.setStackInHand(Hand.MAIN_HAND, stackToGive);
+			player.setItemInHand(InteractionHand.MAIN_HAND, stackToGive);
 		} else if (holdingSameAsDisplay) {
-			itemStack.increment(getStack().getCount());
-			itemStack.capCount(itemStack.getMaxCount());
-			player.setStackInHand(Hand.MAIN_HAND, itemStack);
+			itemStack.grow(getStack().getCount());
+			itemStack.limitSize(itemStack.getMaxStackSize());
+			player.setItemInHand(InteractionHand.MAIN_HAND, itemStack);
 		} else {
 			return;
 		}
 
 		if (!player.isCreative()) {
-			givenTimes.put(player.getUuid(), world.getTime());
-			markDirty();
+			givenTimes.put(player.getUUID(), level.getGameTime());
+			setChanged();
 		}
 	}
 
-	public enum GivesItem implements StringIdentifiable {
+	public enum GivesItem implements StringRepresentable {
 		ALWAYS, TIMED, ONE;
 
-		public static final Codec<GivesItem> CODEC = StringIdentifiable.createCodec(GivesItem::values);
+		public static final Codec<GivesItem> CODEC = StringRepresentable.fromEnum(GivesItem::values);
 
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return name().toLowerCase(Locale.ROOT);
 		}
 	}

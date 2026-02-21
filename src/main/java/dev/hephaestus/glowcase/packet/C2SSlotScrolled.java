@@ -1,23 +1,23 @@
 package dev.hephaestus.glowcase.packet;
 
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public record C2SSlotScrolled(int syncId, int revision, int slotIndex, int amount) implements CustomPayload {
-	public static final Id<C2SSlotScrolled> ID = new Id<>(Glowcase.id("slot_scrolled"));
-	public static final PacketCodec<RegistryByteBuf, C2SSlotScrolled> PACKET_CODEC = PacketCodec.tuple(
-		PacketCodecs.VAR_INT, C2SSlotScrolled::syncId,
-		PacketCodecs.VAR_INT, C2SSlotScrolled::revision,
-		PacketCodecs.VAR_INT, C2SSlotScrolled::slotIndex,
-		PacketCodecs.VAR_INT, C2SSlotScrolled::amount,
+public record C2SSlotScrolled(int syncId, int revision, int slotIndex, int amount) implements CustomPacketPayload {
+	public static final Type<C2SSlotScrolled> ID = new Type<>(Glowcase.id("slot_scrolled"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SSlotScrolled> PACKET_CODEC = StreamCodec.composite(
+		ByteBufCodecs.VAR_INT, C2SSlotScrolled::syncId,
+		ByteBufCodecs.VAR_INT, C2SSlotScrolled::revision,
+		ByteBufCodecs.VAR_INT, C2SSlotScrolled::slotIndex,
+		ByteBufCodecs.VAR_INT, C2SSlotScrolled::amount,
 		C2SSlotScrolled::new
 	);
 
 	@Override
-	public Id<C2SSlotScrolled> getId() {
+	public Type<C2SSlotScrolled> type() {
 		return ID;
 	}
 }

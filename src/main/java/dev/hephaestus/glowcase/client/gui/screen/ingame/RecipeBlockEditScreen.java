@@ -11,32 +11,32 @@ import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
 import dev.hephaestus.glowcase.client.util.EmiClientUtils;
 import dev.hephaestus.glowcase.util.EmiUtils;
 import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2fStack;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class RecipeBlockEditScreen extends GlowcaseScreen {
-	private static final List<Identifier> NO_SUGGESTIONS = List.of();
+	private static final List<ResourceLocation> NO_SUGGESTIONS = List.of();
 	private final RecipeBlockEntity recipeBlockEntity;
 
-	private TextFieldWidget recipeWidget;
-	private TextFieldWidget rotationXWidget;
-	private TextFieldWidget rotationYWidget;
+	private EditBox recipeWidget;
+	private EditBox rotationXWidget;
+	private EditBox rotationYWidget;
 
-	private SuggestionListWidget<Identifier> suggestionWidget;
+	private SuggestionListWidget<ResourceLocation> suggestionWidget;
 
 	// Can't use GlowcaseWidgetHolder as that can crash if EMI is not present
 	@NotNull
 	private final AtomicReference<RequiresEmiLoaded> glowcaseWidgetHolder = new AtomicReference<>(null);
 
-	private ButtonWidget zOffsetToggle;
+	private Button zOffsetToggle;
 	private int fontHeight = -1;
 
 	private int baseY;
@@ -49,100 +49,100 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.client == null) return;
+		if (this.minecraft == null) return;
 
 		if (fontHeight == -1) {
-			fontHeight = this.client.textRenderer.fontHeight;
+			fontHeight = this.minecraft.font.lineHeight;
 			baseY = height / 2 - ((2 * fontHeight + 95) / 2) + fontHeight - (GlowcaseClient.EMI_LOADED ? 46 : 0);
 		}
 
 
-		this.recipeWidget = new GlowcaseTextFieldWidget(this.client.textRenderer, width / 2 - 150, baseY + 10, 300, 20, Text.empty());
+		this.recipeWidget = new GlowcaseTextFieldWidget(this.minecraft.font, width / 2 - 150, baseY + 10, 300, 20, Component.empty());
 		this.recipeWidget.setMaxLength(1024);
-		this.recipeWidget.setText(recipeBlockEntity.recipe);
+		this.recipeWidget.setValue(recipeBlockEntity.recipe);
 
-		this.rotationXWidget = new TextFieldWidget(this.client.textRenderer, (width - 145) / 2, baseY + fontHeight + 45, 70, 20, Text.empty());
+		this.rotationXWidget = new EditBox(this.minecraft.font, (width - 145) / 2, baseY + fontHeight + 45, 70, 20, Component.empty());
 		this.rotationXWidget.setMaxLength(1024);
-		this.rotationXWidget.setText(Float.toString(recipeBlockEntity.rotationX));
-		this.rotationXWidget.setChangedListener(s -> {
+		this.rotationXWidget.setValue(Float.toString(recipeBlockEntity.rotationX));
+		this.rotationXWidget.setResponder(s -> {
 			if (Floats.tryParse(s) instanceof Float parsed) {
 				recipeBlockEntity.rotationX = parsed;
 			}
 		});
 
-		this.rotationYWidget = new TextFieldWidget(this.client.textRenderer, (width - 145) / 2 + 75, baseY + fontHeight + 45, 70, 20, Text.empty());
+		this.rotationYWidget = new EditBox(this.minecraft.font, (width - 145) / 2 + 75, baseY + fontHeight + 45, 70, 20, Component.empty());
 		this.rotationYWidget.setMaxLength(1024);
-		this.rotationYWidget.setText(Float.toString(recipeBlockEntity.rotationY));
-		this.rotationYWidget.setChangedListener(s -> {
+		this.rotationYWidget.setValue(Float.toString(recipeBlockEntity.rotationY));
+		this.rotationYWidget.setResponder(s -> {
 			if (Floats.tryParse(s) instanceof Float parsed) {
 				recipeBlockEntity.rotationY = parsed;
 			}
 		});
 
-		this.zOffsetToggle = ButtonWidget.builder(Text.literal(this.recipeBlockEntity.zOffset.name()), action -> {
+		this.zOffsetToggle = Button.builder(Component.literal(this.recipeBlockEntity.zOffset.name()), action -> {
 			switch (recipeBlockEntity.zOffset) {
 				case FRONT -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
 				case CENTER -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
 				case BACK -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
 			}
 
-			this.zOffsetToggle.setMessage(Text.literal(this.recipeBlockEntity.zOffset.name()));
-		}).dimensions(width / 2 - 75, baseY + fontHeight + 75, 150, 20).build();
+			this.zOffsetToggle.setMessage(Component.literal(this.recipeBlockEntity.zOffset.name()));
+		}).bounds(width / 2 - 75, baseY + fontHeight + 75, 150, 20).build();
 
-		suggestionWidget = SuggestionListWidget.forTextField(recipeWidget, client.textRenderer, Identifier::toString);
+		suggestionWidget = SuggestionListWidget.forTextField(recipeWidget, minecraft.font, ResourceLocation::toString);
 
-		recipeWidget.setChangedListener((text) -> {
-			if (Identifier.tryParse(this.recipeWidget.getText()) != null) {
-				this.recipeBlockEntity.recipe = this.recipeWidget.getText();
+		recipeWidget.setResponder((text) -> {
+			if (ResourceLocation.tryParse(this.recipeWidget.getValue()) != null) {
+				this.recipeBlockEntity.recipe = this.recipeWidget.getValue();
 			}
 
 			if (GlowcaseClient.EMI_LOADED) {
 				suggestionWidget.updateSuggestions(EmiUtils.RECIPE_LIST.get(), text, false, this);
 
-				EmiClientUtils.updateWidgetHolder(recipeWidget.getText(), glowcaseWidgetHolder);
+				EmiClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
 			}
 		});
 
-		this.addDrawableChild(this.recipeWidget);
-		this.addDrawableChild(this.rotationXWidget);
-		this.addDrawableChild(this.rotationYWidget);
-		this.addDrawableChild(this.zOffsetToggle);
+		this.addRenderableWidget(this.recipeWidget);
+		this.addRenderableWidget(this.rotationXWidget);
+		this.addRenderableWidget(this.rotationYWidget);
+		this.addRenderableWidget(this.zOffsetToggle);
 
 		if (GlowcaseClient.EMI_LOADED && glowcaseWidgetHolder.get() == null) {
-			EmiClientUtils.updateWidgetHolder(recipeWidget.getText(), glowcaseWidgetHolder);
+			EmiClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
 		}
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
-		if (this.client == null) return;
+		if (this.minecraft == null) return;
 
 		if (fontHeight == -1) {
-			fontHeight = this.client.textRenderer.fontHeight;
+			fontHeight = this.minecraft.font.lineHeight;
 			baseY = height / 2 - ((2 * fontHeight + 95) / 2) + fontHeight - 46;
 		}
 
-		context.drawTextWithShadow(
-			this.client.textRenderer,
-			Text.translatable("gui.glowcase.recipe"),
-			width / 2 - (this.client.textRenderer.getWidth(Text.translatable("gui.glowcase.recipe")) / 2),
+		context.drawString(
+			this.minecraft.font,
+			Component.translatable("gui.glowcase.recipe"),
+			width / 2 - (this.minecraft.font.width(Component.translatable("gui.glowcase.recipe")) / 2),
 			baseY - fontHeight,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			this.client.textRenderer,
-			Text.translatable("gui.glowcase.pitch"),
-			((width - 145) / 2) + 35 - (this.client.textRenderer.getWidth(Text.translatable("gui.glowcase.pitch")) / 2),
+		context.drawString(
+			this.minecraft.font,
+			Component.translatable("gui.glowcase.pitch"),
+			((width - 145) / 2) + 35 - (this.minecraft.font.width(Component.translatable("gui.glowcase.pitch")) / 2),
 			baseY + 40,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			this.client.textRenderer,
-			Text.translatable("gui.glowcase.yaw"),
-			((width - 145) / 2) + 75 + 35 - (this.client.textRenderer.getWidth(Text.translatable("gui.glowcase.yaw")) / 2),
+		context.drawString(
+			this.minecraft.font,
+			Component.translatable("gui.glowcase.yaw"),
+			((width - 145) / 2) + 75 + 35 - (this.minecraft.font.width(Component.translatable("gui.glowcase.yaw")) / 2),
 			baseY + 40,
 			0xFFFFFFFF
 		);
@@ -158,7 +158,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			int holderWidth = EmiClientUtils.getHolderWidth(widgetHolder);
 			int holderHeight = EmiClientUtils.getHolderHeight(widgetHolder);
 
-			Matrix3x2fStack matrixStack = context.getMatrices();
+			Matrix3x2fStack matrixStack = context.pose();
 			matrixStack.pushMatrix();
 			matrixStack.translate(width / 2f - holderWidth / 2f, baseYForRecipe + spaceForRecipe / 2f - holderHeight / 2f);
 
@@ -208,10 +208,10 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void close() {
-		recipeBlockEntity.setRecipe(recipeWidget.getText());
+	public void onClose() {
+		recipeBlockEntity.setRecipe(recipeWidget.getValue());
 		C2SEditRecipeBlock.of(recipeBlockEntity).send();
-		super.close();
+		super.onClose();
 	}
 
 }

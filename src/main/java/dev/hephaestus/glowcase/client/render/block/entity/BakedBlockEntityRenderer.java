@@ -4,10 +4,17 @@ import com.google.common.collect.Sets;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.systems.ScissorState;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.logging.LogUtils;
 import dev.hephaestus.glowcase.mixin.client.GameRendererAccessor;
@@ -19,22 +26,21 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gl.ScissorState;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.render.chunk.Buffers;
-import net.minecraft.client.render.fog.FogRenderer;
-import net.minecraft.client.util.BufferAllocator;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.profiler.Profilers;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.chunk.SectionBuffers;
+import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector4f;
 import org.slf4j.Logger;
@@ -43,21 +49,21 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
-	protected final BlockEntityRendererFactory.Context context;
+	protected final BlockEntityRendererProvider.Context context;
 
-	protected BakedBlockEntityRenderer(BlockEntityRendererFactory.Context context) {
+	protected BakedBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
 		this.context = context;
 	}
 
 	/**
 	 * Handles invalidation and passing of rendered vertices to the baking system.
-	 * Override {@link #renderBaked(BlockEntity, MatrixStack, VertexConsumerProvider, int, int)} and
-	 * {@link #renderBaked(BlockEntity, MatrixStack, VertexConsumerProvider, int, int)} instead of this method.
+	 * Override {@link #renderBaked(BlockEntity, PoseStack, MultiBufferSource, int, int)} and
+	 * {@link #renderBaked(BlockEntity, PoseStack, MultiBufferSource, int, int)} instead of this method.
 	 */
 	@Override
-	public final void render(T entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos) {
+	public final void render(T entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		renderUnbaked(entity, tickDelta, matrices, vertexConsumers, light, overlay, cameraPos);
-		Manager.activateRegion(entity.getPos());
+		Manager.activateRegion(entity.getBlockPos());
 	}
 
 	/**
@@ -67,14 +73,14 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 	 * You must use the provided VertexConsumerProvider and MatrixStack to render your vertices - any use of Tessellator
 	 * or RenderSystem here will not work. If you need custom rendering settings, you can use a custom RenderLayer.
 	 */
-	public abstract void renderBaked(T entity, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay);
+	public abstract void renderBaked(T entity, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay);
 
 	/**
 	 * Render vertices immediately. This works exactly the same way as a normal BER render method, and can be used for dynamic
 	 * rendering that changes every frame. In this method you can also check for render invalidation and call {@link Manager#markForRebuild(BlockPos)}
 	 * as appropriate.
 	 */
-	public abstract void renderUnbaked(T entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos);
+	public abstract void renderUnbaked(T entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos);
 
 	public abstract boolean shouldBake(T entity);
 
@@ -113,23 +119,23 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 		private static final Object2ReferenceMap<RenderRegionPos, RegionBuffer> regions = new Object2ReferenceOpenHashMap<>();
 		private static final Set<RenderRegionPos> needsRebuild = Sets.newHashSet();
 
-		private static class CachedVertexConsumerProvider implements VertexConsumerProvider {
-			private final Reference2ReferenceMap<RenderLayer, BufferAllocator> allocators = new Reference2ReferenceOpenHashMap<>();
-			private final Reference2ReferenceMap<RenderLayer, BufferBuilder> builders = new Reference2ReferenceOpenHashMap<>();
+		private static class CachedVertexConsumerProvider implements MultiBufferSource {
+			private final Reference2ReferenceMap<RenderType, ByteBufferBuilder> allocators = new Reference2ReferenceOpenHashMap<>();
+			private final Reference2ReferenceMap<RenderType, BufferBuilder> builders = new Reference2ReferenceOpenHashMap<>();
 
 			@Override
-			public VertexConsumer getBuffer(RenderLayer layer) {
+			public VertexConsumer getBuffer(RenderType layer) {
 				return builders.computeIfAbsent(layer, l1 -> new BufferBuilder(
-					allocators.computeIfAbsent(layer, l2 -> new BufferAllocator(layer.getExpectedBufferSize())),
-					layer.getDrawMode(),
-					layer.getVertexFormat()));
+					allocators.computeIfAbsent(layer, l2 -> new ByteBufferBuilder(layer.bufferSize())),
+					layer.mode(),
+					layer.format()));
 			}
 
 			/**
 			 * Resets the provider so another scene can be rendered
 			 */
 			public void reset() {
-				allocators.forEach((layer, allocator) -> allocator.reset());
+				allocators.forEach((layer, allocator) -> allocator.discard());
 				builders.clear();
 			}
 		}
@@ -139,29 +145,29 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 		private static final Logger LOGGER = LogUtils.getLogger();
 
 		private static class RegionBuffer {
-			private final Map<RenderLayer, Buffers> layerBuffers = new Reference2ReferenceOpenHashMap<>();
-			private final Set<RenderLayer> uploadedLayers = new ObjectOpenHashSet<>();
+			private final Map<RenderType, SectionBuffers> layerBuffers = new Reference2ReferenceOpenHashMap<>();
+			private final Set<RenderType> uploadedLayers = new ObjectOpenHashSet<>();
 
 			@SuppressWarnings("DataFlowIssue")
-			public void render(RenderLayer layer, MatrixStack matrices) {
-				Framebuffer framebuffer;
-				if (layer instanceof RenderLayer.MultiPhase) {
-					framebuffer = ((RenderLayerMultiPhaseParametersAccessor) (Object) ((MultiPhaseRenderLayerAccessor) layer).getPhases()).getTarget().get();
+			public void render(RenderType layer, PoseStack matrices) {
+				RenderTarget framebuffer;
+				if (layer instanceof RenderType.CompositeRenderType) {
+					framebuffer = ((RenderLayerMultiPhaseParametersAccessor) (Object) ((MultiPhaseRenderLayerAccessor) layer).getPhases()).getTarget().getRenderTarget();
 				} else {
-					framebuffer = MinecraftClient.getInstance().getFramebuffer();
+					framebuffer = Minecraft.getInstance().getMainRenderTarget();
 				}
 
 				RenderPipeline pipeline;
-				if (layer instanceof RenderLayer.MultiPhase) {
+				if (layer instanceof RenderType.CompositeRenderType) {
 					pipeline = ((MultiPhaseRenderLayerAccessor) layer).getPipeline();
 				} else {
 					pipeline = RenderPipelines.SOLID;
 				}
 
-				layer.startDrawing();
+				layer.setupRenderState();
 				GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms()
-					.write(
-						matrices.peek().getPositionMatrix(),
+					.writeTransform(
+						matrices.last().pose(),
 						new Vector4f(1.0F, 1.0F, 1.0F, 1.0F),
 						RenderSystem.getModelOffset(),
 						RenderSystem.getTextureMatrix(),
@@ -172,27 +178,27 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 					.createCommandEncoder()
 					.createRenderPass(
 						() -> "Glowcase baked BER section layers",
-						framebuffer.getColorAttachmentView(),
+						framebuffer.getColorTextureView(),
 						OptionalInt.empty(),
-						framebuffer.getDepthAttachmentView(),
+						framebuffer.getDepthTextureView(),
 						OptionalDouble.empty()
 					)) {
-					Buffers buffers = layerBuffers.get(layer);
+					SectionBuffers buffers = layerBuffers.get(layer);
 
 					GpuBuffer indexBuffer;
 					VertexFormat.IndexType indexType;
 					if (buffers.getIndexBuffer() == null) {
-						RenderSystem.ShapeIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(layer.getDrawMode());
-						indexBuffer = shapeIndexBuffer.getIndexBuffer(buffers.getIndexCount());
-						indexType = shapeIndexBuffer.getIndexType();
+						RenderSystem.AutoStorageIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(layer.mode());
+						indexBuffer = shapeIndexBuffer.getBuffer(buffers.getIndexCount());
+						indexType = shapeIndexBuffer.type();
 					} else {
 						indexBuffer = buffers.getIndexBuffer();
 						indexType = buffers.getIndexType();
 					}
 
 					ScissorState scissorState = RenderSystem.getScissorStateForRenderTypeDraws();
-					if (scissorState.method_72091()) {
-						renderPass.enableScissor(scissorState.method_72092(), scissorState.method_72093(), scissorState.method_72094(), scissorState.method_72095());
+					if (scissorState.enabled()) {
+						renderPass.enableScissor(scissorState.x(), scissorState.y(), scissorState.width(), scissorState.height());
 					}
 
 					for (int j = 0; j < 12; j++) {
@@ -210,7 +216,7 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 
 					renderPass.drawIndexed(0, 0, buffers.getIndexCount(), 1);
 				}
-				layer.endDrawing();
+				layer.clearRenderState();
 
 				//VertexBuffer buf = layerBuffers.get(layer);
 				//buf.bind();
@@ -220,28 +226,28 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 				//VertexBuffer.unbind();
 			}
 
-			public void upload(RenderLayer layer, BufferBuilder newBuf) {
-				try (BuiltBuffer buffer = newBuf.endNullable()) {
+			public void upload(RenderType layer, BufferBuilder newBuf) {
+				try (MeshData buffer = newBuf.build()) {
 					if (buffer == null) return;
 
 					CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
-					Buffers oldBuffers = this.layerBuffers.get(layer);
+					SectionBuffers oldBuffers = this.layerBuffers.get(layer);
 					if (oldBuffers != null) {
-						if (oldBuffers.getVertexBuffer().size() < buffer.getBuffer().remaining()) {
+						if (oldBuffers.getVertexBuffer().size() < buffer.vertexBuffer().remaining()) {
 							oldBuffers.getVertexBuffer().close();
 							oldBuffers.setVertexBuffer(
 								RenderSystem.getDevice()
 									.createBuffer(
 										() -> "Glowcase Region vertex buffer - layer: " + layer.getName(),
 										GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST,
-										buffer.getBuffer()
+										buffer.vertexBuffer()
 									)
 							);
 						} else if (!oldBuffers.getVertexBuffer().isClosed()) {
-							commandEncoder.writeToBuffer(oldBuffers.getVertexBuffer().slice(), buffer.getBuffer());
+							commandEncoder.writeToBuffer(oldBuffers.getVertexBuffer().slice(), buffer.vertexBuffer());
 						}
 
-						ByteBuffer byteBuffer = buffer.getSortedBuffer();
+						ByteBuffer byteBuffer = buffer.indexBuffer();
 						if (byteBuffer != null) {
 							if (oldBuffers.getIndexBuffer() != null && oldBuffers.getIndexBuffer().size() >= byteBuffer.remaining()) {
 								if (!oldBuffers.getIndexBuffer().isClosed()) {
@@ -266,16 +272,16 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 							oldBuffers.setIndexBuffer(null);
 						}
 
-						oldBuffers.setIndexCount(buffer.getDrawParameters().indexCount());
-						oldBuffers.setIndexType(buffer.getDrawParameters().indexType());
+						oldBuffers.setIndexCount(buffer.drawState().indexCount());
+						oldBuffers.setIndexType(buffer.drawState().indexType());
 					} else {
 						GpuBuffer vertexBuffer = RenderSystem.getDevice()
 							.createBuffer(
 								() -> "Glowcase Region vertex buffer - layer: " + layer.getName(),
 								GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST,
-								buffer.getBuffer()
+								buffer.vertexBuffer()
 							);
-						ByteBuffer sortedBuffer = buffer.getSortedBuffer();
+						ByteBuffer sortedBuffer = buffer.indexBuffer();
 						GpuBuffer indexBuffer = sortedBuffer != null
 							? RenderSystem.getDevice()
 							.createBuffer(
@@ -284,7 +290,7 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 								sortedBuffer
 							)
 							: null;
-						this.layerBuffers.put(layer, new Buffers(vertexBuffer, indexBuffer, buffer.getDrawParameters().indexCount(), buffer.getDrawParameters().indexType()));
+						this.layerBuffers.put(layer, new SectionBuffers(vertexBuffer, indexBuffer, buffer.drawState().indexCount(), buffer.drawState().indexType()));
 					}
 
 					this.uploadedLayers.add(layer);
@@ -292,7 +298,7 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 			}
 
 			public void reset() {
-				layerBuffers.values().forEach(Buffers::close);
+				layerBuffers.values().forEach(SectionBuffers::close);
 				layerBuffers.clear();
 				uploadedLayers.clear();
 			}
@@ -311,16 +317,16 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 
 		// TODO: move chunk baking off-thread?
 
-		private static boolean isVisiblePos(RenderRegionPos rrp, Vec3d cam) {
-			return Math.abs(rrp.x - ((int) cam.getX() >> REGION_SHIFT)) <= VIEW_RADIUS && Math.abs(rrp.z - ((int) cam.getZ() >> REGION_SHIFT)) <= VIEW_RADIUS;
+		private static boolean isVisiblePos(RenderRegionPos rrp, Vec3 cam) {
+			return Math.abs(rrp.x - ((int) cam.x() >> REGION_SHIFT)) <= VIEW_RADIUS && Math.abs(rrp.z - ((int) cam.z() >> REGION_SHIFT)) <= VIEW_RADIUS;
 		}
 
 		@SuppressWarnings("unchecked")
 		public static void render(WorldRenderContext wrc) {
-			Profiler profiler = Profilers.get();
+			ProfilerFiller profiler = Profiler.get();
 			profiler.push("glowcase:baked_block_entity_rendering");
 
-			Vec3d cam = wrc.camera().getPos();
+			Vec3 cam = wrc.camera().getPosition();
 
 			if (!needsRebuild.isEmpty()) {
 				profiler.push("rebuild");
@@ -328,7 +334,7 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 				// Make builders for regions that are marked for rebuild, render and upload to RegionBuffers
 				Set<RenderRegionPos> removing = Sets.newHashSet();
 				List<BlockEntity> blockEntities = new ArrayList<>();
-				MatrixStack bakeMatrices = new MatrixStack();
+				PoseStack bakeMatrices = new PoseStack();
 				for (RenderRegionPos rrp : needsRebuild) {
 					if (isVisiblePos(rrp, cam)) {
 						// For the current region, rebuild each render layer using the buffer builders
@@ -343,17 +349,17 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 							boolean bakedAnything = false;
 
 							for (BlockEntity be : blockEntities) {
-								if (MinecraftClient.getInstance().getBlockEntityRenderDispatcher().get(be) instanceof BakedBlockEntityRenderer renderer && renderer.shouldBake(be)) {
-									BlockPos pos = be.getPos();
-									bakeMatrices.push();
+								if (Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be) instanceof BakedBlockEntityRenderer renderer && renderer.shouldBake(be)) {
+									BlockPos pos = be.getBlockPos();
+									bakeMatrices.pushPose();
 									bakeMatrices.translate(pos.getX() & MAX_XZ_IN_REGION, pos.getY(), pos.getZ() & MAX_XZ_IN_REGION);
 									try {
-										renderer.renderBaked(be, bakeMatrices, vcp, WorldRenderer.getLightmapCoordinates(wrc.world(), pos), OverlayTexture.DEFAULT_UV);
+										renderer.renderBaked(be, bakeMatrices, vcp, LevelRenderer.getLightColor(wrc.world(), pos), OverlayTexture.NO_OVERLAY);
 										bakedAnything = true;
 									} catch (Throwable t) {
 										LOGGER.error("Block entity renderer threw exception during baking: ", t);
 									}
-									bakeMatrices.pop();
+									bakeMatrices.popPose();
 								}
 							}
 
@@ -394,11 +400,11 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 				 * It's needed to make fog not bleed into text blocks
 				 */
 				GpuBufferSlice originalFog = RenderSystem.getShaderFog();
-				RenderSystem.setShaderFog(((GameRendererAccessor) wrc.gameRenderer()).getFogRenderer().getFogBuffer(FogRenderer.FogType.NONE));
+				RenderSystem.setShaderFog(((GameRendererAccessor) wrc.gameRenderer()).getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
 				// Iterate over all RegionBuffers, render visible and remove non-visible RegionBuffers
-				MatrixStack matrices = wrc.matrixStack();
-				matrices.push();
-				matrices.multiplyPositionMatrix(wrc.positionMatrix());
+				PoseStack matrices = wrc.matrixStack();
+				matrices.pushPose();
+				matrices.mulPose(wrc.positionMatrix());
 				matrices.translate(-cam.x, -cam.y, -cam.z);
 				var iter = regions.object2ReferenceEntrySet().iterator();
 				while (iter.hasNext()) {
@@ -407,19 +413,19 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 					RegionBuffer regionBuffer = entry.getValue();
 					if (isVisiblePos(entry.getKey(), cam)) {
 						// Iterate over used render layers in the region, render them
-						matrices.push();
+						matrices.pushPose();
 						matrices.translate(rrp.origin.getX(), rrp.origin.getY(), rrp.origin.getZ());
-						for (RenderLayer l : regionBuffer.uploadedLayers) {
+						for (RenderType l : regionBuffer.uploadedLayers) {
 							regionBuffer.render(l, matrices);
 						}
-						matrices.pop();
+						matrices.popPose();
 					} else {
 						regionBuffer.reset();
 						iter.remove();
 					}
 				}
 				RenderSystem.setShaderFog(originalFog);
-				matrices.pop();
+				matrices.popPose();
 
 				profiler.pop();
 			}

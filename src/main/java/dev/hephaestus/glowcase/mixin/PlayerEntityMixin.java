@@ -2,27 +2,26 @@ package dev.hephaestus.glowcase.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class PlayerEntityMixin extends LivingEntity {
-	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
+	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
 		super(entityType, world);
 	}
 
 	@ModifyReturnValue(
-		method = "shouldCancelInteraction",
+		method = "isSecondaryUseActive",
 		at = @At(value = "RETURN")
 	)
 	private boolean directLockInteraction(boolean original) {
-		return getEquippedStack(EquipmentSlot.MAINHAND).getItem().equals(Glowcase.LOCK_ITEM.get()) || original;
+		return getItemBySlot(EquipmentSlot.MAINHAND).getItem().equals(Glowcase.LOCK_ITEM.get()) || original;
 	}
 }

@@ -1,15 +1,15 @@
 package dev.hephaestus.glowcase.mixin;
 
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.inventory.ContainerLock;
+import net.minecraft.world.LockCode;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(LockableContainerBlockEntity.class)
+@Mixin(BaseContainerBlockEntity.class)
 public interface LockableContainerBlockEntityAccessor {
-	@Accessor("lock")
-	ContainerLock glowcase$getLock();
+	@Accessor("lockKey")
+	LockCode glowcase$getLock();
 
-	@Accessor("lock")
-	void glowcase$setLock(ContainerLock lock);
+	@Accessor("lockKey")
+	void glowcase$setLock(LockCode lock);
 }

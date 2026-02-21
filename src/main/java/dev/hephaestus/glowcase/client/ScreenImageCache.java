@@ -1,20 +1,20 @@
 package dev.hephaestus.glowcase.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.util.HTTPException;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.resource.Resource;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -164,12 +164,12 @@ public class ScreenImageCache {
 	public static class ScreenTexture {
 		private final CompletableFuture<Integer> loader;
 		@Nullable
-		private Identifier texture;
+		private ResourceLocation texture;
 
 		private int width = 0;
 		private int height = 0;
 
-		public Pair<Integer, Identifier> getTexture() {
+		public Pair<Integer, ResourceLocation> getTexture() {
 			if (loader.isDone()) {
 				return new Pair<>(loader.join(), texture);
 			}
@@ -195,12 +195,12 @@ public class ScreenImageCache {
 		/**
 		 * Creates a reference to a local resource.
 		 */
-		public ScreenTexture(@NotNull Identifier texture) {
+		public ScreenTexture(@NotNull ResourceLocation texture) {
 			// Get width/height
-			Optional<Resource> resource = MinecraftClient.getInstance().getResourceManager().getResource(texture);
+			Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
 			if (resource.isPresent())
 				try {
-					InputStream inputStream = resource.get().getInputStream();
+					InputStream inputStream = resource.get().open();
 					BufferedImage image = ImageIO.read(inputStream);
 
 					width = image.getWidth();
@@ -221,7 +221,7 @@ public class ScreenImageCache {
 				HttpURLConnection connection;
 				InputStream stream;
 				try {
-					connection = (HttpURLConnection) url.openConnection(MinecraftClient.getInstance().getNetworkProxy());
+					connection = (HttpURLConnection) url.openConnection(Minecraft.getInstance().getProxy());
 					connection.setDoInput(true);
 					connection.setDoOutput(false);
 					connection.connect();
@@ -248,24 +248,24 @@ public class ScreenImageCache {
 
 				// TODO: Perhaps adding a local file cache might be wise
 
-				int result = MinecraftClient.getInstance().submit(() -> {
+				int result = Minecraft.getInstance().submit(() -> {
 					width = nativeImage.getWidth();
 					height = nativeImage.getHeight();
 
 					String imageHash = Integer.toHexString(nativeImage.hashCode());
-					NativeImageBackedTexture nativeTexture = new NativeImageBackedTexture(() -> imageHash, nativeImage);
+					DynamicTexture nativeTexture = new DynamicTexture(() -> imageHash, nativeImage);
 
 					// Register image as texture
-					TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
+					TextureManager textureManager = Minecraft.getInstance().getTextureManager();
 					this.texture = Glowcase.id("glowcase/img", imageHash);
-					textureManager.registerTexture(this.texture, nativeTexture);
+					textureManager.register(this.texture, nativeTexture);
 
 					return 200;
 				}).join();
 
 				connection.disconnect();
 				return result;
-			}, Util.getMainWorkerExecutor());
+			}, Util.backgroundExecutor());
 		}
 	}
 }

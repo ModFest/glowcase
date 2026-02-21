@@ -3,35 +3,35 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ParticleDisplayBlock extends WaterloggableGlowcaseBlock {
-	public static final MapCodec<ParticleDisplayBlock> CODEC = createCodec(ParticleDisplayBlock::new);
+	public static final MapCodec<ParticleDisplayBlock> CODEC = simpleCodec(ParticleDisplayBlock::new);
 
-	public ParticleDisplayBlock(AbstractBlock.Settings settings) {
+	public ParticleDisplayBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		if (!world.isClient()) return null;
+	public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		if (!world.isClientSide()) return null;
 		return checkType(type, Glowcase.PARTICLE_DISPLAY_BLOCK_ENTITY.get(), ParticleDisplayBlockEntity::clientTick);
 	}
 
@@ -42,18 +42,18 @@ public class ParticleDisplayBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new ParticleDisplayBlockEntity(pos, state);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("block.glowcase.particle_display_block.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.generic.tooltip").formatted(Formatting.DARK_GRAY));
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("block.glowcase.particle_display_block.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 }

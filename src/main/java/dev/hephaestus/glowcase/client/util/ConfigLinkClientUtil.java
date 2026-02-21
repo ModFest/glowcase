@@ -6,11 +6,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.NoticeScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.AlertScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -22,10 +22,10 @@ import java.util.Optional;
 public final class ConfigLinkClientUtil {
 	private static final boolean modmenuAvailable = FabricLoader.getInstance().isModLoaded("modmenu");
 
-	private static final Text glowcase = Text.translatable("block.glowcase.config_link_block");
-	private static final Text missingModmenu = Text.translatable("gui.glowcase.config_link.missing.modmenu");
+	private static final Component glowcase = Component.translatable("block.glowcase.config_link_block");
+	private static final Component missingModmenu = Component.translatable("gui.glowcase.config_link.missing.modmenu");
 
-	public static Screen getConfigScreen(MinecraftClient client, String link) {
+	public static Screen getConfigScreen(Minecraft client, String link) {
 		Screen screen = getModScreen(client, link);
 
 		if (screen != null) {
@@ -36,7 +36,7 @@ public final class ConfigLinkClientUtil {
 	}
 
 	@Nullable
-	public static Screen getModScreen(MinecraftClient client, String link) {
+	public static Screen getModScreen(Minecraft client, String link) {
 		String id = ModSupportUtil.getModId(link);
 
 		if (id == null) {
@@ -60,23 +60,23 @@ public final class ConfigLinkClientUtil {
 			.orElseGet(() -> modUnavailable(client, id));
 	}
 
-	private static Screen modScreenUnavailable(MinecraftClient client, String modName) {
-		return notice(client, glowcase, Text.translatable("gui.glowcase.config_link.missing.mod_screen", modName));
+	private static Screen modScreenUnavailable(Minecraft client, String modName) {
+		return notice(client, glowcase, Component.translatable("gui.glowcase.config_link.missing.mod_screen", modName));
 	}
 
-	private static Screen modUnavailable(MinecraftClient client, String modId) {
-		return notice(client, glowcase, Text.translatable("gui.glowcase.config_link.missing.mod", modId));
+	private static Screen modUnavailable(Minecraft client, String modId) {
+		return notice(client, glowcase, Component.translatable("gui.glowcase.config_link.missing.mod", modId));
 	}
 
-	private static Screen modmenuUnavailable(MinecraftClient client) {
+	private static Screen modmenuUnavailable(Minecraft client) {
 		return notice(client, glowcase, missingModmenu);
 	}
 
-	private static Screen notImplemented(MinecraftClient client, String link) {
-		return notice(client, glowcase, Text.translatable("gui.glowcase.config_link.missing.link", link));
+	private static Screen notImplemented(Minecraft client, String link) {
+		return notice(client, glowcase, Component.translatable("gui.glowcase.config_link.missing.link", link));
 	}
 
-	private static Screen notice(MinecraftClient client, Text title, Text notice) {
-		return new NoticeScreen(() -> client.setScreen(null), title, notice, ScreenTexts.OK, true);
+	private static Screen notice(Minecraft client, Component title, Component notice) {
+		return new AlertScreen(() -> client.setScreen(null), title, notice, CommonComponents.GUI_OK, true);
 	}
 }

@@ -1,40 +1,40 @@
 package dev.hephaestus.glowcase.mixin.client.sound;
 
 import dev.hephaestus.glowcase.client.util.SoundPlayerProxy;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.client.sound.SoundSystem;
-import net.minecraft.client.sound.TickableSoundInstance;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.client.sounds.SoundEngine;
 
 /**
  * @author Ampflower
  **/
-@Mixin(SoundSystem.class)
+@Mixin(SoundEngine.class)
 public abstract class SoundSystemMixin implements SoundPlayerProxy {
 	@Shadow
-	public abstract boolean isPlaying(final SoundInstance sound);
+	public abstract boolean isActive(final SoundInstance sound);
 
 	@Shadow
 	@Final
-	private Map<SoundInstance, Integer> soundStartTicks;
+	private Map<SoundInstance, Integer> queuedSounds;
 
 	@Shadow
 	@Final
-	private List<TickableSoundInstance> soundsToPlayNextTick;
+	private List<TickableSoundInstance> queuedTickableSounds;
 
 	@Override
 	public boolean glowcase$isQueued(final SoundInstance sound) {
-		return this.soundStartTicks.containsKey(sound) ||
-			this.soundsToPlayNextTick.contains(sound);
+		return this.queuedSounds.containsKey(sound) ||
+			this.queuedTickableSounds.contains(sound);
 	}
 
 	@Override
 	public boolean glowcase$isQueuedOrPlaying(final SoundInstance sound) {
-		return this.isPlaying(sound) || this.glowcase$isQueued(sound);
+		return this.isActive(sound) || this.glowcase$isQueued(sound);
 	}
 }

@@ -6,9 +6,9 @@ import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.ItemDisplayBlockEntity;
 import eu.pb4.polydex.api.v1.hover.HoverDisplayBuilder;
 import eu.pb4.polydex.impl.PolydexImpl;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Makes Polydex hover display more correct information
@@ -29,8 +29,8 @@ public class PolydexCompatibility {
 		}
 
 		if (target.blockEntity() instanceof HyperlinkBlockEntity blockEntity && !blockEntity.getUrl().isEmpty()) {
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, Text.literal(blockEntity.getUrl()));
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, Text.literal("Internet"));
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, Component.literal(blockEntity.getUrl()));
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, Component.literal("Internet"));
 		}
 	}
 
@@ -41,8 +41,8 @@ public class PolydexCompatibility {
 		}
 
 		if (target.blockEntity() instanceof ConfigLinkBlockEntity blockEntity && !blockEntity.getUrl().isEmpty()) {
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, Text.literal(blockEntity.getUrl()));
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, Text.literal("Mod Config"));
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, Component.literal(blockEntity.getUrl()));
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, Component.literal("Mod Config"));
 		}
 	}
 
@@ -54,9 +54,9 @@ public class PolydexCompatibility {
 
 		if (target.blockEntity() instanceof ItemDisplayBlockEntity blockEntity && !blockEntity.matchesStack(ItemStack.EMPTY)) {
 			var item = blockEntity.getStack();
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, item.getName());
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.NAME, item.getHoverName());
 			// I won't break this I promise
-			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, PolydexImpl.getMod(Registries.ITEM.getId(item.getItem())));
+			hoverDisplayBuilder.setComponent(HoverDisplayBuilder.MOD_SOURCE, PolydexImpl.getMod(BuiltInRegistries.ITEM.getKey(item.getItem())));
 		}
 	}
 }

@@ -3,35 +3,34 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class TextBlock extends RotatableBlock {
-	public static final MapCodec<TextBlock> CODEC = createCodec(TextBlock::new);
+	public static final MapCodec<TextBlock> CODEC = simpleCodec(TextBlock::new);
 
-	public TextBlock(AbstractBlock.Settings settings) {
+	public TextBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
@@ -42,44 +41,44 @@ public class TextBlock extends RotatableBlock {
 	}
 
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 
 		if (world.getBlockEntity(pos) instanceof TextBlockEntity be) { // Wish we had ctx.side right now...
-			if (be.zOffset == TextBlockEntity.ZOffset.CENTER && Math.abs(placer.getPitch()) < 30) {
+			if (be.zOffset == TextBlockEntity.ZOffset.CENTER && Math.abs(placer.getXRot()) < 30) {
 				be.zOffset = TextBlockEntity.ZOffset.BACK;
-			} else if (be.zOffset == TextBlockEntity.ZOffset.BACK && Math.abs(placer.getPitch()) > 60) {
+			} else if (be.zOffset == TextBlockEntity.ZOffset.BACK && Math.abs(placer.getXRot()) > 60) {
 				be.zOffset = TextBlockEntity.ZOffset.CENTER;
 			}
-			be.markDirty();
+			be.setChanged();
 		}
 	}
 
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new TextBlockEntity(pos, state);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("block.glowcase.text_block.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.generic.tooltip").formatted(Formatting.DARK_GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.text_block.tooltip.1").formatted(Formatting.DARK_GRAY));
-		NbtComponent component = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("block.glowcase.text_block.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.text_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
+		CustomData component = stack.get(DataComponents.BLOCK_ENTITY_DATA);
 		if (component == null) return;
-		NbtCompound nbt = component.getNbt(); //TODO: use codecs
+		CompoundTag nbt = component.getUnsafe(); //TODO: use codecs
 		if (nbt == null) return;
-		for (NbtElement element : nbt.getList("lines").orElse(new NbtList())) {
+		for (Tag element : nbt.getList("lines").orElse(new ListTag())) {
 			Optional<String> line = element.asString();
 			String lineContent;
 			if (line.isPresent() && !(lineContent = line.get()).isBlank()) {
-				textConsumer.accept(Text.literal((lineContent.length() > 20 ? "%s...\"" : "%s").formatted(lineContent.substring(0, Math.min(lineContent.length(), 20)))).formatted(Formatting.DARK_PURPLE));
+				textConsumer.accept(Component.literal((lineContent.length() > 20 ? "%s...\"" : "%s").formatted(lineContent.substring(0, Math.min(lineContent.length(), 20)))).withStyle(ChatFormatting.DARK_PURPLE));
 			}
 		}
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 }

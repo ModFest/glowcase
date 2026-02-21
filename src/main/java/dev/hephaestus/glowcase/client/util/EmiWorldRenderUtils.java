@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.client.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 //import dev.emi.emi.api.EmiApi;
 //import dev.emi.emi.api.recipe.EmiRecipe;
 //import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -9,15 +8,7 @@ import com.mojang.blaze3d.systems.VertexSorter;
 //import dev.emi.emi.widget.RecipeBackground;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+//import net.minecraft.client.render.*;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector2i;

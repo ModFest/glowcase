@@ -1,28 +1,28 @@
 package dev.hephaestus.glowcase.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public abstract class RotatableBlock extends WaterloggableGlowcaseBlock {
 
-	public RotatableBlock(AbstractBlock.Settings settings) {
+	public RotatableBlock(BlockBehaviour.Properties settings) {
 		super(settings);
-		this.setDefaultState(this.getDefaultState().with(Properties.ROTATION, 0));
+		this.registerDefaultState(this.defaultBlockState().setValue(BlockStateProperties.ROTATION_16, 0));
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
-		builder.add(Properties.ROTATION);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
+		builder.add(BlockStateProperties.ROTATION_16);
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(Properties.ROTATION, MathHelper.floor((double) ((180.0F + ctx.getPlayerYaw()) * 16.0F / 360.0F) + 0.5D) & 15);
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(BlockStateProperties.ROTATION_16, Mth.floor((double) ((180.0F + ctx.getRotation()) * 16.0F / 360.0F) + 0.5D) & 15);
 	}
 }

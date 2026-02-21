@@ -5,45 +5,45 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.StackInteractable;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class EntityDisplayBlock extends StackInteractableBlock {
-	public static final MapCodec<EntityDisplayBlock> CODEC = createCodec(EntityDisplayBlock::new);
+	public static final MapCodec<EntityDisplayBlock> CODEC = simpleCodec(EntityDisplayBlock::new);
 
-	public EntityDisplayBlock(AbstractBlock.Settings settings) {
+	public EntityDisplayBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new EntityDisplayBlockEntity(pos, state);
 	}
 
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-		super.onPlaced(world, pos, state, placer, itemStack);
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+		super.setPlacedBy(world, pos, state, placer, itemStack);
 		if (placer != null && world.getBlockEntity(pos) instanceof DisplayBlockEntity be) {
-			be.setYaw((Math.round(((540.0F - placer.getHeadYaw())) / 45.0F) * 45) % 360);
+			be.setYaw((Math.round(((540.0F - placer.getYHeadRot())) / 45.0F) * 45) % 360);
 		}
 	}
 
@@ -54,26 +54,26 @@ public class EntityDisplayBlock extends StackInteractableBlock {
 	}
 
 	@Override
-	boolean canTarget(PlayerEntity player, BlockPos pos) {
-		if (!(player.getWorld().getBlockEntity(pos) instanceof StackInteractable be)) return false;
-		return canEditGlowcase(player, pos) && ((be.matchesStack(ItemStack.EMPTY) && player.getMainHandStack().getItem() instanceof SpawnEggItem) || be.matchesStack(player.getMainHandStack()) || player.getMainHandStack().isIn(Glowcase.ITEM_TAG));
+	boolean canTarget(Player player, BlockPos pos) {
+		if (!(player.level().getBlockEntity(pos) instanceof StackInteractable be)) return false;
+		return canEditGlowcase(player, pos) && ((be.matchesStack(ItemStack.EMPTY) && player.getMainHandItem().getItem() instanceof SpawnEggItem) || be.matchesStack(player.getMainHandItem()) || player.getMainHandItem().is(Glowcase.ITEM_TAG));
 	}
 
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
 		return checkType(type, Glowcase.ENTITY_DISPLAY_BLOCK_ENTITY.get(), EntityDisplayBlockEntity::tick);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("block.glowcase.entity_display_block.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.entity_display_block.tooltip.1").formatted(Formatting.DARK_GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.entity_display_block.tooltip.2").formatted(Formatting.DARK_GRAY));
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.2").withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 }

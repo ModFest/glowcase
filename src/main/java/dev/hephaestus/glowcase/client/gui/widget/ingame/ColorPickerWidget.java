@@ -1,21 +1,21 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.ColorPickerIncludedScreen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.texture.TextureSetup;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +29,14 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class ColorPickerWidget extends PressableWidget {
-	static final Identifier CONFIRM_TEXTURE = Identifier.ofVanilla("pending_invite/accept");
-	static final Identifier CONFIRM_HIGHLIGHTED_TEXTURE = Identifier.ofVanilla("pending_invite/accept_highlighted");
-	static final Identifier CANCEL_TEXTURE = Identifier.ofVanilla("pending_invite/reject");
-	static final Identifier CANCEL_HIGHLIGHTED_TEXTURE = Identifier.ofVanilla("pending_invite/reject_highlighted");
+public class ColorPickerWidget extends AbstractButton {
+	static final ResourceLocation CONFIRM_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/accept");
+	static final ResourceLocation CONFIRM_HIGHLIGHTED_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/accept_highlighted");
+	static final ResourceLocation CANCEL_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/reject");
+	static final ResourceLocation CANCEL_HIGHLIGHTED_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/reject_highlighted");
 
 	public final ColorPickerIncludedScreen screen;
-	public Element targetElement;
+	public GuiEventListener targetElement;
 	public Color color = Color.red;
 	public boolean includePresets = true;
 	public ArrayList<ColorPresetWidget> presetWidgets = Lists.newArrayList();
@@ -44,7 +44,7 @@ public class ColorPickerWidget extends PressableWidget {
 	public IconButtonWidget confirmButton;
 	public IconButtonWidget cancelButton;
 	private Consumer<Color> changeListener;
-	private BiConsumer<Color, @Nullable Formatting> presetListener;
+	private BiConsumer<Color, @Nullable ChatFormatting> presetListener;
 	private Consumer<ColorPickerWidget> onAccept;
 	private Consumer<ColorPickerWidget> onCancel;
 
@@ -68,7 +68,7 @@ public class ColorPickerWidget extends PressableWidget {
 		return new ColorPickerWidget.Builder(screen, x, y);
 	}
 
-	public ColorPickerWidget(ColorPickerIncludedScreen screen, int x, int y, int width, int height, Text message) {
+	public ColorPickerWidget(ColorPickerIncludedScreen screen, int x, int y, int width, int height, Component message) {
 		super(x, y, width, height, message);
 		this.screen = screen;
 
@@ -83,7 +83,7 @@ public class ColorPickerWidget extends PressableWidget {
 		updateThumbPositions();
 	}
 
-	public void setTargetElement(Element element) {
+	public void setTargetElement(GuiEventListener element) {
 		this.targetElement = element;
 	}
 
@@ -133,7 +133,7 @@ public class ColorPickerWidget extends PressableWidget {
 		this.screen.insertHexTag(hex);
 	}
 
-	public void insertFormatting(Formatting formatting) {
+	public void insertFormatting(ChatFormatting formatting) {
 		this.screen.insertFormattingTag(formatting);
 	}
 
@@ -144,17 +144,17 @@ public class ColorPickerWidget extends PressableWidget {
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		if (!visible) return;
 		updateHSL();
 
 		//context.setShaderColor(1f, 1f, 1f, this.alpha);
 		/*RenderSystem.enableBlend();
 		RenderSystem.enableDepthTest();*/
-		Matrix3x2fStack matrices = context.getMatrices();
+		Matrix3x2fStack matrices = context.pose();
 		//context.applyBlur();
 
-		context.createNewRootLayer();
+		context.nextStratum();
 		matrices.pushMatrix();
 
 		int x = this.getX();
@@ -164,8 +164,8 @@ public class ColorPickerWidget extends PressableWidget {
 		int height = this.getHeight();
 
 		//background
-		context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
-		if (this.isSelected()) {
+		context.blit(RenderPipelines.GUI_TEXTURED, ResourceLocation.withDefaultNamespace("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
+		if (this.isHoveredOrFocused()) {
 			//outline
 			drawOutline(context, x, y, width, height, Color.white);
 		}
@@ -218,11 +218,11 @@ public class ColorPickerWidget extends PressableWidget {
 		presetY = hueY + hueHeight + presetPadding;
 	}
 
-	private void drawColorPreview(DrawContext context, int x, int y, int width, int height) {
+	private void drawColorPreview(GuiGraphics context, int x, int y, int width, int height) {
 		context.fill(x, y, x + width, y + height, this.color.getRGB());
 	}
 
-	private void drawHueBar(DrawContext context, int x, int y, int width, int height, int z) {
+	private void drawHueBar(GuiGraphics context, int x, int y, int width, int height, int z) {
 		//rainbow gradient
 		int[] colors = new int[]{
 			Color.red.getRGB(), Color.yellow.getRGB(), Color.green.getRGB(),
@@ -245,7 +245,7 @@ public class ColorPickerWidget extends PressableWidget {
 		drawOutline(context, hueThumbX - 3, y - 1, 6, height + 2, Color.white);
 	}
 
-	private void drawSatLight(DrawContext context, int x, int y, int width, int height) {
+	private void drawSatLight(GuiGraphics context, int x, int y, int width, int height) {
 		//white to current color's hue, left to right
 		sidewaysGradient(context, x, y, width, height, Color.white.getRGB(), getRgbFromHueThumb());
 
@@ -257,7 +257,7 @@ public class ColorPickerWidget extends PressableWidget {
 		drawOutline(context, satLightThumbX - 4, satLightThumbY - 4, 8, 8, Color.white);
 	}
 
-	private void drawOutline(DrawContext context, int x, int y, int width, int height, Color outlineColor) {
+	private void drawOutline(GuiGraphics context, int x, int y, int width, int height, Color outlineColor) {
 		int color = outlineColor.getRGB();
 		context.fill(x, y, x + width, y + 1, color);
 		context.fill(x, y, x + 1, y + height, color);
@@ -265,21 +265,21 @@ public class ColorPickerWidget extends PressableWidget {
 		context.fill(x, y + height, x + width, y + height - 1, color);
 	}
 
-	private void sidewaysGradient(DrawContext context, int x, int y, int width, int height, int startColor, int endColor) {
-		context.state.addSimpleElement(new SimpleGuiElementRenderState() {
+	private void sidewaysGradient(GuiGraphics context, int x, int y, int width, int height, int startColor, int endColor) {
+		context.guiRenderState.submitGuiElement(new GuiElementRenderState() {
 
 			@Override
-			public ScreenRect bounds() {
-				return new ScreenRect(x, y, width, height).transformEachVertex(context.getMatrices());
+			public ScreenRectangle bounds() {
+				return new ScreenRectangle(x, y, width, height).transformMaxBounds(context.pose());
 			}
 
 			@Override
-			public void setupVertices(VertexConsumer vertices, float depth) {
-				Matrix3x2fStack matrix = context.getMatrices();
-				vertices.vertex(matrix, x, y, depth).color(startColor);
-				vertices.vertex(matrix, x, y + height, depth).color(startColor);
-				vertices.vertex(matrix, x + width, y + height, depth).color(endColor);
-				vertices.vertex(matrix, x + width, y, depth).color(endColor);
+			public void buildVertices(VertexConsumer vertices, float depth) {
+				Matrix3x2fStack matrix = context.pose();
+				vertices.addVertexWith2DPose(matrix, x, y, depth).setColor(startColor);
+				vertices.addVertexWith2DPose(matrix, x, y + height, depth).setColor(startColor);
+				vertices.addVertexWith2DPose(matrix, x + width, y + height, depth).setColor(endColor);
+				vertices.addVertexWith2DPose(matrix, x + width, y, depth).setColor(endColor);
 			}
 
 			@Override
@@ -289,17 +289,17 @@ public class ColorPickerWidget extends PressableWidget {
 
 			@Override
 			public TextureSetup textureSetup() {
-				return TextureSetup.empty();
+				return TextureSetup.noTexture();
 			}
 
 			@Override
-			public @Nullable ScreenRect scissorArea() {
+			public @Nullable ScreenRectangle scissorArea() {
 				return null;
 			}
 		});
 	}
 
-	private void drawPresets(DrawContext context, int mouseX, int mouseY, float delta, int x, int y, int height, int z, int presetSize, int presetsPerLine, int presetPadding) {
+	private void drawPresets(GuiGraphics context, int mouseX, int mouseY, float delta, int x, int y, int height, int z, int presetSize, int presetsPerLine, int presetPadding) {
 		int presetX = x;
 		int presetY = y;
 		int renderedPresets = 0;
@@ -320,22 +320,22 @@ public class ColorPickerWidget extends PressableWidget {
 
 	//done manually to keep list order instead of looping through Formatting.values()
 	public void addDefaultPresets() {
-		ColorPresetWidget darkRed = ColorPresetWidget.fromFormatting(this, Formatting.DARK_RED);
-		ColorPresetWidget red = ColorPresetWidget.fromFormatting(this, Formatting.RED);
-		ColorPresetWidget gold = ColorPresetWidget.fromFormatting(this, Formatting.GOLD);
-		ColorPresetWidget yellow = ColorPresetWidget.fromFormatting(this, Formatting.YELLOW);
-		ColorPresetWidget green = ColorPresetWidget.fromFormatting(this, Formatting.GREEN);
-		ColorPresetWidget darkGreen = ColorPresetWidget.fromFormatting(this, Formatting.DARK_GREEN);
-		ColorPresetWidget aqua = ColorPresetWidget.fromFormatting(this, Formatting.AQUA);
-		ColorPresetWidget darkAqua = ColorPresetWidget.fromFormatting(this, Formatting.DARK_AQUA);
-		ColorPresetWidget blue = ColorPresetWidget.fromFormatting(this, Formatting.BLUE);
-		ColorPresetWidget darkBlue = ColorPresetWidget.fromFormatting(this, Formatting.DARK_BLUE);
-		ColorPresetWidget lightPurple = ColorPresetWidget.fromFormatting(this, Formatting.LIGHT_PURPLE);
-		ColorPresetWidget darkPurple = ColorPresetWidget.fromFormatting(this, Formatting.DARK_PURPLE);
-		ColorPresetWidget white = ColorPresetWidget.fromFormatting(this, Formatting.WHITE);
-		ColorPresetWidget grey = ColorPresetWidget.fromFormatting(this, Formatting.GRAY);
-		ColorPresetWidget darkGrey = ColorPresetWidget.fromFormatting(this, Formatting.DARK_GRAY);
-		ColorPresetWidget black = ColorPresetWidget.fromFormatting(this, Formatting.BLACK);
+		ColorPresetWidget darkRed = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_RED);
+		ColorPresetWidget red = ColorPresetWidget.fromFormatting(this, ChatFormatting.RED);
+		ColorPresetWidget gold = ColorPresetWidget.fromFormatting(this, ChatFormatting.GOLD);
+		ColorPresetWidget yellow = ColorPresetWidget.fromFormatting(this, ChatFormatting.YELLOW);
+		ColorPresetWidget green = ColorPresetWidget.fromFormatting(this, ChatFormatting.GREEN);
+		ColorPresetWidget darkGreen = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_GREEN);
+		ColorPresetWidget aqua = ColorPresetWidget.fromFormatting(this, ChatFormatting.AQUA);
+		ColorPresetWidget darkAqua = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_AQUA);
+		ColorPresetWidget blue = ColorPresetWidget.fromFormatting(this, ChatFormatting.BLUE);
+		ColorPresetWidget darkBlue = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_BLUE);
+		ColorPresetWidget lightPurple = ColorPresetWidget.fromFormatting(this, ChatFormatting.LIGHT_PURPLE);
+		ColorPresetWidget darkPurple = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_PURPLE);
+		ColorPresetWidget white = ColorPresetWidget.fromFormatting(this, ChatFormatting.WHITE);
+		ColorPresetWidget grey = ColorPresetWidget.fromFormatting(this, ChatFormatting.GRAY);
+		ColorPresetWidget darkGrey = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_GRAY);
+		ColorPresetWidget black = ColorPresetWidget.fromFormatting(this, ChatFormatting.BLACK);
 		this.presetWidgets.addAll(List.of(darkRed, red, gold, yellow, green, darkGreen, aqua, darkAqua,
 			blue, darkBlue, lightPurple, darkPurple, white, grey, darkGrey, black));
 	}
@@ -529,15 +529,15 @@ public class ColorPickerWidget extends PressableWidget {
 	}
 
 	@Override
-	public void appendClickableNarrations(NarrationMessageBuilder builder) {
-		this.appendDefaultNarrations(builder);
+	public void updateWidgetNarration(NarrationElementOutput builder) {
+		this.defaultButtonNarrationText(builder);
 	}
 
 	public void setChangeListener(Consumer<Color> changeListener) {
 		this.changeListener = changeListener;
 	}
 
-	public void setPresetListener(BiConsumer<Color, @Nullable Formatting> presetListener) {
+	public void setPresetListener(BiConsumer<Color, @Nullable ChatFormatting> presetListener) {
 		this.presetListener = presetListener;
 	}
 
@@ -549,7 +549,7 @@ public class ColorPickerWidget extends PressableWidget {
 		this.onCancel = onCancel;
 	}
 
-	public BiConsumer<Color, @Nullable Formatting> getPresetListener() {
+	public BiConsumer<Color, @Nullable ChatFormatting> getPresetListener() {
 		return presetListener;
 	}
 
@@ -592,7 +592,7 @@ public class ColorPickerWidget extends PressableWidget {
 		}
 
 		public ColorPickerWidget build() {
-			ColorPickerWidget colorPickerWidget = new ColorPickerWidget(this.screen, this.x, this.y, this.width, this.height, Text.of(""));
+			ColorPickerWidget colorPickerWidget = new ColorPickerWidget(this.screen, this.x, this.y, this.width, this.height, Component.nullToEmpty(""));
 			colorPickerWidget.setIncludePresets(this.includePresets);
 			if (this.includePresets) {
 				colorPickerWidget.setPresets(this.includeDefaultPresets, this.presets);

@@ -3,36 +3,38 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class HyperlinkBlock extends WaterloggableGlowcaseBlock {
-	public static final MapCodec<HyperlinkBlock> CODEC = createCodec(HyperlinkBlock::new);
+	public static final MapCodec<HyperlinkBlock> CODEC = simpleCodec(HyperlinkBlock::new);
 
-	public HyperlinkBlock(AbstractBlock.Settings settings) {
+	public HyperlinkBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected VoxelShape targetedOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	protected VoxelShape targetedOutlineShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return HALF_CUBED;
 	}
 
@@ -43,33 +45,33 @@ public class HyperlinkBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	boolean canTarget(PlayerEntity player, BlockPos pos) {
+	boolean canTarget(Player player, BlockPos pos) {
 		return true;
 	}
 
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new HyperlinkBlockEntity(pos, state);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (!(world.getBlockEntity(pos) instanceof HyperlinkBlockEntity be)) return ActionResult.CONSUME;
-		if (world.isClient && !be.getUrl().isBlank()) {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (!(world.getBlockEntity(pos) instanceof HyperlinkBlockEntity be)) return InteractionResult.CONSUME;
+		if (world.isClientSide && !be.getUrl().isBlank()) {
 			Glowcase.proxy.openUrlWithConfirmation(be.getUrl());
 		}
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("block.glowcase.hyperlink_block.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.generic.tooltip").formatted(Formatting.DARK_GRAY));
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("block.glowcase.hyperlink_block.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 }

@@ -2,34 +2,34 @@ package dev.hephaestus.glowcase.packet;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public record C2SEditHyperlinkBlock(BlockPos pos, String title, String url) implements C2SEditBlockEntity {
-	public static final Id<C2SEditHyperlinkBlock> ID = new Id<>(Glowcase.id("channel.hyperlink.save"));
-	public static final PacketCodec<RegistryByteBuf, C2SEditHyperlinkBlock> PACKET_CODEC = PacketCodec.tuple(
-		BlockPos.PACKET_CODEC, C2SEditHyperlinkBlock::pos,
-		PacketCodecs.STRING, C2SEditHyperlinkBlock::title,
-		PacketCodecs.STRING, C2SEditHyperlinkBlock::url,
+	public static final Type<C2SEditHyperlinkBlock> ID = new Type<>(Glowcase.id("channel.hyperlink.save"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditHyperlinkBlock> PACKET_CODEC = StreamCodec.composite(
+		BlockPos.STREAM_CODEC, C2SEditHyperlinkBlock::pos,
+		ByteBufCodecs.STRING_UTF8, C2SEditHyperlinkBlock::title,
+		ByteBufCodecs.STRING_UTF8, C2SEditHyperlinkBlock::url,
 		C2SEditHyperlinkBlock::new
 	);
 
 	public static C2SEditHyperlinkBlock of(HyperlinkBlockEntity be) {
-		return new C2SEditHyperlinkBlock(be.getPos(), be.getTitle(), be.getUrl());
+		return new C2SEditHyperlinkBlock(be.getBlockPos(), be.getTitle(), be.getUrl());
 	}
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 
 	@Override
-	public void receive(ServerWorld world, BlockEntity blockEntity) {
+	public void receive(ServerLevel world, BlockEntity blockEntity) {
 		if (!(blockEntity instanceof HyperlinkBlockEntity be)) return;
 		if (this.title().length() <= HyperlinkBlockEntity.TITLE_MAX_LENGTH) {
 			be.setTitle(this.title());

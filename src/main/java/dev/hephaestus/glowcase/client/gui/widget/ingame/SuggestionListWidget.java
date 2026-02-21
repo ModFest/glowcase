@@ -4,42 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.ContainerEventHandler;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.resource.CrossFrameResourcePool;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.hephaestus.glowcase.util.MathUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.ParentElement;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.texture.TextureSetup;
-import net.minecraft.client.util.Pool;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.lwjgl.glfw.GLFW;
 
-public class SuggestionListWidget<T> extends ClickableWidget {
-	public static final Identifier BLUR_ID = Identifier.ofVanilla("blur");
-	public static final Framebuffer FRAMEBUFFER = new SimpleFramebuffer("Glowcase Suggestions", 1, 1, false);
-	public static final Pool POOL = new Pool(3);
-	private final TextRenderer textRenderer;
-	private final MinecraftClient client;
+public class SuggestionListWidget<T> extends AbstractWidget {
+	public static final ResourceLocation BLUR_ID = ResourceLocation.withDefaultNamespace("blur");
+	public static final RenderTarget FRAMEBUFFER = new TextureTarget("Glowcase Suggestions", 1, 1, false);
+	public static final CrossFrameResourcePool POOL = new CrossFrameResourcePool(3);
+	private final Font textRenderer;
+	private final Minecraft client;
 
 	private final List<T> suggestions = new ArrayList<>();
 	private int selectedItem = -1;
-	private final @Nullable TextFieldWidget textFieldWidget;
+	private final @Nullable EditBox textFieldWidget;
 	private @NotNull String filter = "";
     private int scrollOffset = 0;
 
@@ -58,12 +56,12 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     private int scrollbarDragStartY = 0;
     private int initialScrollOffset = 0;
 
-    public SuggestionListWidget(@Nullable TextFieldWidget widget, TextRenderer textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
-        super(x, y, width, height, Text.empty());
+    public SuggestionListWidget(@Nullable EditBox widget, Font textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
+        super(x, y, width, height, Component.empty());
 
 		this.textFieldWidget = widget;
 
-		this.client = MinecraftClient.getInstance();
+		this.client = Minecraft.getInstance();
 
         this.baseLineHeight = baseLineHeight;
         this.padding = padding;
@@ -75,37 +73,37 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 		setWidth(width);
     }
 
-	public static <T> SuggestionListWidget<T> forTextField(TextFieldWidget textField, TextRenderer textRenderer, Function<T, String> toStringFunction) {
+	public static <T> SuggestionListWidget<T> forTextField(EditBox textField, Font textRenderer, Function<T, String> toStringFunction) {
 		return new SuggestionListWidget<>(
 			textField, textRenderer,
 			textField.getX(),
 			textField.getY() + textField.getHeight() + 5, textField.getWidth(),
 			100, 10, 4, 5,
-			a -> textField.setText(toStringFunction.apply(a)),
+			a -> textField.setValue(toStringFunction.apply(a)),
 			toStringFunction
 		);
 	}
 
-	public static <T> SuggestionListWidget<T> forTextFieldWithStaticSuggestions(TextFieldWidget textField, TextRenderer textRenderer, List<T> suggestions, Function<T, String> toStringFunction, @Nullable ParentElement parent) {
+	public static <T> SuggestionListWidget<T> forTextFieldWithStaticSuggestions(EditBox textField, Font textRenderer, List<T> suggestions, Function<T, String> toStringFunction, @Nullable ContainerEventHandler parent) {
 		var suggestionWidget = forTextField(textField, textRenderer, toStringFunction);
-		textField.setChangedListener((text) -> suggestionWidget.updateSuggestions(suggestions, text, parent));
+		textField.setResponder((text) -> suggestionWidget.updateSuggestions(suggestions, text, parent));
 		return suggestionWidget;
 	}
 
 	@Override
 	public void setWidth(int width) {
 		super.setWidth(width);
-		while (textRenderer.getWidth("m".repeat(characterWidth)) < this.width) {
+		while (textRenderer.width("m".repeat(characterWidth)) < this.width) {
 			characterWidth++;
 		}
 	}
 
-	public void updateSuggestions(List<T> newSuggestions, String filter, @Nullable ParentElement parent) {
+	public void updateSuggestions(List<T> newSuggestions, String filter, @Nullable ContainerEventHandler parent) {
 		updateSuggestions(newSuggestions, filter, true, parent);
 	}
 
 	// update the suggestion list based on filter
-    public void updateSuggestions(List<T> newSuggestions, String filter, boolean strict, @Nullable ParentElement parent) {
+    public void updateSuggestions(List<T> newSuggestions, String filter, boolean strict, @Nullable ContainerEventHandler parent) {
         suggestions.clear();
 		this.filter = filter;
 
@@ -135,7 +133,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         if (suggestions.isEmpty()) return;
 
 		if (textFieldWidget != null && !textFieldWidget.isFocused()) {
@@ -143,15 +141,15 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 			this.setFocused(false);
 		}
 
-		context.createNewRootLayer();
-		context.state.addSimpleElement(new SimpleGuiElementRenderState() {
+		context.nextStratum();
+		context.guiRenderState.submitGuiElement(new GuiElementRenderState() {
 			@Override
-			public void setupVertices(VertexConsumer vertices, float depth) {
-				Matrix3x2fStack matrix = context.getMatrices();
-				vertices.vertex(matrix, 0, 0, depth).texture(0, 0).color(0xFFFFFFFF);
-				vertices.vertex(matrix, 0, 1, depth).texture(0, 1).color(0xFFFFFFFF);
-				vertices.vertex(matrix, 1, 1, depth).texture(1, 1).color(0xFFFFFFFF);
-				vertices.vertex(matrix, 1, 0, depth).texture(1, 0).color(0xFFFFFFFF);
+			public void buildVertices(VertexConsumer vertices, float depth) {
+				Matrix3x2fStack matrix = context.pose();
+				vertices.addVertexWith2DPose(matrix, 0, 0, depth).setUv(0, 0).setColor(0xFFFFFFFF);
+				vertices.addVertexWith2DPose(matrix, 0, 1, depth).setUv(0, 1).setColor(0xFFFFFFFF);
+				vertices.addVertexWith2DPose(matrix, 1, 1, depth).setUv(1, 1).setColor(0xFFFFFFFF);
+				vertices.addVertexWith2DPose(matrix, 1, 0, depth).setUv(1, 0).setColor(0xFFFFFFFF);
 			}
 
 			@Override
@@ -161,22 +159,22 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 
 			@Override
 			public TextureSetup textureSetup() {
-				return TextureSetup.withoutGlTexture(FRAMEBUFFER.getColorAttachmentView());
+				return TextureSetup.singleTexture(FRAMEBUFFER.getColorTextureView());
 			}
 
 			@Override
-			public @Nullable ScreenRect scissorArea() {
+			public @Nullable ScreenRectangle scissorArea() {
 				return null;
 			}
 
 			@Override
-			public @Nullable ScreenRect bounds() {
-				return ScreenRect.empty();
+			public @Nullable ScreenRectangle bounds() {
+				return ScreenRectangle.empty();
 			}
 		});
 
-		context.createNewRootLayer();
-        context.getMatrices().pushMatrix();
+		context.nextStratum();
+        context.pose().pushMatrix();
 
 		int bgColor = 0x90000000;
         int adjustedLineHeight = baseLineHeight + padding * 2;
@@ -192,7 +190,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 		int y = SuggestionListWidget.this.getY();
 		context.enableScissor(x, y, x + listWidth, y + dynamicHeight);
 
-		context.drawTexturedQuad(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorAttachmentView(), 0, 0, FRAMEBUFFER.textureWidth / this.client.getWindow().getScaleFactor(), FRAMEBUFFER.textureHeight / this.client.getWindow().getScaleFactor(), 0, 1, 0, 1, -1);
+		context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
 
         context.fill(x, y, x + listWidth, y + dynamicHeight, bgColor);
 
@@ -219,10 +217,10 @@ public class SuggestionListWidget<T> extends ClickableWidget {
             }
 
             // detect if the text is too long AND if the item is hovered, then scroll, otherwise don't
-            if (textRenderer.getWidth(suggestionText) > (this.getWidth() - padding - 20)) {
-                drawOverflowText(context, textRenderer, Text.literal(suggestionText), x + padding, suggestionY + padding - 2, x + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFFFF, hover);
+            if (textRenderer.width(suggestionText) > (this.getWidth() - padding - 20)) {
+                drawOverflowText(context, textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding - 2, x + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFFFF, hover);
             } else {
-                context.drawTextWithShadow(textRenderer, Text.literal(suggestionText), x + padding, suggestionY + padding + 1, 0xFFFFFFFF);
+                context.drawString(textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding + 1, 0xFFFFFFFF);
             }
         }
 
@@ -236,7 +234,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
 
 			context.enableScissor(sbX, y, sbX + scrollbarWidth, y + dynamicHeight);
 
-			context.drawTexturedQuad(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorAttachmentView(), 0, 0, FRAMEBUFFER.textureWidth / this.client.getWindow().getScaleFactor(), FRAMEBUFFER.textureHeight / this.client.getWindow().getScaleFactor(), 0, 1, 0, 1, -1);
+			context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
 
             context.fill(sbX, y, sbX + scrollbarWidth, y + dynamicHeight, bgColor);
             context.disableScissor();
@@ -255,7 +253,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
             context.fill(handleX, handleY, handleX + handleWidth, handleY + handleHeight, 0xFFFFFFFF);
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
     @Override
@@ -340,7 +338,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     }
     
     @Override
-    protected void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {}
+    protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput builder) {}
     
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
@@ -364,7 +362,7 @@ public class SuggestionListWidget<T> extends ClickableWidget {
         return overList || overScrollbar;
     }
 
-    private void drawOutline(DrawContext context, int x, int y, int width, int height, int color) {
+    private void drawOutline(GuiGraphics context, int x, int y, int width, int height, int color) {
         context.fill(x, y, x + width, y + 1, color);
         context.fill(x, y + height - 1, x + width, y + height, color);
         context.fill(x, y, x + 1, y + height, color);
@@ -372,21 +370,21 @@ public class SuggestionListWidget<T> extends ClickableWidget {
     }
 
     // similar to drawScrollableText but not centered
-    private void drawOverflowText(DrawContext context, TextRenderer textRenderer, Text text, int startX, int startY, int endX, int endY, int color, boolean hovered) {
-        int textRendererWidth = textRenderer.getWidth(text);
+    private void drawOverflowText(GuiGraphics context, Font textRenderer, Component text, int startX, int startY, int endX, int endY, int color, boolean hovered) {
+        int textRendererWidth = textRenderer.width(text);
         int availableWidth = endX - startX;
         int y = startY + ((endY - startY) - 9) / 2;
     
         // if hovered, we scroll
         if (hovered) {
             int extra = textRendererWidth - availableWidth;
-            double time = Util.getMeasuringTimeMs() / 1000.0;
+            double time = Util.getMillis() / 1000.0;
             double period = Math.max(extra / 8.0, 2.0);
             double scroll = 0.5 - 0.5 * Math.cos(2 * Math.PI * time / period);
             int offset = (int)(scroll * extra);
             
             context.enableScissor(startX, startY, endX, endY);
-            context.drawTextWithShadow(textRenderer, text, startX - offset, y, color);
+            context.drawString(textRenderer, text, startX - offset, y, color);
             context.disableScissor();
         } else {
             // otherwise try to shorten the text as much as possible
@@ -437,14 +435,14 @@ public class SuggestionListWidget<T> extends ClickableWidget {
                     String prefix = collapsedText.substring(0, slashIndex + 1);
                     String lastPart = collapsedText.substring(slashIndex + 1);
 
-                    if (textRenderer.getWidth(collapsedText) > availableWidth) {
-                        int prefixWidth = textRenderer.getWidth(prefix);
+                    if (textRenderer.width(collapsedText) > availableWidth) {
+                        int prefixWidth = textRenderer.width(prefix);
                         int allowedForLast = availableWidth - prefixWidth;
 
                         if (allowedForLast < 0) {
                             finalText = trimToWidth(collapsedText, availableWidth, textRenderer);
                         } else {
-                            if (textRenderer.getWidth(lastPart) > allowedForLast) {
+                            if (textRenderer.width(lastPart) > allowedForLast) {
                                 lastPart = trimToWidth(lastPart, allowedForLast, textRenderer);
                             }
 
@@ -455,26 +453,26 @@ public class SuggestionListWidget<T> extends ClickableWidget {
                     finalText = trimToWidth(collapsedText, availableWidth, textRenderer);
                 }
             } else {
-                if (textRenderer.getWidth(finalText) > availableWidth) {
+                if (textRenderer.width(finalText) > availableWidth) {
                     finalText = trimToWidth(finalText, availableWidth, textRenderer);
                 }
             }
 
             context.enableScissor(startX, startY, endX, endY);
-            context.drawTextWithShadow(textRenderer, Text.literal(finalText), startX, y, color);
+            context.drawString(textRenderer, Component.literal(finalText), startX, y, color);
             context.disableScissor();
         }
     }
 
-    private String trimToWidth(String rawText, int availableWidth, TextRenderer textRenderer) {
-        if (textRenderer.getWidth(rawText) <= availableWidth) {
+    private String trimToWidth(String rawText, int availableWidth, Font textRenderer) {
+        if (textRenderer.width(rawText) <= availableWidth) {
             return rawText;
         }
 
-        int maxWidth = availableWidth - textRenderer.getWidth("...");
+        int maxWidth = availableWidth - textRenderer.width("...");
         int trimIndex = rawText.length();
 
-        while (trimIndex > 0 && textRenderer.getWidth(rawText.substring(0, trimIndex)) > maxWidth) {
+        while (trimIndex > 0 && textRenderer.width(rawText.substring(0, trimIndex)) > maxWidth) {
             trimIndex--;
         }
         

@@ -2,19 +2,19 @@ package dev.hephaestus.glowcase.mixin.client;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@Mixin(InGameHud.class)
+@Mixin(Gui.class)
 public abstract class MixinInGameHud {
-    @ModifyArg(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0), index = 1)
-    public Identifier usePickupCrosshair(Identifier original) {
-        if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().world != null && MinecraftClient.getInstance().crosshairTarget instanceof BlockHitResult bhr && MinecraftClient.getInstance().world.getBlockState(bhr.getBlockPos()).isOf(Glowcase.ITEM_PROVIDER_BLOCK.get()) && Glowcase.ITEM_PROVIDER_BLOCK.get().canPickup(MinecraftClient.getInstance().player, bhr.getBlockPos())) {
+    @ModifyArg(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIII)V", ordinal = 0), index = 1)
+    public ResourceLocation usePickupCrosshair(ResourceLocation original) {
+        if (Minecraft.getInstance().player != null && Minecraft.getInstance().level != null && Minecraft.getInstance().hitResult instanceof BlockHitResult bhr && Minecraft.getInstance().level.getBlockState(bhr.getBlockPos()).is(Glowcase.ITEM_PROVIDER_BLOCK.get()) && Glowcase.ITEM_PROVIDER_BLOCK.get().canPickup(Minecraft.getInstance().player, bhr.getBlockPos())) {
             return GlowcaseClient.PROVIDER_CROSSHAIR_TEXTURE;
         }
 

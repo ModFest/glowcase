@@ -2,29 +2,28 @@ package dev.hephaestus.glowcase.client.util;
 
 import dev.hephaestus.glowcase.Glowcase;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.SynchronousResourceReloader;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class NoteTextColorResource implements SynchronousResourceReloader, IdentifiableResourceReloadListener {
-	private static final Identifier TEXTURE = Glowcase.id("textures/gui/note.png");
+public class NoteTextColorResource implements ResourceManagerReloadListener, IdentifiableResourceReloadListener {
+	private static final ResourceLocation TEXTURE = Glowcase.id("textures/gui/note.png");
 
 	public static int TXT_COLOR = 0x000000;
 
 	@Override
-	public void reload(ResourceManager manager) {
+	public void onResourceManagerReload(ResourceManager manager) {
 		Optional<Resource> resource = manager.getResource(TEXTURE);
 
 		if (resource.isPresent()) {
 			try {
-				InputStream inputStream = resource.get().getInputStream();
+				InputStream inputStream = resource.get().open();
 				BufferedImage image = ImageIO.read(inputStream);
 
 				TXT_COLOR = image.getRGB(image.getWidth()-1, image.getHeight()-1);
@@ -33,7 +32,7 @@ public class NoteTextColorResource implements SynchronousResourceReloader, Ident
 	}
 
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return Glowcase.id("note_txt_color");
 	}
 }

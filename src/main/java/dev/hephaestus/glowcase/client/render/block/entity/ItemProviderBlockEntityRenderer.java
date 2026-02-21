@@ -1,46 +1,46 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.ItemProviderBlock;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
-public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context context) implements BlockEntityRenderer<ItemProviderBlockEntity> {
-	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
+public record ItemProviderBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemProviderBlockEntity> {
+	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
 
 	@Override
-	public void render(ItemProviderBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos) {
-		if (entity.getWorld() == null || entity.getWorld().getBlockState(entity.getPos()).isAir()) return;
-		Entity camera = MinecraftClient.getInstance().getCameraEntity();
-		BlockState blockState = entity.getWorld().getBlockState(entity.getPos());
+	public void render(ItemProviderBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
+		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
+		Entity camera = Minecraft.getInstance().getCameraEntity();
+		BlockState blockState = entity.getLevel().getBlockState(entity.getBlockPos());
 
 		if (camera == null) return;
 
-		matrices.push();
+		matrices.pushPose();
 		matrices.translate(0.5D, 0D, 0.5D);
 
 		float yaw = 0F;
@@ -51,26 +51,26 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context
 
 		Direction facing = Direction.UP;
 
-		if (blockState.isOf(Glowcase.ITEM_PROVIDER_BLOCK.get())) {
-			facing = blockState.get(ItemProviderBlock.FACING);
+		if (blockState.is(Glowcase.ITEM_PROVIDER_BLOCK.get())) {
+			facing = blockState.getValue(ItemProviderBlock.FACING);
 		}
 
 		switch (facing) {
 			case DOWN, UP -> {
 				if (entity.getStack().getItem() instanceof BlockItem) {
-					Vec2f pitchAndYaw = BlockEntityRenderUtil.getTracking(camera, entity.getPos(), tickDelta);
+					Vec2 pitchAndYaw = BlockEntityRenderUtil.getTracking(camera, entity.getBlockPos(), tickDelta);
 					pitch = pitchAndYaw.x;
 					yaw = pitchAndYaw.y;
-					matrices.multiply(RotationAxis.POSITIVE_Y.rotation(yaw));
+					matrices.mulPose(Axis.YP.rotation(yaw));
 				} else {
-					pitch = (float) Math.toRadians(camera.getPitch());
-					yaw = (float) Math.toRadians(-camera.getYaw());
-					matrices.multiply(RotationAxis.POSITIVE_Y.rotation(yaw));
+					pitch = (float) Math.toRadians(camera.getXRot());
+					yaw = (float) Math.toRadians(-camera.getYRot());
+					matrices.mulPose(Axis.YP.rotation(yaw));
 					isBillboard = true;
 				}
 			}
 			default -> {
-				matrices.multiply(facing.getRotationQuaternion().mul(RotationAxis.POSITIVE_X.rotationDegrees(-90.0F)));
+				matrices.mulPose(facing.getRotation().mul(Axis.XP.rotationDegrees(-90.0F)));
 				matrices.translate(0D, Math.sin(pitch) * -0.4, -0.4D);
 				isBack = true;
 			}
@@ -78,25 +78,25 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context
 
 			matrices.translate(0, 0.5, 0);
 			matrices.scale(0.5F, 0.5F, 0.5F);
-			matrices.multiply(RotationAxis.POSITIVE_X.rotation(pitch));
+			matrices.mulPose(Axis.XP.rotation(pitch));
 
 		if (!entity.isInvisible()) {
-			matrices.push();
+			matrices.pushPose();
 			if (facing.getAxis() != Direction.Axis.Y) {
-				matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180f));
+				matrices.mulPose(Axis.YP.rotationDegrees(180f));
 			}
 
-			context.getItemRenderer().renderItem(entity.getStack(), ItemDisplayContext.FIXED, light, OverlayTexture.DEFAULT_UV, matrices, vertexConsumers, entity.getWorld(), 0);
-			matrices.pop();
+			context.getItemRenderer().renderStatic(entity.getStack(), ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY, matrices, vertexConsumers, entity.getLevel(), 0);
+			matrices.popPose();
 		}
 
-		HitResult hitResult = MinecraftClient.getInstance().crosshairTarget;
-		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(entity.getPos())) {
-			matrices.push();
+		HitResult hitResult = Minecraft.getInstance().hitResult;
+		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(entity.getBlockPos())) {
+			matrices.pushPose();
 			if (isBack) { // Dunno, matrices are hard
-				matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180));
+				matrices.mulPose(Axis.XP.rotationDegrees(180));
 			} else {
-				matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(180));
+				matrices.mulPose(Axis.ZP.rotationDegrees(180));
 			}
 			float scale = 0.025F;
 
@@ -105,37 +105,37 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererFactory.Context
 			matrices.scale(scale, scale, scale);
 
 			ItemStack stack = entity.getStack();
-			Text name = stack.isEmpty() ? Text.translatable("gui.glowcase.none") : (Text.literal("")).append(stack.getName()).formatted(stack.getRarity().getFormatting());
-			int color = ColorHelper.fullAlpha(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getRgb());
-			matrices.push();
-			matrices.translate(-context.getTextRenderer().getWidth(name) / 2F, -4, 0);
-			context.getTextRenderer().draw(name, 0, 0, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
-			matrices.pop();
+			Component name = stack.isEmpty() ? Component.translatable("gui.glowcase.none") : (Component.literal("")).append(stack.getHoverName()).withStyle(stack.getRarity().color());
+			int color = ARGB.opaque(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getValue());
+			matrices.pushPose();
+			matrices.translate(-context.getFont().width(name) / 2F, -4, 0);
+			context.getFont().drawInBatch(name, 0, 0, color, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+			matrices.popPose();
 
 			if (!stack.isEmpty()) {
-				matrices.push();
-				if (entity.canGiveTo(MinecraftClient.getInstance().player)) {
-					Text countText = Text.literal("%dx".formatted(entity.getStack().getCount()));
-					matrices.translate(-context.getTextRenderer().getWidth(countText) + 16, 32, 0);
-					context.getTextRenderer().draw(countText, 0, 0, 0xFFFFFFFF, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+				matrices.pushPose();
+				if (entity.canGiveTo(Minecraft.getInstance().player)) {
+					Component countText = Component.literal("%dx".formatted(entity.getStack().getCount()));
+					matrices.translate(-context.getFont().width(countText) + 16, 32, 0);
+					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
 				} else {
-					long cooldownMS = entity.getCooldownTicks(MinecraftClient.getInstance().player) * 50;
-					Text countText = Text.literal("[%s]".formatted(entity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).formatted(Formatting.YELLOW);
-					matrices.translate(-context.getTextRenderer().getWidth(countText) + 16, 24, 0);
-					context.getTextRenderer().draw(countText, 0, 0, 0xFFFFFFFF, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+					long cooldownMS = entity.getCooldownTicks(Minecraft.getInstance().player) * 50;
+					Component countText = Component.literal("[%s]".formatted(entity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).withStyle(ChatFormatting.YELLOW);
+					matrices.translate(-context.getFont().width(countText) + 16, 24, 0);
+					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
 				}
-				matrices.pop();
+				matrices.popPose();
 			}
-			matrices.pop();
+			matrices.popPose();
 		}
 
-		matrices.pop();
+		matrices.popPose();
 
-		if (!entity.hasItem() || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getPos())) {
+		if (!entity.hasItem() || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos())) {
 			if (isBack) {
 				BlockEntityRenderUtil.renderFacingPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers);
 			} else if (isBillboard) {
-				BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getRenderDispatcher().camera);
+				BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getBlockEntityRenderDispatcher().camera);
 			} else {
 				BlockEntityRenderUtil.renderTrackingPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, camera, tickDelta);
 			}

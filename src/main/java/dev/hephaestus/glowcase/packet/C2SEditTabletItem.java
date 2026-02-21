@@ -5,20 +5,19 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 
-public record C2SEditTabletItem(int index, String url, String alt) implements CustomPayload {
-	public static final Id<C2SEditTabletItem> ID = new Id<>(Glowcase.id("channel.slide_tablet"));
-	public static final PacketCodec<RegistryByteBuf, C2SEditTabletItem> PACKET_CODEC = PacketCodec.tuple(
-		PacketCodecs.INTEGER, C2SEditTabletItem::index,
-		PacketCodecs.STRING, C2SEditTabletItem::url,
-		PacketCodecs.STRING, C2SEditTabletItem::alt,
+public record C2SEditTabletItem(int index, String url, String alt) implements CustomPacketPayload {
+	public static final Type<C2SEditTabletItem> ID = new Type<>(Glowcase.id("channel.slide_tablet"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditTabletItem> PACKET_CODEC = StreamCodec.composite(
+		ByteBufCodecs.INT, C2SEditTabletItem::index,
+		ByteBufCodecs.STRING_UTF8, C2SEditTabletItem::url,
+		ByteBufCodecs.STRING_UTF8, C2SEditTabletItem::alt,
 		C2SEditTabletItem::new
 	);
 
@@ -28,8 +27,8 @@ public record C2SEditTabletItem(int index, String url, String alt) implements Cu
 	}
 
 	public void receive(ServerPlayNetworking.Context context) {
-		ItemStack stack = context.player().getMainHandStack();
-		if (!(stack.isOf(Glowcase.TABLET_ITEM.get()))) return;
+		ItemStack stack = context.player().getMainHandItem();
+		if (!(stack.is(Glowcase.TABLET_ITEM.get()))) return;
 
 		Pair<String, String> trimmed = ScreenBlockEntity.trimStr(this.url, this.alt);
 		Pair<String, String> slide = new Pair<>(trimmed.getFirst(), trimmed.getSecond());
@@ -64,7 +63,7 @@ public record C2SEditTabletItem(int index, String url, String alt) implements Cu
 	}
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

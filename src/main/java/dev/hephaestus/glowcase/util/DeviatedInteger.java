@@ -3,11 +3,10 @@ package dev.hephaestus.glowcase.util;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.math.MathHelper;
-
 import java.util.function.Supplier;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.Mth;
 
 public record DeviatedInteger(Integer mean, Integer stdDev) implements DeviatedValue<Integer> {
 	public static final DeviatedInteger ZERO = new DeviatedInteger(0, 0);
@@ -17,16 +16,16 @@ public record DeviatedInteger(Integer mean, Integer stdDev) implements DeviatedV
 		Codec.INT.fieldOf("std_dev").forGetter(DeviatedInteger::stdDev)
 	).apply(instance, DeviatedInteger::new));
 
-	public static final PacketCodec<ByteBuf, DeviatedInteger> PACKET_CODEC = PacketCodec.tuple(
-		PacketCodecs.VAR_INT,
+	public static final StreamCodec<ByteBuf, DeviatedInteger> PACKET_CODEC = StreamCodec.composite(
+		ByteBufCodecs.VAR_INT,
 		DeviatedInteger::mean,
-		PacketCodecs.VAR_INT,
+		ByteBufCodecs.VAR_INT,
 		DeviatedInteger::stdDev,
 		DeviatedInteger::new
 	);
 
 	@Override
 	public Integer get(Supplier<Double> random) {
-		return mean + MathHelper.floor(random.get() * stdDev);
+		return mean + Mth.floor(random.get() * stdDev);
 	}
 }

@@ -1,10 +1,10 @@
 package dev.hephaestus.glowcase.block.entity;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-public interface InfiniteInventory extends Inventory {
+public interface InfiniteInventory extends Container {
 	ItemStack getStack();
 
 	default boolean hasItem() {
@@ -12,7 +12,7 @@ public interface InfiniteInventory extends Inventory {
 	}
 
 	@Override
-	default int size() {
+	default int getContainerSize() {
 		return 1;
 	}
 
@@ -22,30 +22,30 @@ public interface InfiniteInventory extends Inventory {
 	}
 
 	@Override
-	default ItemStack getStack(int slot) {
+	default ItemStack getItem(int slot) {
 		return getStack().copyWithCount(1);
 	}
 
 	@Override
-	default ItemStack removeStack(int slot, int amount) {
+	default ItemStack removeItem(int slot, int amount) {
 		return getStack().copyWithCount(1);
 	}
 
 	@Override
-	default ItemStack removeStack(int slot) {
+	default ItemStack removeItemNoUpdate(int slot) {
 		return getStack().copyWithCount(1);
 	}
 
 	@Override
-	default void setStack(int slot, ItemStack stack) {
+	default void setItem(int slot, ItemStack stack) {
 	}
 
 	@Override
-	default boolean canPlayerUse(PlayerEntity player) {
+	default boolean stillValid(Player player) {
 		return false;
 	}
 
 	@Override
-	default void clear() {
+	default void clearContent() {
 	}
 }

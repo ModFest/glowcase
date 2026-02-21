@@ -5,20 +5,19 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.util.CollectableStack;
-import net.minecraft.component.ComponentType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.codec.PacketCodecs;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.world.item.ItemStack;
 
 public record CollectionComponent(ImmutableList<CollectableStack> collectables, int selected) {
 	public static final Codec<CollectionComponent> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 		Codec.list(CollectableStack.CODEC).fieldOf("collectables").forGetter(CollectionComponent::collectables),
 		Codec.INT.fieldOf("selected").forGetter(CollectionComponent::selected)
 	).apply(instance, (c, s) -> new CollectionComponent(ImmutableList.copyOf(c), s)));
-	public static final ComponentType<CollectionComponent> TYPE = ComponentType.<CollectionComponent>builder().codec(CODEC).packetCodec(PacketCodecs.registryCodec(CODEC)).build();
+	public static final DataComponentType<CollectionComponent> TYPE = DataComponentType.<CollectionComponent>builder().persistent(CODEC).networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(CODEC)).build();
 
 	public CollectionComponent() {
 		this(ImmutableList.of(), -1);
@@ -53,7 +52,7 @@ public record CollectionComponent(ImmutableList<CollectableStack> collectables, 
 	public CollectionComponent withStackAfterSelection(ItemStack stack) {
 		if (stack.isEmpty()) return this;
 		hasSelection();
-		CollectableStack newCollectable = new CollectableStack(stack.getRegistryEntry(), stack.copy().getComponentChanges(), stack.getCount(), false);
+		CollectableStack newCollectable = new CollectableStack(stack.getItemHolder(), stack.copy().getComponentsPatch(), stack.getCount(), false);
 		return new CollectionComponent(alteredCollectables(l -> l.add(selected + 1, newCollectable)), selected + 1);
 	}
 
@@ -68,7 +67,7 @@ public record CollectionComponent(ImmutableList<CollectableStack> collectables, 
 			CollectableStack collectable = collectables.get(i);
 			if (!collectable.collected()) {
 				ItemStack stackToCollect = collectable.getStack();
-				if (ItemStack.areItemsAndComponentsEqual(stackToCollect, otherStack) && stackToCollect.getCount() <= otherStack.getCount()) {
+				if (ItemStack.isSameItemSameComponents(stackToCollect, otherStack) && stackToCollect.getCount() <= otherStack.getCount()) {
 					return i;
 				}
 			}

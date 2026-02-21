@@ -7,22 +7,22 @@ import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.ScreenImageCache.ScreenTexture;
 import dev.hephaestus.glowcase.packet.C2SEditTabletItem;
 import dev.hephaestus.glowcase.util.TextUtils;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.TextWidget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 public class TabletEditScreen extends GlowcaseScreen {
-	private static final Identifier TEXTURE = Glowcase.id("textures/gui/tablet.png");
+	private static final ResourceLocation TEXTURE = Glowcase.id("textures/gui/tablet.png");
 	private static final int TXT_COLOR = 0x8af4b9;
 
 	private static final int BG_WIDTH = 256;
@@ -55,16 +55,16 @@ public class TabletEditScreen extends GlowcaseScreen {
 	private ScreenTexture next_slide;
 
 	// Widgets
-	private TextWidget progressText;
-	private TextFieldWidget urlEntryWidget;
-	private TextFieldWidget altEntryWidget;
-	private ButtonWidget previousButton;
-	private ButtonWidget nextButton;
+	private StringWidget progressText;
+	private EditBox urlEntryWidget;
+	private EditBox altEntryWidget;
+	private Button previousButton;
+	private Button nextButton;
 
 	public TabletEditScreen(ItemStack stack) {
 		this.current = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
 
-		if (stack.contains(Glowcase.LINKED_SCREEN_COMPONENT.get()))
+		if (stack.has(Glowcase.LINKED_SCREEN_COMPONENT.get()))
 			this.screen_pos = stack.get(Glowcase.LINKED_SCREEN_COMPONENT.get());
 
 		this.slides = new ArrayList<>();
@@ -74,72 +74,72 @@ public class TabletEditScreen extends GlowcaseScreen {
 	@Override
 	protected void init() {
 		super.init();
-		if (this.client == null) return;
+		if (this.minecraft == null) return;
 
-		this.progressText = new TextWidget(width / 2 - BG_WIDTH / 2 + 5, height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .2), this.client.textRenderer.fontHeight,
-			Text.empty(), this.client.textRenderer)
-			.setTextColor(TXT_COLOR)
+		this.progressText = new StringWidget(width / 2 - BG_WIDTH / 2 + 5, height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .2), this.minecraft.font.lineHeight,
+			Component.empty(), this.minecraft.font)
+			.setColor(TXT_COLOR)
 			.alignLeft();
 
-		Text linkedText = (screen_pos == null) ? Text.translatable("gui.glowcase.tablet.not_linked")
-			: Text.translatable("gui.glowcase.tablet.linked", screen_pos.getSecond().toShortString());
+		Component linkedText = (screen_pos == null) ? Component.translatable("gui.glowcase.tablet.not_linked")
+			: Component.translatable("gui.glowcase.tablet.linked", screen_pos.getSecond().toShortString());
 
-		TextWidget linkedTextWidget = new TextWidget(width / 2 - BG_WIDTH / 2 + 7 + (int) (BG_WIDTH * .2), height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .8) - 13, this.client.textRenderer.fontHeight,
-			linkedText, this.client.textRenderer)
-			.setTextColor(TXT_COLOR)
+		StringWidget linkedTextWidget = new StringWidget(width / 2 - BG_WIDTH / 2 + 7 + (int) (BG_WIDTH * .2), height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .8) - 13, this.minecraft.font.lineHeight,
+			linkedText, this.minecraft.font)
+			.setColor(TXT_COLOR)
 			.alignRight();
 
-		this.urlEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 30 - 1, BG_WIDTH - 10 - 55, 20, Text.empty());
+		this.urlEntryWidget = new EditBox(this.minecraft.font, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 30 - 1, BG_WIDTH - 10 - 55, 20, Component.empty());
 		this.urlEntryWidget.setMaxLength(ScreenBlockEntity.URL_MAX_LENGTH);
-		this.urlEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.url"));
-		this.urlEntryWidget.setChangedListener((value) -> slide_dirty = true);
+		this.urlEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.url"));
+		this.urlEntryWidget.setResponder((value) -> slide_dirty = true);
 
-		this.altEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 55 - 1, BG_WIDTH - 10, 20, Text.empty());
+		this.altEntryWidget = new EditBox(this.minecraft.font, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 55 - 1, BG_WIDTH - 10, 20, Component.empty());
 		this.altEntryWidget.setMaxLength(ScreenBlockEntity.ALT_MAX_LENGTH);
-		this.altEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.alt"));
-		this.altEntryWidget.setChangedListener((value) -> slide_dirty = true);
+		this.altEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.alt"));
+		this.altEntryWidget.setResponder((value) -> slide_dirty = true);
 
-		ButtonWidget updateButton = ButtonWidget.builder(
-			Text.translatable("gui.glowcase.refresh"),
+		Button updateButton = Button.builder(
+			Component.translatable("gui.glowcase.refresh"),
 			action -> {
 				syncSlide();
 				getSlides();
 			}
-		).dimensions(width / 2 + BG_WIDTH / 2 - 55, height / 2 + 30 - 1, 50, 20).build();
+		).bounds(width / 2 + BG_WIDTH / 2 - 55, height / 2 + 30 - 1, 50, 20).build();
 
-		previousButton = ButtonWidget.builder(
-			Text.translatable("gui.glowcase.previous"),
+		previousButton = Button.builder(
+			Component.translatable("gui.glowcase.previous"),
 			action -> {
 				syncSlide();
 				current--;
 				getSlides();
 			}
-		).dimensions(width / 2 - BG_WIDTH / 2 - 25 + SCREEN_X1, height / 2 - 25, 50, 20).build();
+		).bounds(width / 2 - BG_WIDTH / 2 - 25 + SCREEN_X1, height / 2 - 25, 50, 20).build();
 
-		nextButton = ButtonWidget.builder(
-			Text.translatable("gui.glowcase.next"),
+		nextButton = Button.builder(
+			Component.translatable("gui.glowcase.next"),
 			action -> {
 				syncSlide();
 				current++;
 				getSlides();
 			}
-		).dimensions(width / 2 + BG_WIDTH / 2 - 35 + SCREEN_X1, height / 2 - 25, 50, 20).build();
+		).bounds(width / 2 + BG_WIDTH / 2 - 35 + SCREEN_X1, height / 2 - 25, 50, 20).build();
 
 		getSlides();
 
-		this.addDrawableChild(this.progressText);
-		this.addDrawableChild(linkedTextWidget);
-		this.addDrawableChild(this.urlEntryWidget);
-		this.addDrawableChild(this.altEntryWidget);
-		this.addDrawableChild(updateButton);
-		this.addDrawableChild(previousButton);
-		this.addDrawableChild(nextButton);
+		this.addRenderableWidget(this.progressText);
+		this.addRenderableWidget(linkedTextWidget);
+		this.addRenderableWidget(this.urlEntryWidget);
+		this.addRenderableWidget(this.altEntryWidget);
+		this.addRenderableWidget(updateButton);
+		this.addRenderableWidget(previousButton);
+		this.addRenderableWidget(nextButton);
 	}
 
 	@Override
-	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.renderBackground(context, mouseX, mouseY, delta);
-		context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE,
+		context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2, height / 2 - BG_HEIGHT / 2,
 			0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_WIDTH
 		);
@@ -162,7 +162,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 		// We can't really use the build-in gradient because it only goes vertical
 
 		// Left
-		context.drawTexture(
+		context.blit(
 			RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2 + SCREEN_X1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
@@ -172,7 +172,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 		);
 
 		// Right
-		context.drawTexture(
+		context.blit(
 			RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2 + SCREEN_X2 - IMG_WIDTH + 1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
@@ -193,7 +193,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 	 *
 	 * <p>The screen texture will be rescaled to fit within the IMG_WIDTH and IMG_HEIGHT constants.</p>
 	 */
-	public void renderPicture(DrawContext context, @Nullable ScreenTexture slide, int x, int y, float scale) {
+	public void renderPicture(GuiGraphics context, @Nullable ScreenTexture slide, int x, int y, float scale) {
 		if (slide == null || slide.getTexture().getSecond() == null)
 			return;
 
@@ -208,7 +208,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 		int scaled_width = (int) (cur_width * final_scale);
 		int scaled_height = (int) (cur_height * final_scale);
 
-		context.drawTexture(
+		context.blit(
 			RenderPipelines.GUI_TEXTURED, slide.getTexture().getSecond(),
 			x - scaled_width / 2, y - scaled_height / 2, 0, 0,
 			scaled_width, scaled_height, scaled_width, scaled_height
@@ -217,8 +217,8 @@ public class TabletEditScreen extends GlowcaseScreen {
 
 	public void syncSlide() {
 		if (slide_dirty) {
-			slides.set(current, new Pair<>(this.urlEntryWidget.getText(), this.altEntryWidget.getText()));
-			C2SEditTabletItem.of(current, this.urlEntryWidget.getText(), this.altEntryWidget.getText()).send();
+			slides.set(current, new Pair<>(this.urlEntryWidget.getValue(), this.altEntryWidget.getValue()));
+			C2SEditTabletItem.of(current, this.urlEntryWidget.getValue(), this.altEntryWidget.getValue()).send();
 		}
 	}
 
@@ -267,15 +267,15 @@ public class TabletEditScreen extends GlowcaseScreen {
 			next_slide = null;
 
 		// Update shown values
-		this.urlEntryWidget.setText(slide.getFirst());
-		this.altEntryWidget.setText(slide.getSecond());
-		this.progressText.setMessage(Text.translatable("gui.glowcase.progress", "" + (current + 1), slides.size()));
+		this.urlEntryWidget.setValue(slide.getFirst());
+		this.altEntryWidget.setValue(slide.getSecond());
+		this.progressText.setMessage(Component.translatable("gui.glowcase.progress", "" + (current + 1), slides.size()));
 		slide_dirty = false;
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		syncSlide();
-		super.close();
+		super.onClose();
 	}
 }

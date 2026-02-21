@@ -1,30 +1,30 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.mixin.client.TextRendererAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.BakedGlyph;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.font.TextRenderer.TextLayerType;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Font.DisplayMode;
+import net.minecraft.client.gui.font.glyphs.BakedGlyph;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
 
 public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockEntity> {
-	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
+	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
 	private boolean wasOutOfRange = false;
 
-	public TextBlockEntityRenderer(BlockEntityRendererFactory.Context context) {
+	public TextBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
 		super(context);
 	}
 
@@ -34,12 +34,12 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 	}
 
 	@Override
-	public void renderUnbaked(TextBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos) {
-		Entity camera = MinecraftClient.getInstance().getCameraEntity();
+	public void renderUnbaked(TextBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
+		Entity camera = Minecraft.getInstance().getCameraEntity();
 		if (camera != null && entity.viewDistance >= 0) {
-			double dx = camera.getX() - (entity.getPos().getX() + 0.5);
-			double dy = camera.getY() - (entity.getPos().getY() + 0.5);
-			double dz = camera.getZ() - (entity.getPos().getZ() + 0.5);
+			double dx = camera.getX() - (entity.getBlockPos().getX() + 0.5);
+			double dy = camera.getY() - (entity.getBlockPos().getY() + 0.5);
+			double dz = camera.getZ() - (entity.getBlockPos().getZ() + 0.5);
 
 			if ((dx * dx + dy * dy + dz * dz) > (entity.viewDistance * entity.viewDistance)) {
 				if (!wasOutOfRange) {
@@ -57,20 +57,20 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 
 		if (entity.renderDirty) {
 			entity.renderDirty = false;
-			BakedBlockEntityRenderer.Manager.markForRebuild(entity.getPos());
+			BakedBlockEntityRenderer.Manager.markForRebuild(entity.getBlockPos());
 		}
 
-		if (entity.getWorld() == null || entity.getWorld().getBlockState(entity.getPos()).isAir()) return;
-		if (entity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getPos())) BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, entity.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : entity.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
+		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
+		if (entity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos())) BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, entity.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : entity.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
 	}
 
 	@Override
-	public void renderBaked(TextBlockEntity entity, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-		Entity camera = MinecraftClient.getInstance().getCameraEntity();
+	public void renderBaked(TextBlockEntity entity, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay) {
+		Entity camera = Minecraft.getInstance().getCameraEntity();
 		if (camera != null && entity.viewDistance >= 0) {
-			double dx = camera.getX() - (entity.getPos().getX() + 0.5);
-			double dy = camera.getY() - (entity.getPos().getY() + 0.5);
-			double dz = camera.getZ() - (entity.getPos().getZ() + 0.5);
+			double dx = camera.getX() - (entity.getBlockPos().getX() + 0.5);
+			double dy = camera.getY() - (entity.getBlockPos().getY() + 0.5);
+			double dz = camera.getZ() - (entity.getBlockPos().getZ() + 0.5);
 			
 			if ((dx * dx + dy * dy + dz * dz) > (entity.viewDistance * entity.viewDistance)) {
 				if (!wasOutOfRange) {
@@ -88,11 +88,11 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
             }
 		}
 		
-		matrices.push();
+		matrices.pushPose();
 		matrices.translate(0.5D, 0.5D, 0.5D);
 
-		float rotation = -(entity.getCachedState().get(Properties.ROTATION) * 360) / 16.0F;
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotation));
+		float rotation = -(entity.getBlockState().getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F;
+		matrices.mulPose(Axis.YP.rotationDegrees(rotation));
 
 		switch (entity.zOffset) {
 			case FRONT -> matrices.translate(0D, 0D, 0.4D);
@@ -101,19 +101,19 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 
 		float scale = 0.010416667F * entity.scale;
 		matrices.scale(scale, -scale, scale);
-		TextRenderer textRenderer = this.context.getTextRenderer();
+		Font textRenderer = this.context.getFont();
 
 		double maxLength = 0;
 		double minLength = Double.MAX_VALUE;
 		for (int i = 0; i < entity.lines.size(); ++i) {
-			maxLength = Math.max(maxLength, textRenderer.getWidth(entity.lines.get(i)));
-			minLength = Math.min(minLength, textRenderer.getWidth(entity.lines.get(i)));
+			maxLength = Math.max(maxLength, textRenderer.width(entity.lines.get(i)));
+			minLength = Math.min(minLength, textRenderer.width(entity.lines.get(i)));
 		}
 
 		matrices.translate(0, -((entity.lines.size() - 0.25) * 12) / 2D, 0D);
 		for (int i = 0; i < entity.lines.size(); ++i) {
-			Text line = entity.lines.get(i);
-			double width = textRenderer.getWidth(line);
+			Component line = entity.lines.get(i);
+			double width = textRenderer.width(line);
 			if (width == 0) continue;
 
 			double dX = switch (entity.textAlignment) {
@@ -124,39 +124,39 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 				case RIGHT -> maxLength - width - maxLength / 2D;
 			};
 
-			matrices.push();
+			matrices.pushPose();
 			matrices.translate(dX, 0, 0);
 
-			TextRenderer.Drawer drawer = (TextRenderer.Drawer) textRenderer.prepare(line.asOrderedText(), 0, i * 12, entity.color, entity.shadow, 0);
+			Font.PreparedTextBuilder drawer = (Font.PreparedTextBuilder) textRenderer.prepareText(line.getVisualOrderText(), 0, i * 12, entity.color, entity.shadow, 0);
 
-			TextRenderer.GlyphDrawer glyphDrawer = TextRenderer.GlyphDrawer.drawing(
+			Font.GlyphVisitor glyphDrawer = Font.GlyphVisitor.forMultiBufferSource(
 				vertexConsumers,
-				matrices.peek().getPositionMatrix(),
-				TextLayerType.NORMAL,
+				matrices.last().pose(),
+				DisplayMode.NORMAL,
 				// TODO: use the light param and add a toggle to make it glow (use LightmapTextureManager.MAX_LIGHT_COORDINATE)
-				LightmapTextureManager.MAX_LIGHT_COORDINATE
+				LightTexture.FULL_BRIGHT
 			);
 
 			// Yep, we're back to that hack again.
 			if (entity.backgroundColor != 0) {
 				BakedGlyph rectangleBakedGlyph = ((TextRendererAccessor) textRenderer)
-					.invokeGetFontStorage(Style.DEFAULT_FONT_ID)
-					.getRectangleBakedGlyph();
+					.invokeGetFontStorage(Style.DEFAULT_FONT)
+					.whiteGlyph();
 
-				final BakedGlyph.Rectangle rect = new BakedGlyph.Rectangle(
+				final BakedGlyph.Effect rect = new BakedGlyph.Effect(
 					-4, i * 12 - 2f,
 					(float) width + 4, (i + 1) * 12 - 2f,
 					-0.01F, entity.backgroundColor);
 
-				glyphDrawer.drawRectangle(rectangleBakedGlyph, rect);
+				glyphDrawer.acceptEffect(rectangleBakedGlyph, rect);
 			}
 
-			drawer.draw(glyphDrawer);
+			drawer.visit(glyphDrawer);
 
-			matrices.pop();
+			matrices.popPose();
 		}
 
-		matrices.pop();
+		matrices.popPose();
 	}
 
 }

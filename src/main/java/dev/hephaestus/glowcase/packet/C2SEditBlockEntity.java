@@ -3,31 +3,31 @@ package dev.hephaestus.glowcase.packet;
 import dev.hephaestus.glowcase.block.GlowcaseBlock;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
-public interface C2SEditBlockEntity extends CustomPayload {
+public interface C2SEditBlockEntity extends CustomPacketPayload {
 
 	BlockPos pos();
 
-	void receive(ServerWorld world, BlockEntity blockEntity);
+	void receive(ServerLevel world, BlockEntity blockEntity);
 
 	default void receive(ServerPlayNetworking.Context context) {
 		if (!canEdit(context.player())) return;
-		receive(context.player().getWorld(), context.player().getWorld().getBlockEntity(this.pos()));
+		receive(context.player().level(), context.player().level().getBlockEntity(this.pos()));
 	}
 
 	default void send() {
 		ClientPlayNetworking.send(this);
 	}
 
-	default boolean canEdit(ServerPlayerEntity player) {
-		if (!player.getWorld().isChunkLoaded(ChunkPos.toLong(pos()))) return false;
-		if (player.squaredDistanceTo(pos().toCenterPos()) > (12 * 12)) return false;
-		return player.getWorld().getBlockState(pos()).getBlock() instanceof GlowcaseBlock block && GlowcaseBlock.canEditGlowcase(player, pos());
+	default boolean canEdit(ServerPlayer player) {
+		if (!player.level().areEntitiesLoaded(ChunkPos.asLong(pos()))) return false;
+		if (player.distanceToSqr(pos().getCenter()) > (12 * 12)) return false;
+		return player.level().getBlockState(pos()).getBlock() instanceof GlowcaseBlock block && GlowcaseBlock.canEditGlowcase(player, pos());
 	}
 }

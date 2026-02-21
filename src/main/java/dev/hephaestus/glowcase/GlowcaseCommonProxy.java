@@ -1,7 +1,7 @@
 package dev.hephaestus.glowcase;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseCommonProxy {
 

@@ -1,10 +1,10 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
 import org.joml.Vector3f;
 
 import com.google.common.primitives.Floats;
@@ -12,26 +12,26 @@ import com.google.common.primitives.Floats;
 public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 	protected final DisplayBlockEntity displayBlock;
 
-	protected TextFieldWidget scaleField;
-    protected TextFieldWidget xOffsetField;
-    protected TextFieldWidget yOffsetField;
-    protected TextFieldWidget zOffsetField;
-    protected TextFieldWidget pitchField;
-    protected TextFieldWidget yawField;
+	protected EditBox scaleField;
+    protected EditBox xOffsetField;
+    protected EditBox yOffsetField;
+    protected EditBox zOffsetField;
+    protected EditBox pitchField;
+    protected EditBox yawField;
 
-	protected ButtonWidget decreaseSize;
-	protected ButtonWidget increaseSize;
+	protected Button decreaseSize;
+	protected Button increaseSize;
 
-	protected ButtonWidget decreaseXOffset;
-	protected ButtonWidget increaseXOffset;
-	protected ButtonWidget decreaseYOffset;
-	protected ButtonWidget increaseYOffset;
-	protected ButtonWidget decreaseZOffset;
-	protected ButtonWidget increaseZOffset;
-	protected ButtonWidget decreasePitch;
-	protected ButtonWidget increasePitch;
-	protected ButtonWidget decreaseYaw;
-	protected ButtonWidget increaseYaw;
+	protected Button decreaseXOffset;
+	protected Button increaseXOffset;
+	protected Button decreaseYOffset;
+	protected Button increaseYOffset;
+	protected Button decreaseZOffset;
+	protected Button increaseZOffset;
+	protected Button decreasePitch;
+	protected Button increasePitch;
+	protected Button decreaseYaw;
+	protected Button increaseYaw;
 
 	private final float pitchYawChange = 15F;
 	private final float scaleOffsetChange = 0.125F;
@@ -44,31 +44,31 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.client != null) {
-			this.scaleField = new TextFieldWidget(this.client.textRenderer, 90, 10, 60, 20, Text.empty());
-            this.scaleField.setText(String.valueOf(this.displayBlock.getScale().x()));
-			this.scaleField.setChangedListener(string -> {
+		if (this.minecraft != null) {
+			this.scaleField = new EditBox(this.minecraft.font, 90, 10, 60, 20, Component.empty());
+            this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+			this.scaleField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					this.displayBlock.setScale(new Vector3f(parsed, parsed, parsed));
 					editDisplayBlock();
 				}
 			});
 
-			this.decreaseSize = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreaseSize = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.getScale().sub(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
 				editDisplayBlock();
-				this.scaleField.setText(String.valueOf(this.displayBlock.getScale().x()));
-			}).dimensions(90 + 60 + 5, 10, 20, 20).build();
+				this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+			}).bounds(90 + 60 + 5, 10, 20, 20).build();
 
-			this.increaseSize = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increaseSize = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.getScale().add(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
 				editDisplayBlock();
-				this.scaleField.setText(String.valueOf(this.displayBlock.getScale().x()));
-			}).dimensions(90 + 60 + 5 + 20, 10, 20, 20).build();
+				this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+			}).bounds(90 + 60 + 5 + 20, 10, 20, 20).build();
 
-			this.xOffsetField = new TextFieldWidget(this.client.textRenderer, 90, 40, 60, 20, Text.empty());
-            this.xOffsetField.setText(String.valueOf(this.displayBlock.getOffset().x()));
-			this.xOffsetField.setChangedListener(string -> {
+			this.xOffsetField = new EditBox(this.minecraft.font, 90, 40, 60, 20, Component.empty());
+            this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+			this.xOffsetField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					Vector3f offset = this.displayBlock.getOffset();
 					offset.x = parsed;
@@ -77,21 +77,21 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 				}
 			});
 
-			this.decreaseXOffset = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreaseXOffset = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.getOffset().sub(scaleOffsetChange, 0, 0);
 				editDisplayBlock();
-				this.xOffsetField.setText(String.valueOf(this.displayBlock.getOffset().x()));
-			}).dimensions(90 + 60 + 5, 40, 20, 20).build();
+				this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+			}).bounds(90 + 60 + 5, 40, 20, 20).build();
 
-			this.increaseXOffset = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increaseXOffset = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.getOffset().add(scaleOffsetChange, 0, 0);
 				editDisplayBlock();
-				this.xOffsetField.setText(String.valueOf(this.displayBlock.getOffset().x()));
-			}).dimensions(90 + 60 + 5 + 20, 40, 20, 20).build();
+				this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+			}).bounds(90 + 60 + 5 + 20, 40, 20, 20).build();
 
-			this.yOffsetField = new TextFieldWidget(this.client.textRenderer, 90, 70, 60, 20, Text.empty());
-            this.yOffsetField.setText(String.valueOf(this.displayBlock.getOffset().y()));
-			this.yOffsetField.setChangedListener(string -> {
+			this.yOffsetField = new EditBox(this.minecraft.font, 90, 70, 60, 20, Component.empty());
+            this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+			this.yOffsetField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					Vector3f offset = this.displayBlock.getOffset();
 					offset.y = parsed;
@@ -100,21 +100,21 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 				}
 			});
 
-			this.decreaseYOffset = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreaseYOffset = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.getOffset().sub(0, scaleOffsetChange, 0);
 				editDisplayBlock();
-				this.yOffsetField.setText(String.valueOf(this.displayBlock.getOffset().y()));
-			}).dimensions(90 + 60 + 5, 70, 20, 20).build();
+				this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+			}).bounds(90 + 60 + 5, 70, 20, 20).build();
 
-			this.increaseYOffset = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increaseYOffset = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.getOffset().add(0, scaleOffsetChange, 0);
 				editDisplayBlock();
-				this.yOffsetField.setText(String.valueOf(this.displayBlock.getOffset().y()));
-			}).dimensions(90 + 60 + 5 + 20, 70, 20, 20).build();
+				this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+			}).bounds(90 + 60 + 5 + 20, 70, 20, 20).build();
 
-			this.zOffsetField = new TextFieldWidget(this.client.textRenderer, 90, 100, 60, 20, Text.empty());
-            this.zOffsetField.setText(String.valueOf(this.displayBlock.getOffset().z()));
-			this.zOffsetField.setChangedListener(string -> {
+			this.zOffsetField = new EditBox(this.minecraft.font, 90, 100, 60, 20, Component.empty());
+            this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+			this.zOffsetField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					Vector3f offset = this.displayBlock.getOffset();
 					offset.z = parsed;
@@ -123,90 +123,90 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 				}
 			});
 
-			this.decreaseZOffset = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreaseZOffset = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.getOffset().sub(0, 0, scaleOffsetChange);
 				editDisplayBlock();
-				this.zOffsetField.setText(String.valueOf(this.displayBlock.getOffset().z()));
-			}).dimensions(90 + 60 + 5, 100, 20, 20).build();
+				this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+			}).bounds(90 + 60 + 5, 100, 20, 20).build();
 
-			this.increaseZOffset = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increaseZOffset = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.getOffset().add(0, 0, scaleOffsetChange);
 				editDisplayBlock();
-				this.zOffsetField.setText(String.valueOf(this.displayBlock.getOffset().z()));
-			}).dimensions(90 + 60 + 5 + 20, 100, 20, 20).build();
+				this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+			}).bounds(90 + 60 + 5 + 20, 100, 20, 20).build();
 
-			this.pitchField = new TextFieldWidget(this.client.textRenderer, 90, 130, 60, 20, Text.empty());
-            this.pitchField.setText(String.valueOf(this.displayBlock.getPitch()));
-			this.pitchField.setChangedListener(string -> {
+			this.pitchField = new EditBox(this.minecraft.font, 90, 130, 60, 20, Component.empty());
+            this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+			this.pitchField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					this.displayBlock.setPitch(parsed);
 					editDisplayBlock();
 				}
 			});
 
-			this.decreasePitch = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreasePitch = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.setPitch(this.displayBlock.getPitch() - pitchYawChange);
 				editDisplayBlock();
-				this.pitchField.setText(String.valueOf(this.displayBlock.getPitch()));
-			}).dimensions(90 + 60 + 5, 130, 20, 20).build();
+				this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+			}).bounds(90 + 60 + 5, 130, 20, 20).build();
 
-			this.increasePitch = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increasePitch = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.setPitch(this.displayBlock.getPitch() + pitchYawChange);
 				editDisplayBlock();
-				this.pitchField.setText(String.valueOf(this.displayBlock.getPitch()));
-			}).dimensions(90 + 60 + 5 + 20, 130, 20, 20).build();
+				this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+			}).bounds(90 + 60 + 5 + 20, 130, 20, 20).build();
 
-			this.yawField = new TextFieldWidget(this.client.textRenderer, 90, 160, 60, 20, Text.empty());
-            this.yawField.setText(String.valueOf(this.displayBlock.getYaw()));
-			this.yawField.setChangedListener(string -> {
+			this.yawField = new EditBox(this.minecraft.font, 90, 160, 60, 20, Component.empty());
+            this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+			this.yawField.setResponder(string -> {
 				if (Floats.tryParse(string) instanceof Float parsed) {
 					this.displayBlock.setYaw(parsed);
 					editDisplayBlock();
 				}
 			});
 
-			this.decreaseYaw = ButtonWidget.builder(Text.literal("-"), action -> {
+			this.decreaseYaw = Button.builder(Component.literal("-"), action -> {
 				this.displayBlock.setYaw(this.displayBlock.getYaw() - pitchYawChange);
 				editDisplayBlock();
-				this.yawField.setText(String.valueOf(this.displayBlock.getYaw()));
-			}).dimensions(90 + 60 + 5, 160, 20, 20).build();
+				this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+			}).bounds(90 + 60 + 5, 160, 20, 20).build();
 
-			this.increaseYaw = ButtonWidget.builder(Text.literal("+"), action -> {
+			this.increaseYaw = Button.builder(Component.literal("+"), action -> {
 				this.displayBlock.setYaw(this.displayBlock.getYaw() + pitchYawChange);
 				editDisplayBlock();
-				this.yawField.setText(String.valueOf(this.displayBlock.getYaw()));
-			}).dimensions(90 + 60 + 5 + 20, 160, 20, 20).build();
+				this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+			}).bounds(90 + 60 + 5 + 20, 160, 20, 20).build();
 
-			this.addDrawableChild(this.scaleField);
-			this.addDrawableChild(this.xOffsetField);
-			this.addDrawableChild(this.yOffsetField);
-			this.addDrawableChild(this.zOffsetField);
-			this.addDrawableChild(this.pitchField);
-			this.addDrawableChild(this.yawField);
-			this.addDrawableChild(this.decreaseSize);
-			this.addDrawableChild(this.increaseSize);
-			this.addDrawableChild(this.decreaseXOffset);
-			this.addDrawableChild(this.increaseXOffset);
-			this.addDrawableChild(this.decreaseYOffset);
-			this.addDrawableChild(this.increaseYOffset);
-			this.addDrawableChild(this.decreaseZOffset);
-			this.addDrawableChild(this.increaseZOffset);
-			this.addDrawableChild(this.decreasePitch);
-			this.addDrawableChild(this.increasePitch);
-			this.addDrawableChild(this.decreaseYaw);
-			this.addDrawableChild(this.increaseYaw);
+			this.addRenderableWidget(this.scaleField);
+			this.addRenderableWidget(this.xOffsetField);
+			this.addRenderableWidget(this.yOffsetField);
+			this.addRenderableWidget(this.zOffsetField);
+			this.addRenderableWidget(this.pitchField);
+			this.addRenderableWidget(this.yawField);
+			this.addRenderableWidget(this.decreaseSize);
+			this.addRenderableWidget(this.increaseSize);
+			this.addRenderableWidget(this.decreaseXOffset);
+			this.addRenderableWidget(this.increaseXOffset);
+			this.addRenderableWidget(this.decreaseYOffset);
+			this.addRenderableWidget(this.increaseYOffset);
+			this.addRenderableWidget(this.decreaseZOffset);
+			this.addRenderableWidget(this.increaseZOffset);
+			this.addRenderableWidget(this.decreasePitch);
+			this.addRenderableWidget(this.increasePitch);
+			this.addRenderableWidget(this.decreaseYaw);
+			this.addRenderableWidget(this.increaseYaw);
 		}
 	}
 
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		if (this.client != null) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+		if (this.minecraft != null) {
 			super.render(context, mouseX, mouseY, delta);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.scale_label"), 20, 17, 0xFFFFFFFF);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.x_offset_label"), 20, 47, 0xFFFFFFFF);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.y_offset_label"), 20, 77, 0xFFFFFFFF);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.z_offset_label"), 20, 107, 0xFFFFFFFF);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.pitch_value"), 20, 137, 0xFFFFFFFF);
-			context.drawTextWithShadow(client.textRenderer, Text.translatable("gui.glowcase.yaw_value"), 20, 167, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.scale_label"), 20, 17, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.x_offset_label"), 20, 47, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.y_offset_label"), 20, 77, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.z_offset_label"), 20, 107, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.pitch_value"), 20, 137, 0xFFFFFFFF);
+			context.drawString(minecraft.font, Component.translatable("gui.glowcase.yaw_value"), 20, 167, 0xFFFFFFFF);
 		}
 	}
 

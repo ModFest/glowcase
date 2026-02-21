@@ -1,22 +1,22 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public abstract class GlowcaseScreen extends Screen {
 	protected GlowcaseScreen() {
-		super(Text.empty());
+		super(Component.empty());
 	}
 
 	@Override
-	public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-		this.renderInGameBackground(context);
-		context.applyBlur();
+	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+		this.renderTransparentBackground(context);
+		context.blurBeforeThisStratum();
 	}
 
 	@Override
-	public boolean shouldPause() {
+	public boolean isPauseScreen() {
 		return false;
 	}
 }
