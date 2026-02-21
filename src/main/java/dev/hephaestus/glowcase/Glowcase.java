@@ -18,7 +18,7 @@ import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import dev.hephaestus.glowcase.compat.PolydexCompatibility;
+//import dev.hephaestus.glowcase.compat.PolydexCompatibility;
 import dev.hephaestus.glowcase.item.CollectionCaseItem;
 import dev.hephaestus.glowcase.item.LockItem;
 import dev.hephaestus.glowcase.item.NoteItem;
@@ -225,9 +225,9 @@ public class Glowcase implements ModInitializer {
 	public void onInitialize() {
 		GlowcaseNetworking.init();
 
-		if (FabricLoader.getInstance().isModLoaded("polydex2")) {
-			PolydexCompatibility.onInitialize();
-		}
+//		if (FabricLoader.getInstance().isModLoaded("polydex2")) {
+//			PolydexCompatibility.onInitialize();
+//		}
 
 		// Never make this command available outside of dev
 		/*if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
