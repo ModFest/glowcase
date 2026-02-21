@@ -10,6 +10,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.font.TextFieldHelper;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Mth;
@@ -141,7 +144,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 
 			if (caretStart != caretEnd) {
 				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-				context.textHighlight(startX, caretStartY, endX, caretStartY + 9);
+				context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 			}
 		}
 
@@ -149,32 +152,33 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean charTyped(char chr, int keyCode) {
+	public boolean charTyped(CharacterEvent event) {
 		if (this.titleEntryWidget.canConsumeInput()) {
-			return this.titleEntryWidget.charTyped(chr, keyCode);
+			return this.titleEntryWidget.charTyped(event);
 		} else if (this.colorEntryWidget.canConsumeInput()) {
-			return this.colorEntryWidget.charTyped(chr, keyCode);
+			return this.colorEntryWidget.charTyped(event);
 		} else {
-			this.selectionManager.charTyped(chr);
+			this.selectionManager.charTyped(event);
 			return true;
 		}
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int keyCode = event.key();
 		if (this.titleEntryWidget.canConsumeInput()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
 				this.onClose();
 				return true;
 			} else {
-				return this.titleEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+				return this.titleEntryWidget.keyPressed(event);
 			}
 		} else if (this.colorEntryWidget.canConsumeInput()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
 				this.onClose();
 				return true;
 			} else {
-				return this.colorEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+				return this.colorEntryWidget.keyPressed(event);
 			}
 		} else {
 			setFocused(null);
@@ -208,7 +212,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 				return true;
 			} else {
 				try {
-					boolean val = this.selectionManager.keyPressed(keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
+					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
 					int selectionOffset = this.popupBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
 
 					// Find line feed characters and create proper newlines
@@ -249,12 +253,14 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		int topOffset = (int) (40 + 2 * this.width / 100F);
-		if (!this.titleEntryWidget.mouseClicked(mouseX, mouseY, button)) {
+		if (!this.titleEntryWidget.mouseClicked(event, doubleClick)) {
 			this.titleEntryWidget.setFocused(false);
 		}
-		if (!this.colorEntryWidget.mouseClicked(mouseX, mouseY, button)) {
+		if (!this.colorEntryWidget.mouseClicked(event, doubleClick)) {
 			this.colorEntryWidget.setFocused(false);
 		}
 		if (mouseY > topOffset) {
@@ -306,7 +312,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 			}
 			return true;
 		} else {
-			return super.mouseClicked(mouseX, mouseY, button);
+			return super.mouseClicked(event, doubleClick);
 		}
 	}
 }

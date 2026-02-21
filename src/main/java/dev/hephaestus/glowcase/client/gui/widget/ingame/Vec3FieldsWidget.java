@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
+import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -19,7 +20,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 	private Vec3 value;
 
 	public Vec3FieldsWidget(int x, int y, int width, int height, Minecraft client, Vec3 defaultValue) {
-		super(x, y, width, height, Component.empty());
+		super(x, y, width, height, Component.empty(),  AbstractScrollArea.defaultSettings(10));
 		this.x = new EditBox(
 			client.font,
 			x, y,
@@ -47,9 +48,10 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.y.setValue(String.valueOf(defaultValue.y));
 		this.z.setValue(String.valueOf(defaultValue.z));
 
-		this.x.setFilter(ParseUtil::canParseDouble);
-		this.y.setFilter(ParseUtil::canParseDouble);
-		this.z.setFilter(ParseUtil::canParseDouble);
+		// FIXME removed in 26.1+
+//		this.x.setFilter(ParseUtil::canParseDouble);
+//		this.y.setFilter(ParseUtil::canParseDouble);
+//		this.z.setFilter(ParseUtil::canParseDouble);
 
 		this.x.setResponder(s -> value = new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z));
 		this.y.setResponder(s -> value = new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z));

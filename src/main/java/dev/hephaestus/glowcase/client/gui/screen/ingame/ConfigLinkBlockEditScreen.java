@@ -5,6 +5,7 @@ import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditConfigLinkBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -38,15 +39,16 @@ public class ConfigLinkBlockEditScreen extends GlowcaseScreen {
         this.addRenderableWidget(this.urlEntryWidget);
     }
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		int keyCode = event.key();
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         } else if (this.titleEntryWidget.canConsumeInput()) {
-            return this.titleEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+            return this.titleEntryWidget.keyPressed(event);
         } else if (this.urlEntryWidget.canConsumeInput()) {
-            return this.urlEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+            return this.urlEntryWidget.keyPressed(event);
         } else {
             return false;
         }

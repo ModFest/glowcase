@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
+import net.minecraft.client.input.InputWithModifiers;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -45,7 +46,7 @@ public class ColorPresetWidget extends AbstractButton {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+	protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		context.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), this.color.getRGB());
 		if(isMouseOver(mouseX, mouseY)) {
 			drawOutline(context, this.getX() - 1, this.getY() - 1, this.getWidth() + 2, this.getHeight() + 2, this.z + 1);
@@ -61,7 +62,7 @@ public class ColorPresetWidget extends AbstractButton {
 	}
 
 	@Override
-	public void onPress() {
+	public void onPress(InputWithModifiers input) {
 		BiConsumer<Color, ChatFormatting> presetListener = this.colorPickerWidget.getPresetListener();
 		if(presetListener != null) {
 			presetListener.accept(this.color, this.formatting != null && this.formatting.isColor() ? this.formatting : null);

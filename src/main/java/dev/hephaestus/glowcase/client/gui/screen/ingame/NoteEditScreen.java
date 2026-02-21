@@ -9,6 +9,8 @@ import dev.hephaestus.glowcase.packet.C2SEditNoteItem;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -430,19 +432,21 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public boolean charTyped(char chr, int modifiers) {
+	public boolean charTyped(CharacterEvent event) {
 		if (!signing || (currentRow == 6 ? title : author).length() < NoteComponent.TITLE_LIMIT) {
-			this.selectionManager.charTyped(chr);
+			this.selectionManager.charTyped(event);
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		if (colorPickerWidget.active && colorPickerWidget.visible) {
 			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
-				colorPickerWidget.mouseClicked(mouseX, mouseY, button);
+				colorPickerWidget.mouseClicked(event, doubleClick);
 				this.setFocused(colorPickerWidget);
 				this.setDragging(true);
 				return true;
@@ -519,7 +523,7 @@ public class NoteEditScreen extends TextEditorScreen {
 
 			return true;
 		} else {
-			return super.mouseClicked(mouseX, mouseY, button);
+			return super.mouseClicked(event, doubleClick);
 		}
 	}
 

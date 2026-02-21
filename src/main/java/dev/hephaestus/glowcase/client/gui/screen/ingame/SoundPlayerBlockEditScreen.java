@@ -4,19 +4,22 @@ import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
-import dev.hephaestus.glowcase.util.ParseUtil;
 import dev.hephaestus.glowcase.packet.C2SEditSoundBlock;
+import dev.hephaestus.glowcase.util.ParseUtil;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	private final SoundPlayerBlockEntity soundBlock;
@@ -194,24 +197,26 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && soundId.isFocused()) {
-			return suggestionWidget.mouseClicked(mouseX, mouseY, button);
+			return suggestionWidget.mouseClicked(event, doubleClick);
 		} else {
 			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 		}
 
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
 		if (suggestionWidget.draggingScrollbar) {
-			if (suggestionWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY))
+			if (suggestionWidget.mouseDragged(event, dx, dy))
 				return true;
 		}
 
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(event, dx, dy);
 	}
 
 	@Override
@@ -225,11 +230,11 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+	public boolean keyPressed(KeyEvent event) {
+		if (suggestionWidget.keyPressed(event)) {
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override

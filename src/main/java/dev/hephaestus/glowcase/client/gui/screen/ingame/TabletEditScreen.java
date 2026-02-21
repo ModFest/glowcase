@@ -78,7 +78,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 
 		this.progressText = new StringWidget(width / 2 - BG_WIDTH / 2 + 5, height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .2), this.minecraft.font.lineHeight,
 			Component.empty(), this.minecraft.font)
-			.setColor(TXT_COLOR)
+			.color(TXT_COLOR)
 			.alignLeft();
 
 		Component linkedText = (screen_pos == null) ? Component.translatable("gui.glowcase.tablet.not_linked")

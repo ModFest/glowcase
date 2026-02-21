@@ -7,6 +7,7 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.NoteEditScreen;
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 
 		// Render background
 
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderType.text(NOTE_TEXTURE));
+		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(NOTE_TEXTURE));
 		Matrix4f matrix4f = matrices.last().pose();
 
 		{

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.lwjgl.glfw.GLFW;
@@ -257,28 +258,29 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int keyCode = event.key();
 		if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			this.onClose();
 			return true;
 		} else if (this.widthEntryWidget.canConsumeInput()) {
-			return this.widthEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.widthEntryWidget.keyPressed(event);
 		} else if (this.heightEntryWidget.canConsumeInput()) {
-			return this.heightEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.heightEntryWidget.keyPressed(event);
 		} else if (this.urlEntryWidget.canConsumeInput()) {
-			return this.urlEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.urlEntryWidget.keyPressed(event);
 		} else if (this.altEntryWidget.canConsumeInput()) {
-			return this.altEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.altEntryWidget.keyPressed(event);
 		} else if (this.offsetXField.canConsumeInput()) {
-			return this.offsetXField.keyPressed(keyCode, scanCode, modifiers);
+			return this.offsetXField.keyPressed(event);
 		} else if (this.offsetYField.canConsumeInput()) {
-			return this.offsetYField.keyPressed(keyCode, scanCode, modifiers);
+			return this.offsetYField.keyPressed(event);
 		} else if (this.offsetZField.canConsumeInput()) {
-			return this.offsetZField.keyPressed(keyCode, scanCode, modifiers);
+			return this.offsetZField.keyPressed(event);
 		} else if (this.pitchEntryWidget.canConsumeInput()) {
-			return this.pitchEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.pitchEntryWidget.keyPressed(event);
 		} else if (this.yawEntryWidget.canConsumeInput()) {
-			return this.yawEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+			return this.yawEntryWidget.keyPressed(event);
 		} else {
 			return false;
 		}

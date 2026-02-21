@@ -13,6 +13,8 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -144,7 +146,7 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+	protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		if (!visible) return;
 		updateHSL();
 
@@ -274,12 +276,12 @@ public class ColorPickerWidget extends AbstractButton {
 			}
 
 			@Override
-			public void buildVertices(VertexConsumer vertices, float depth) {
+			public void buildVertices(VertexConsumer vertices) {
 				Matrix3x2fStack matrix = context.pose();
-				vertices.addVertexWith2DPose(matrix, x, y, depth).setColor(startColor);
-				vertices.addVertexWith2DPose(matrix, x, y + height, depth).setColor(startColor);
-				vertices.addVertexWith2DPose(matrix, x + width, y + height, depth).setColor(endColor);
-				vertices.addVertexWith2DPose(matrix, x + width, y, depth).setColor(endColor);
+				vertices.addVertexWith2DPose(matrix, x, y).setColor(startColor);
+				vertices.addVertexWith2DPose(matrix, x, y + height).setColor(startColor);
+				vertices.addVertexWith2DPose(matrix, x + width, y + height).setColor(endColor);
+				vertices.addVertexWith2DPose(matrix, x + width, y).setColor(endColor);
 			}
 
 			@Override
@@ -305,7 +307,7 @@ public class ColorPickerWidget extends AbstractButton {
 		int renderedPresets = 0;
 		for (ColorPresetWidget preset : this.presetWidgets) {
 			preset.setPosition(presetX, presetY, z, presetSize);
-			preset.renderWidget(context, mouseX, mouseY, delta);
+			preset.render(context, mouseX, mouseY, delta);
 			presetX += presetSize + presetPadding;
 			renderedPresets++;
 			if (renderedPresets % presetsPerLine == 0) {
@@ -341,33 +343,35 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	@Override
-	public void onClick(double mouseX, double mouseY) {
+	public void onClick(MouseButtonEvent event, boolean doubleClick) {
 		this.mouseDown = true;
 		this.satLightDown = false;
 		this.hueDown = false;
 		this.presetDown = false;
 		this.confirmOrCancelButtonDown = false;
-		setColorFromMouse(mouseX, mouseY);
+		setColorFromMouse(event, doubleClick);
 	}
 
-	public void setColorFromMouse(double mouseX, double mouseY) {
+	public void setColorFromMouse(MouseButtonEvent event, boolean doubleClick) {
 		int colorAlpha = color.getAlpha();
 
+		double mouseX = event.x();
+		double mouseY = event.y();
 		if (clickedSatLight(mouseX, mouseY)) {
 			setSatLightFromMouse(mouseX, mouseY);
 		} else if (clickedHue(mouseX, mouseY)) {
 			setHueFromMouse(mouseX);
 		} else if (this.confirmButton.isMouseOver(mouseX, mouseY)) {
 			if (satLightDown || hueDown || presetDown || confirmOrCancelButtonDown) return;
-			this.confirmButton.onClick(mouseX, mouseY);
+			this.confirmButton.onClick(event, doubleClick);
 			confirmOrCancelButtonDown = true;
 		} else if (this.cancelButton.isMouseOver(mouseX, mouseY)) {
 			if (satLightDown || hueDown || presetDown || confirmOrCancelButtonDown) return;
-			this.cancelButton.onClick(mouseX, mouseY);
+			this.cancelButton.onClick(event, doubleClick);
 			confirmOrCancelButtonDown = true;
 		} else {
 			//clickedPreset also sets the preset to avoid an extra calculation
-			checkAndSetPreset(mouseX, mouseY);
+			checkAndSetPreset(event, doubleClick);
 		}
 
 		if (this.changeListener != null) {
@@ -406,13 +410,13 @@ public class ColorPickerWidget extends AbstractButton {
 		return hueDown;
 	}
 
-	public boolean checkAndSetPreset(double mouseX, double mouseY) {
+	public boolean checkAndSetPreset(MouseButtonEvent event, boolean doubleClick) {
 		if (satLightDown || hueDown || presetDown || confirmOrCancelButtonDown) return false;
 
 		//just checks for each preset here, and also sets here so it doesn't have to check again
 		for (ColorPresetWidget preset : this.presetWidgets) {
-			if (preset.isMouseOver(mouseX, mouseY)) {
-				preset.onClick(mouseX, mouseY);
+			if (preset.isMouseOver(event.x(), event.y())) {
+				preset.onClick(event, doubleClick);
 				//even though the preset closes the color picker,
 				//this is added to prevent spamming tags when holding down the mouse button
 				presetDown = true;
@@ -422,14 +426,14 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	@Override
-	protected void onDrag(double mouseX, double mouseY, double deltaX, double deltaY) {
-		if (mouseDown || isMouseOver(mouseX, mouseY)) {
-			setColorFromMouse(mouseX, mouseY);
+	protected void onDrag(MouseButtonEvent event, double dx, double dy) {
+		if (mouseDown || isMouseOver(event.x(), event.y())) {
+			setColorFromMouse(event, false);
 		}
 	}
 
 	@Override
-	public void onRelease(double mouseX, double mouseY) {
+	public void onRelease(MouseButtonEvent event) {
 		this.mouseDown = false;
 	}
 
@@ -439,7 +443,9 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	@Override
-	public void onPress() {}
+	public void onPress(InputWithModifiers input) {
+	}
+
 
 	public void setSatLightFromMouse(double mouseX, double mouseY) {
 		if (mouseX < satLightX) {

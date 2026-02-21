@@ -11,6 +11,8 @@ import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
 import dev.hephaestus.glowcase.client.util.EmiClientUtils;
 import dev.hephaestus.glowcase.util.EmiUtils;
 import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2fStack;
 
@@ -167,26 +169,27 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			matrixStack.popMatrix();
 		}
 	}
-
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && recipeWidget.isFocused()) {
-			return suggestionWidget.mouseClicked(mouseX, mouseY, button);
+			return suggestionWidget.mouseClicked(event, doubleClick);
 		} else {
 			suggestionWidget.updateSuggestions(NO_SUGGESTIONS, "", this);
 		}
 
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
 		if (suggestionWidget.draggingScrollbar) {
-			if (suggestionWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY))
+			if (suggestionWidget.mouseDragged(event, dx, dy))
 				return true;
 		}
 
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(event, dx, dy);
 	}
 
 	@Override
@@ -200,11 +203,11 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+	public boolean keyPressed(KeyEvent event) {
+		if (suggestionWidget.keyPressed(event)) {
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override

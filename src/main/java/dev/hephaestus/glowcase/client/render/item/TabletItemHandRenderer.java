@@ -9,13 +9,13 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.ScreenImageCache;
 import dev.hephaestus.glowcase.client.render.block.entity.ScreenBlockEntityRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.joml.Matrix4f;
 
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -38,7 +38,7 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 		matrices.translate(-0.5F, -0.5F, 0.0F);
 		matrices.scale(0.0078125F, 0.0078125F, 0.0078125F);
 
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderType.text(TABLET_TEXTURE));
+		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(TABLET_TEXTURE));
 		Matrix4f matrix4f = matrices.last().pose();
 
 		vertexConsumer.addVertex(matrix4f, -7.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 1.0F).setLight(light);
@@ -93,7 +93,7 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 			return;
 		}
 
-		vertexConsumer = vertexConsumers.getBuffer(RenderType.text(texture));
+		vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(texture));
 		matrix4f = matrices.last().pose();
 
 		float pixel = 142f/64f;

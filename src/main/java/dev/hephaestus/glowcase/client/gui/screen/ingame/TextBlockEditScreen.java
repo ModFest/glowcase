@@ -6,10 +6,6 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
-import org.lwjgl.glfw.GLFW;
-
-import java.awt.*;
-import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -19,8 +15,15 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import org.lwjgl.glfw.GLFW;
+
+import java.awt.*;
+import java.util.List;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen {
@@ -209,9 +212,12 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 				int lineWidth = this.font.width(text);
 				switch (this.textBlockEntity.textAlignment) {
-					case LEFT -> context.drawString(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
-					case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawString(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
-					case RIGHT -> context.drawString(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
+					case LEFT ->
+						context.drawString(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
+					case CENTER, CENTER_LEFT, CENTER_RIGHT ->
+						context.drawString(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
+					case RIGHT ->
+						context.drawString(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
 				}
 			}
 
@@ -246,7 +252,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 				if (caretStart != caretEnd) {
 					int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-					context.textHighlight(startX, caretStartY, endX, caretStartY + 9);
+					context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 				}
 			}
 
@@ -257,22 +263,23 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public boolean charTyped(char chr, int keyCode) {
+	public boolean charTyped(CharacterEvent event) {
 		for (final var element : this.textWidgets) {
-			if (element.charTyped(chr, keyCode)) {
+			if (element.charTyped(event)) {
 				return true;
 			}
 		}
 
-		return this.selectionManager.charTyped(chr);
+		return this.selectionManager.charTyped(event);
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		var keyCode = event.key();
 		if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
 			for (final var element : this.textWidgets) {
 				if (element.isFocused()) {
-					return element.keyPressed(keyCode, scanCode, modifiers);
+					return element.keyPressed(event);
 				}
 			}
 		}
@@ -344,7 +351,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				}
 
 				try {
-					boolean val = this.selectionManager.keyPressed(keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
+					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
 					int selectionOffset = this.textBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
 
 					// Find line feed characters and create proper newlines
@@ -407,11 +414,13 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		int topOffset = (int) (40 + 2 * this.width / 100F);
 
 		for (final var text : textWidgets) {
-			if (!text.mouseClicked(mouseX, mouseY, button)) {
+			if (!text.mouseClicked(event, doubleClick)) {
 				continue;
 			}
 			this.setFocused(text);
@@ -426,7 +435,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 		if (colorPickerWidget.active && colorPickerWidget.visible) {
 			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
-				colorPickerWidget.mouseClicked(mouseX, mouseY, button);
+				colorPickerWidget.mouseClicked(event, doubleClick);
 				this.setFocused(colorPickerWidget);
 				this.setDragging(true);
 				return true;
@@ -485,7 +494,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			}
 			return true;
 		} else {
-			return super.mouseClicked(mouseX, mouseY, button);
+			return super.mouseClicked(event, doubleClick);
 		}
 	}
 
