@@ -5,29 +5,37 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-public record ItemDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemDisplayBlockEntity, ItemDisplayBlockEntityRenderer.ItemDisplayRenderState> {
+public record ItemDisplayBlockEntityRenderer(
+	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemDisplayBlockEntity, ItemDisplayBlockEntityRenderer.ItemDisplayRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_display_block.png");
 
 	public static class ItemDisplayRenderState extends BlockEntityRenderState {
+		public boolean shouldRenderPlaceholder;
+		public float yaw;
 	}
 
 	@Override
 	public ItemDisplayRenderState createRenderState() {
 		return new ItemDisplayRenderState();
+	}
+
+	@Override
+	public void extractRenderState(ItemDisplayBlockEntity blockEntity, ItemDisplayRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
+
+		state.shouldRenderPlaceholder = blockEntity.matchesStack(ItemStack.EMPTY) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
+		state.yaw = blockEntity.getYaw();
 	}
 
 	@Override
@@ -64,7 +72,9 @@ public record ItemDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context
 //
 //		matrices.popPose();
 //
-//		if (entity.matchesStack(ItemStack.EMPTY) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos())) BlockEntityRenderUtil.renderCenteredPlaceholder(entity, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(entity.getYaw()), matrices, vertexConsumers);
+		if (state.shouldRenderPlaceholder) {
+			BlockEntityRenderUtil.renderCenteredPlaceholder(state, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(state.yaw), poseStack, submitNodeCollector);
+		}
 
 	}
 }

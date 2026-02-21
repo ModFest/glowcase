@@ -12,11 +12,10 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import org.joml.Quaternionf;
@@ -30,16 +29,20 @@ public class BlockEntityRenderUtil {
 		new Vector3f(-0.5F, 0.5F, 0.0F)
 	};
 
-	public static void renderPlaceholder(BlockEntity entity, Identifier texture, float scale, Quaternionf rotation, PoseStack matrices, MultiBufferSource vertexConsumers, float zOffset) {
-		matrices.pushPose();
-		matrices.translate(0.5, 0.5, 0.5);
-		matrices.mulPose(rotation);
-		matrices.translate(0, 0, zOffset);
-		matrices.scale(scale, scale, scale);
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.entityCutout(texture));
-		renderPlaceholderFace(matrices.last(), vertexConsumer, entity.getBlockPos());
-		renderPlaceholderBackFace(matrices.last(), vertexConsumer, entity.getBlockPos());
-		matrices.popPose();
+	public static void renderPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, Quaternionf rotation, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, float zOffset) {
+		poseStack.pushPose();
+		poseStack.translate(0.5, 0.5, 0.5);
+		poseStack.mulPose(rotation);
+		poseStack.translate(0, 0, zOffset);
+		poseStack.scale(scale, scale, scale);
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutoutCull(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
+			@Override
+			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
+				renderPlaceholderBackFace(pose, buffer, state.blockPos);
+				renderPlaceholderFace(pose, buffer, state.blockPos);
+			}
+		});
+		poseStack.popPose();
 	}
 
 	public static void renderBillboardPlaceholder(BlockEntityRenderState entity, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
@@ -57,34 +60,42 @@ public class BlockEntityRenderUtil {
 		poseStack.popPose();
 	}
 
-	public static void renderTrackingPlaceholder(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers, Entity camera, float tickDelta) {
-		matrices.pushPose();
-		matrices.translate(0.5, 0.5, 0.5);
-		Vec2 tracking = getTracking(camera, entity.getBlockPos(), tickDelta);
+	public static void renderTrackingPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Entity camera, float tickDelta) {
+		poseStack.pushPose();
+		poseStack.translate(0.5, 0.5, 0.5);
+		Vec2 tracking = getTracking(camera, state.blockPos, tickDelta);
 		float pitch = tracking.x;
 		float yaw = tracking.y;
-		matrices.mulPose(Axis.YP.rotation((float) (Math.PI + yaw)));
-		matrices.mulPose(Axis.XP.rotation(-pitch));
-		matrices.scale(scale, scale, scale);
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.entityCutout(texture));
-		renderPlaceholderFace(matrices.last(), vertexConsumer, entity.getBlockPos());
-		matrices.popPose();
+		poseStack.mulPose(Axis.YP.rotation((float) (Math.PI + yaw)));
+		poseStack.mulPose(Axis.XP.rotation(-pitch));
+		poseStack.scale(scale, scale, scale);
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
+			@Override
+			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
+				renderPlaceholderFace(poseStack.last(), buffer, state.blockPos);
+			}
+		});
+		poseStack.popPose();
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers, float zOffset) {
-		renderPlaceholder(entity, texture, scale, Axis.YP.rotationDegrees(-(entity.getBlockState().getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F), matrices, vertexConsumers, zOffset);
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, Identifier texture,
+														  float scale, PoseStack matrices, MultiBufferSource vertexConsumers, float zOffset) {
+//		renderPlaceholder(entity, texture, scale, Axis.YP.rotationDegrees(-(entity.getBlockState().getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F), matrices, vertexConsumers, zOffset);
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers) {
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, Identifier texture,
+														  float scale, PoseStack matrices, MultiBufferSource vertexConsumers) {
 		renderPlaceholderWithBlockRotation(entity, texture, scale, matrices, vertexConsumers, 0F);
 	}
 
-	public static void renderCenteredPlaceholder(BlockEntity entity, Identifier texture, float scale, Quaternionf rotation, PoseStack matrices, MultiBufferSource vertexConsumers) {
-		renderPlaceholder(entity, texture, scale, rotation, matrices, vertexConsumers, 0F);
+	public static void renderCenteredPlaceholder(BlockEntityRenderState entity, Identifier texture,
+												 float scale, Quaternionf rotation, PoseStack matrices, SubmitNodeCollector submitNodeCollector) {
+		renderPlaceholder(entity, texture, scale, rotation, matrices, submitNodeCollector, 0F);
 	}
 
-	public static void renderFacingPlaceholder(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers) {
-		renderPlaceholder(entity, texture, scale, entity.getBlockState().getValue(BlockStateProperties.FACING).getRotation().mul(Axis.XP.rotationDegrees(-90.0F)), matrices, vertexConsumers, -0.4F);
+	public static void renderFacingPlaceholder(BlockEntityRenderState entity, Direction facing, Identifier texture,
+											   float scale, PoseStack matrices, SubmitNodeCollector submitNodeCollector) {
+		renderPlaceholder(entity, texture, scale, facing.getRotation().mul(Axis.XP.rotationDegrees(-90.0F)), matrices, submitNodeCollector, -0.4F);
 	}
 
 	public static boolean shouldRenderPlaceholder(BlockPos pos) {

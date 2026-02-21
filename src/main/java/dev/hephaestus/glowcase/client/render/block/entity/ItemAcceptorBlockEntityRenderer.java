@@ -13,10 +13,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
@@ -34,7 +32,7 @@ public record ItemAcceptorBlockEntityRenderer(
 
 	public static class ItemAcceptorRenderState extends BlockEntityRenderState {
 		public int count;
-		public ItemStackRenderState displayItemStack = new ItemStackRenderState();
+		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
 		public float rotation;
 	}
 
@@ -47,10 +45,7 @@ public record ItemAcceptorBlockEntityRenderer(
 	public void extractRenderState(ItemAcceptorBlockEntity blockEntity, ItemAcceptorRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 		state.count = blockEntity.count;
-
-		state.displayItemStack = new ItemStackRenderState();
-		this.context.itemModelResolver().updateForTopItem(state.displayItemStack, blockEntity.getDisplayItemStack(), ItemDisplayContext.GUI, blockEntity.getLevel(), null, (int) state.blockPos.asLong());
-
+		this.context.itemModelResolver().updateForTopItem(state.itemRenderState, blockEntity.getDisplayItemStack(), ItemDisplayContext.GUI, blockEntity.getLevel(), null, (int) state.blockPos.asLong());
 		state.rotation = getRotationYForSide2D(blockEntity.getBlockState().getValue(ItemAcceptorBlock.FACING));
 	}
 
@@ -67,14 +62,14 @@ public record ItemAcceptorBlockEntityRenderer(
 
 		GpuBufferSlice shaderLights = RenderSystem.getShaderLights();
 
-		if (state.displayItemStack.usesBlockLight()) {
+		if (state.itemRenderState.usesBlockLight()) {
 			poseStack.last().normal().rotate(ITEM_LIGHT_ROTATION_3D);
 			client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
 		} else {
 			poseStack.last().normal().rotate(ITEM_LIGHT_ROTATION_FLAT);
 			client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_FLAT);
 		}
-		state.displayItemStack.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+		state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 
 		RenderSystem.setShaderLights(shaderLights);
 
