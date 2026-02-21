@@ -33,7 +33,7 @@ public record CollectableStack(Holder<Item> item, DataComponentPatch changes, in
 		Component name = stack.getHoverName();
 		JukeboxPlayable songComponent = stack.get(DataComponents.JUKEBOX_PLAYABLE);
 		if (songComponent != null) {
-			JukeboxSong song = songComponent.song().unwrap(lookup).map(Holder::value).orElse(null);
+			JukeboxSong song = songComponent.song().value();
 			if (song != null) {
 				name = song.description();
 			}

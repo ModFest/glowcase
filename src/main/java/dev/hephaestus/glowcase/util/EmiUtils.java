@@ -4,12 +4,12 @@ package dev.hephaestus.glowcase.util;
 //import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Objects;
 
 public class EmiUtils {
-	public static final NotSoConstant<List<ResourceLocation>> RECIPE_LIST = new NotSoConstant<>(() -> List.of()/*EmiApi.getRecipeManager().getRecipes().stream().map(EmiRecipe::getId).filter(Objects::nonNull).toList(), list -> !list.isEmpty()*/);
+	public static final NotSoConstant<List<Identifier>> RECIPE_LIST = new NotSoConstant<>(() -> List.of()/*EmiApi.getRecipeManager().getRecipes().stream().map(EmiRecipe::getId).filter(Objects::nonNull).toList(), list -> !list.isEmpty()*/);
 
 	/*public static EmiRecipe getRecipe(String recipeString) {
 		Identifier recipeId = Identifier.tryParse(recipeString);

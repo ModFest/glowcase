@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,7 +20,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
-	private ResourceLocation item = ResourceLocation.withDefaultNamespace("air");
+	private Identifier item = Identifier.withDefaultNamespace("air");
 	public int count = 1;
 	public int pulse = 4;
 	public OutputDirection outputDirection = OutputDirection.BACK;
@@ -35,7 +35,7 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void saveAdditional(ValueOutput view) {
 		super.saveAdditional(view);
 
-		view.store("item", ResourceLocation.CODEC, this.item);
+		view.store("item", Identifier.CODEC, this.item);
 		view.putInt("count", this.count);
 		view.putInt("pulse", this.pulse);
 		view.putBoolean("is_item_tag", this.isItemTag);
@@ -46,18 +46,18 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void loadAdditional(ValueInput view) {
 		super.loadAdditional(view);
 
-		this.setItem(view.read("item", ResourceLocation.CODEC).orElse(ResourceLocation.withDefaultNamespace("air")));
+		this.setItem(view.read("item", Identifier.CODEC).orElse(Identifier.withDefaultNamespace("air")));
 		this.count = view.getIntOr("count", 1);
 		this.pulse = view.getIntOr("pulse", 4);
 		this.isItemTag = view.getBooleanOr("is_item_tag", false);
 		this.outputDirection = view.read("output_direction", OutputDirection.CODEC).orElse(OutputDirection.BACK);
 	}
 
-	public ResourceLocation getItem() {
+	public Identifier getItem() {
 		return item;
 	}
 
-	public void setItem(ResourceLocation item) {
+	public void setItem(Identifier item) {
 		if (item == null) {
 			return;
 		}

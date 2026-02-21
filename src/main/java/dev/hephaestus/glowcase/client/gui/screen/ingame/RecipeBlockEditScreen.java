@@ -20,17 +20,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class RecipeBlockEditScreen extends GlowcaseScreen {
-	private static final List<ResourceLocation> NO_SUGGESTIONS = List.of();
+	private static final List<Identifier> NO_SUGGESTIONS = List.of();
 	private final RecipeBlockEntity recipeBlockEntity;
 
 	private EditBox recipeWidget;
 	private EditBox rotationXWidget;
 	private EditBox rotationYWidget;
 
-	private SuggestionListWidget<ResourceLocation> suggestionWidget;
+	private SuggestionListWidget<Identifier> suggestionWidget;
 
 	// Can't use GlowcaseWidgetHolder as that can crash if EMI is not present
 	@NotNull
@@ -89,10 +89,10 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			this.zOffsetToggle.setMessage(Component.literal(this.recipeBlockEntity.zOffset.name()));
 		}).bounds(width / 2 - 75, baseY + fontHeight + 75, 150, 20).build();
 
-		suggestionWidget = SuggestionListWidget.forTextField(recipeWidget, minecraft.font, ResourceLocation::toString);
+		suggestionWidget = SuggestionListWidget.forTextField(recipeWidget, minecraft.font, Identifier::toString);
 
 		recipeWidget.setResponder((text) -> {
-			if (ResourceLocation.tryParse(this.recipeWidget.getValue()) != null) {
+			if (Identifier.tryParse(this.recipeWidget.getValue()) != null) {
 				this.recipeBlockEntity.recipe = this.recipeWidget.getValue();
 			}
 

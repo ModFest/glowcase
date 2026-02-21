@@ -26,7 +26,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ArrayList;
@@ -49,8 +49,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	private EditBox tickRateMean;
 	private EditBox tickRateStdDev;
 
-	private SuggestionListWidget<ResourceLocation> suggestionWidget;
-	private List<ResourceLocation> validParticles = new ArrayList<>();
+	private SuggestionListWidget<Identifier> suggestionWidget;
+	private List<Identifier> validParticles = new ArrayList<>();
 
 	public ParticleDisplayEditScreen(ParticleDisplayBlockEntity blockEntity) {
 		this.blockEntity = blockEntity;
@@ -84,7 +84,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 			.map(BuiltInRegistries.PARTICLE_TYPE::getKey)
 			.collect(Collectors.toList());
 
-		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, minecraft.font, validParticles, ResourceLocation::toString, this);
+		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, minecraft.font, validParticles, Identifier::toString, this);
 
 		particleId.setResponder((text) -> {
 			suggestionWidget.updateSuggestions(validParticles, text, this);
@@ -318,7 +318,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		int paramStart = idText.indexOf('{');
 
-		ResourceLocation id = ResourceLocation.tryParse(
+		Identifier id = Identifier.tryParse(
 			paramStart == -1 ? idText : idText.substring(0, paramStart));
 		if (id == null) return;
 

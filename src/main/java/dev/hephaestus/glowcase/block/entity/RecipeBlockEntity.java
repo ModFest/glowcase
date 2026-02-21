@@ -5,7 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentGetter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -24,7 +24,7 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 
 	@Environment(EnvType.CLIENT)
 	public void openRecipe() {
-		ResourceLocation rid = ResourceLocation.tryParse(recipe);
+		Identifier rid = Identifier.tryParse(recipe);
 		/*if (GlowcaseClient.EMI_LOADED) {
 			EmiClientUtils.displayRecipe(rid);
 		}*/

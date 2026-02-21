@@ -18,12 +18,12 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
 
 public class TabletItemHandRenderer extends ItemHandRenderer {
-	private static final ResourceLocation TABLET_TEXTURE = Glowcase.id("textures/gui/tablet_hand.png");
+	private static final Identifier TABLET_TEXTURE = Glowcase.id("textures/gui/tablet_hand.png");
 
 	@Override
 	public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, ItemStack stack) {
@@ -87,7 +87,7 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 		String url = slideshow.get(index).getFirst();
 
 		ScreenImageCache.ScreenTexture image = GlowcaseClient.screenImageCache.getImage(url, null);
-		ResourceLocation texture = image.getTexture().getSecond();
+		Identifier texture = image.getTexture().getSecond();
 		if (texture == null) {
 			matrices.popPose();
 			return;

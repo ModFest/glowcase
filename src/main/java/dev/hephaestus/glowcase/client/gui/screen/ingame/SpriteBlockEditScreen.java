@@ -13,7 +13,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
 import java.util.ArrayList;
@@ -123,7 +123,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		// You can also display any item
 		BuiltInRegistries.ITEM.stream()
 			.map(BuiltInRegistries.ITEM::getKey)
-			.map(ResourceLocation::toString)
+			.map(Identifier::toString)
 			.forEach(validSprites::add);
 
 		// And you can use any modid to display its icon

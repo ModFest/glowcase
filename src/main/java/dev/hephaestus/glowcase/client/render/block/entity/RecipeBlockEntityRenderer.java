@@ -13,13 +13,13 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public record RecipeBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<RecipeBlockEntity> {
-	private static final ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/recipe_block.png");
+	private static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/recipe_block.png");
 
 	public void render(RecipeBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		if (GlowcaseClient.EMI_LOADED) {

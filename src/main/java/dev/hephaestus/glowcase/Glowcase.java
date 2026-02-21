@@ -27,7 +27,7 @@ import dev.hephaestus.glowcase.item.component.CollectionComponent;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import dev.hephaestus.glowcase.item.component.TabletComponents;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
@@ -38,7 +38,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -137,7 +137,7 @@ public class Glowcase implements ModInitializer {
 	public static final Supplier<BlockItem> ENTITY_DISPLAY_BLOCK_ITEM = registerBlockItem("entity_display_block", ENTITY_DISPLAY_BLOCK);
 	public static final Supplier<BlockEntityType<EntityDisplayBlockEntity>> ENTITY_DISPLAY_BLOCK_ENTITY = registerBlockEntity("entity_display_block", () -> FabricBlockEntityTypeBuilder.create(EntityDisplayBlockEntity::new, ENTITY_DISPLAY_BLOCK.get()).build(null));
 
-	public static final Supplier<CreativeModeTab> ITEM_GROUP = registerItemGroup("items", () -> FabricItemGroup.builder()
+	public static final Supplier<CreativeModeTab> ITEM_GROUP = registerItemGroup("items", () -> FabricCreativeModeTab.builder()
 		.title(Component.translatable("itemGroup.glowcase.items"))
 		.icon(() -> new ItemStack(SPRITE_BLOCK_ITEM.get()))
 		.displayItems((displayContext, entries) -> {
@@ -163,12 +163,12 @@ public class Glowcase implements ModInitializer {
 		.build()
 	);
 
-	public static ResourceLocation id(String... path) {
-		return ResourceLocation.fromNamespaceAndPath(MODID, String.join("/", path));
+	public static Identifier id(String... path) {
+		return Identifier.fromNamespaceAndPath(MODID, String.join("/", path));
 	}
 
 	public static <T extends Block> Supplier<T> registerBlock(String path, Function<BlockBehaviour.Properties, T> supplier) {
-		ResourceLocation identifier = id(path);
+		Identifier identifier = id(path);
 		BlockBehaviour.Properties settings = GlowcaseBlock.defaultSettings().setId(ResourceKey.create(Registries.BLOCK, identifier));
 		
 		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.BLOCK, identifier, supplier.apply(settings)));
@@ -179,7 +179,7 @@ public class Glowcase implements ModInitializer {
 	}
 
 	public static Supplier<BlockItem> registerBlockItem(String path, Supplier<? extends Block> blockSupplier, Consumer<Item.Properties> seetingsConsumer) {
-		ResourceLocation identifier = id(path);
+		Identifier identifier = id(path);
 		Block block = blockSupplier.get();
 		Item.Properties settings = defaultItemSettings().setId(ResourceKey.create(Registries.ITEM, identifier));
 		seetingsConsumer.accept(settings);
@@ -199,7 +199,7 @@ public class Glowcase implements ModInitializer {
 	}
 
 	public static <T extends Item> Supplier<T> registerItem(String path, Function<Item.Properties, T> supplier) {
-		ResourceLocation identifier = id(path);
+		Identifier identifier = id(path);
 		Item.Properties settings = defaultItemSettings().setId(ResourceKey.create(Registries.ITEM, identifier));
 
 		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.ITEM, identifier, supplier.apply(settings)));

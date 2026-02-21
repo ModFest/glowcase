@@ -16,7 +16,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	private final SoundPlayerBlockEntity soundBlock;
@@ -123,7 +123,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		validSounds = BuiltInRegistries.SOUND_EVENT.stream()
 			.map(BuiltInRegistries.SOUND_EVENT::getKey)
 			.filter(Objects::nonNull)
-			.map(ResourceLocation::toString)
+			.map(Identifier::toString)
 			.collect(Collectors.toList());
 
 		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(soundId, minecraft.font, validSounds, Function.identity(), this);
@@ -250,7 +250,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		Objects.requireNonNull(this.minecraft);
 
 		String idText = this.soundId.getValue();
-		ResourceLocation id = ResourceLocation.tryParse(idText);
+		Identifier id = Identifier.tryParse(idText);
 
 		if (id != null) {
 			soundBlock.soundId = id;

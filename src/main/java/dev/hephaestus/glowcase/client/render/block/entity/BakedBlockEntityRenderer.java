@@ -25,7 +25,7 @@ import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelTerrainRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -322,7 +322,7 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 		}
 
 		@SuppressWarnings("unchecked")
-		public static void render(WorldRenderContext wrc) {
+		public static void render(LevelTerrainRenderContext wrc) {
 			ProfilerFiller profiler = Profiler.get();
 			profiler.push("glowcase:baked_block_entity_rendering");
 

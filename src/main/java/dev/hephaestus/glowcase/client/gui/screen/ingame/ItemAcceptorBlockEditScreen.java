@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 	private final ItemAcceptorBlockEntity itemAcceptorBlockEntity;
@@ -28,11 +28,11 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 
 		if (this.minecraft == null) return;
 
-		ResourceLocation item = this.itemAcceptorBlockEntity.getItem();
+		Identifier item = this.itemAcceptorBlockEntity.getItem();
 
 		this.itemWidget = new EditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
-		if (!item.equals(ResourceLocation.withDefaultNamespace("air"))) {
+		if (!item.equals(Identifier.withDefaultNamespace("air"))) {
 			this.itemWidget.setValue((this.itemAcceptorBlockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
@@ -74,11 +74,11 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 			text = text.substring(1);
 		}
 
-		if (!text.isEmpty() && ResourceLocation.tryParse(text) instanceof ResourceLocation id) {
+		if (!text.isEmpty() && Identifier.tryParse(text) instanceof Identifier id) {
 			this.itemAcceptorBlockEntity.setItem(id);
 			this.itemAcceptorBlockEntity.isItemTag = isItemTag;
 		} else {
-			this.itemAcceptorBlockEntity.setItem(ResourceLocation.withDefaultNamespace("air"));
+			this.itemAcceptorBlockEntity.setItem(Identifier.withDefaultNamespace("air"));
 		}
 
 		if (Ints.tryParse(countWidget.getValue()) instanceof Integer integer) {

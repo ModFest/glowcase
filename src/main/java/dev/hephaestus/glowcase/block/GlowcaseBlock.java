@@ -2,6 +2,7 @@ package dev.hephaestus.glowcase.block;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.GlowcaseBlockEntity;
+import net.minecraft.world.item.component.TypedEntityData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -50,8 +51,8 @@ public abstract class GlowcaseBlock extends BaseEntityBlock {
 	abstract protected boolean openEditScreen(BlockPos pos);
 
 	protected void loadClientSideNBT(Level world, BlockPos pos, LivingEntity placer, ItemStack stack) {
-		if (world.isClientSide && placer instanceof Player player && canEditGlowcase(player, pos)) {
-			CustomData blockEntityTag = stack.get(DataComponents.BLOCK_ENTITY_DATA);
+		if (world.isClientSide() && placer instanceof Player player && canEditGlowcase(player, pos)) {
+			TypedEntityData<BlockEntityType<?>> blockEntityTag = stack.get(DataComponents.BLOCK_ENTITY_DATA);
 			if (blockEntityTag != null && world.getBlockEntity(pos) instanceof BlockEntity be) {
 				blockEntityTag.loadInto(be, world.registryAccess());
 			}
@@ -62,7 +63,7 @@ public abstract class GlowcaseBlock extends BaseEntityBlock {
 	@Override
 	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		loadClientSideNBT(world, pos, placer, stack);
-		if (world.isClientSide && placer instanceof Player player && canEditGlowcase(player, pos)) {
+		if (world.isClientSide() && placer instanceof Player player && canEditGlowcase(player, pos)) {
 			openEditScreen(pos);
 		}
 	}
@@ -74,7 +75,7 @@ public abstract class GlowcaseBlock extends BaseEntityBlock {
 		}
 
 		if (player.getItemInHand(hand).is(Glowcase.ITEM_TAG) && canEditGlowcase(player, pos)) {
-			if (world.isClientSide) {
+			if (world.isClientSide()) {
 				openEditScreen(pos);
 			}
 

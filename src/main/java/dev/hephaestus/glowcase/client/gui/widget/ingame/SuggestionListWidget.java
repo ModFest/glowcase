@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,7 +16,7 @@ import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -29,7 +29,7 @@ import org.joml.Matrix3x2fStack;
 import org.lwjgl.glfw.GLFW;
 
 public class SuggestionListWidget<T> extends AbstractWidget {
-	public static final ResourceLocation BLUR_ID = ResourceLocation.withDefaultNamespace("blur");
+	public static final Identifier BLUR_ID = Identifier.withDefaultNamespace("blur");
 	public static final RenderTarget FRAMEBUFFER = new TextureTarget("Glowcase Suggestions", 1, 1, false);
 	public static final CrossFrameResourcePool POOL = new CrossFrameResourcePool(3);
 	private final Font textRenderer;

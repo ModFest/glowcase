@@ -8,11 +8,11 @@ import dev.hephaestus.glowcase.util.DeviatedInteger;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 public record ParticleDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ParticleDisplayBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/particle_display.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/particle_display.png");
 
 	public void render(ParticleDisplayBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;

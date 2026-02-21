@@ -6,22 +6,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 public class IconButtonWidget extends Button {
-	public ResourceLocation icon;
+	public Identifier icon;
 	@Nullable
-	public ResourceLocation hoverIcon;
+	public Identifier hoverIcon;
 	public int iconWidth;
 	public int iconHeight;
 	public int z;
 
-	public static IconButtonWidget.Builder builder(ResourceLocation icon, Button.OnPress onPress) {
+	public static IconButtonWidget.Builder builder(Identifier icon, Button.OnPress onPress) {
 		return new IconButtonWidget.Builder(icon, onPress);
 	}
 
-	public IconButtonWidget(int x, int y, int width, int height, int iconWidth, int iconHeight, ResourceLocation icon, @Nullable ResourceLocation hoverIcon, OnPress onPress) {
+	public IconButtonWidget(int x, int y, int width, int height, int iconWidth, int iconHeight, Identifier icon, @Nullable Identifier hoverIcon, OnPress onPress) {
 		super(x, y, width, height, Component.nullToEmpty(""), onPress, Button.DEFAULT_NARRATION);
 		this.icon = icon;
 		this.hoverIcon = hoverIcon;
@@ -31,7 +31,7 @@ public class IconButtonWidget extends Button {
 
 	@Override
 	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		ResourceLocation drawnIcon = this.icon;
+		Identifier drawnIcon = this.icon;
 		if(this.hoverIcon != null && this.isMouseOver(mouseX, mouseY)) {
 			drawnIcon = this.hoverIcon;
 		}
@@ -49,9 +49,9 @@ public class IconButtonWidget extends Button {
 
 	@Environment(EnvType.CLIENT)
 	public static class Builder {
-		private final ResourceLocation icon;
+		private final Identifier icon;
 		@Nullable
-		private ResourceLocation hoverIcon = null;
+		private Identifier hoverIcon = null;
 		private final Button.OnPress onPress;
 		private int x;
 		private int y;
@@ -60,7 +60,7 @@ public class IconButtonWidget extends Button {
 		private int width = 150;
 		private int height = 150;
 
-		public Builder(ResourceLocation icon, Button.OnPress onPress) {
+		public Builder(Identifier icon, Button.OnPress onPress) {
 			this.icon = icon;
 			this.onPress = onPress;
 		}
@@ -83,7 +83,7 @@ public class IconButtonWidget extends Button {
 			return this.position(x, y).size(width, height, iconWidth, iconHeight);
 		}
 
-		public IconButtonWidget.Builder hoverIcon(ResourceLocation hoverIcon) {
+		public IconButtonWidget.Builder hoverIcon(Identifier hoverIcon) {
 			this.hoverIcon = hoverIcon;
 			return this;
 		}

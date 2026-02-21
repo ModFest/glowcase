@@ -4,8 +4,8 @@ import dev.hephaestus.glowcase.mixin.BaseContainerBlockEntityAccessor;
 
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.critereon.ItemPredicate;
-import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.advancements.criterion.ItemPredicate;
+import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -56,8 +56,8 @@ public class LockItem extends Item {
 			soundEvent = SoundEvents.WOODEN_TRAPDOOR_OPEN;
 		}
 
-		player.displayClientMessage(message, true);
-		player.playNotifySound(soundEvent, SoundSource.BLOCKS, 1.0F, 1.0F);
+		player.sendOverlayMessage(message);
+		player.playSound(soundEvent,1.0F, 1.0F);
 		be.setChanged();
 
 		return InteractionResult.SUCCESS;

@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.mixin.client;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.FontSet;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
@@ -12,5 +12,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
  **/
 @Mixin(Font.class)
 public interface FontAccessor {
-	@Invoker("getFontSet") FontSet invokeGetFontStorage(ResourceLocation id);
+	@Invoker("getFontSet") FontSet invokeGetFontStorage(Identifier id);
 }

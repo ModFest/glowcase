@@ -10,12 +10,12 @@ import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 
 public record OutlineBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<OutlineBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/outline_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/outline_block.png");
 
 	public void render(OutlineBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;

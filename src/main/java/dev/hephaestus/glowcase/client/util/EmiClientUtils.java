@@ -8,10 +8,10 @@ import dev.hephaestus.glowcase.util.EmiUtils;
 import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class EmiClientUtils {
-	public static void displayRecipe(ResourceLocation recipeId) {
+	public static void displayRecipe(Identifier recipeId) {
 		/*if (recipeId == null) {
 			return;
 		}

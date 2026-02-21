@@ -12,7 +12,7 @@ import dev.hephaestus.glowcase.client.ScreenImageCache;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -20,7 +20,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import org.joml.Matrix4f;
 import java.util.ArrayList;
 
 public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ScreenBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/screen_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/screen_block.png");
 
 	public static final int COLOR_SCR_OFF = 0xFF111111;
 	public static final int COLOR_SCR_ON = 0xFFFFFFFF;
@@ -66,7 +66,7 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 
 		Font textRenderer = this.context.getFont();
 
-		int brightness = entity.eink ? light : LightTexture.FULL_BRIGHT;
+		int brightness = entity.eink ? light : Lightmap.FULL_BRIGHT;
 
 		String url = entity.url;
 
@@ -90,10 +90,10 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 		} else {
 			ScreenImageCache screenImageCache = GlowcaseClient.screenImageCache;
 			ScreenImageCache.ScreenTexture image = screenImageCache.getImage(url, entity.getBlockPos());
-			Pair<Integer, ResourceLocation> response = image.getTexture();
+			Pair<Integer, Identifier> response = image.getTexture();
 
 			int code = response.getFirst();
-			@Nullable ResourceLocation texture = response.getSecond();
+			@Nullable Identifier texture = response.getSecond();
 
 			if (texture != null) {
 				if (!entity.stretch) {
@@ -131,7 +131,7 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 		matrices.popPose();
 	}
 
-	public static void renderPicture(@NotNull ResourceLocation texture, float x1, float x2, float y1, float y2, MultiBufferSource vertexConsumers, PoseStack matrices, int light, boolean renderBackface) {
+	public static void renderPicture(@NotNull Identifier texture, float x1, float x2, float y1, float y2, MultiBufferSource vertexConsumers, PoseStack matrices, int light, boolean renderBackface) {
 		RenderType renderLayer = GlowcaseRenderLayers.getScreen(texture, !renderBackface);
 		VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 

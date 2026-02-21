@@ -9,7 +9,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -59,10 +59,11 @@ public class ParticleDisplayBlockEntity extends GlowcaseBlockEntity {
 		entity.tickCounter--;
 		if (entity.tickCounter > 0) return;
 
-		entity.tickCounter = entity.tickRate.get(world.random::nextDouble);
-		for (int i = 0; i < entity.count.get(world.random::nextDouble); i++) {
-			Vec3 particlePos = entity.position.get(world.random::nextGaussian).add(pos.getCenter());
-			Vec3 particleVelocity = entity.velocity.get(world.random::nextGaussian);
+		var random = world.getRandom();
+		entity.tickCounter = entity.tickRate.get(random::nextDouble);
+		for (int i = 0; i < entity.count.get(random::nextDouble); i++) {
+			Vec3 particlePos = entity.position.get(random::nextGaussian).add(pos.getCenter());
+			Vec3 particleVelocity = entity.velocity.get(random::nextGaussian);
 
 			world.addParticle(
 				entity.particle,

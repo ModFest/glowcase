@@ -10,7 +10,7 @@ import dev.hephaestus.glowcase.block.ItemAcceptorBlock;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -72,7 +72,7 @@ public record ItemAcceptorBlockEntityRenderer(BlockEntityRendererProvider.Contex
 
 			Font textRenderer = context.getFont();
 			String string = String.valueOf(entity.count);
-			textRenderer.drawInBatch(string, 9 - textRenderer.width(string), 1, CommonColors.WHITE, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+			textRenderer.drawInBatch(string, 9 - textRenderer.width(string), 1, CommonColors.WHITE, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 		}
 
 		matrices.popPose();

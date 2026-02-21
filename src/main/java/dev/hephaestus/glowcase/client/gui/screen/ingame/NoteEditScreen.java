@@ -24,13 +24,13 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class NoteEditScreen extends TextEditorScreen {
-	private static final ResourceLocation TEXTURE = Glowcase.id("textures/gui/note.png");
+	private static final Identifier TEXTURE = Glowcase.id("textures/gui/note.png");
 
 	private static final int SCREEN_X1 = 3;
 	private static final int SCREEN_Y1 = 5;

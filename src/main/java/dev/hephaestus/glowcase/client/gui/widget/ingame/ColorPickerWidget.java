@@ -15,7 +15,7 @@ import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +30,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class ColorPickerWidget extends AbstractButton {
-	static final ResourceLocation CONFIRM_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/accept");
-	static final ResourceLocation CONFIRM_HIGHLIGHTED_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/accept_highlighted");
-	static final ResourceLocation CANCEL_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/reject");
-	static final ResourceLocation CANCEL_HIGHLIGHTED_TEXTURE = ResourceLocation.withDefaultNamespace("pending_invite/reject_highlighted");
+	static final Identifier CONFIRM_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept");
+	static final Identifier CONFIRM_HIGHLIGHTED_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept_highlighted");
+	static final Identifier CANCEL_TEXTURE = Identifier.withDefaultNamespace("pending_invite/reject");
+	static final Identifier CANCEL_HIGHLIGHTED_TEXTURE = Identifier.withDefaultNamespace("pending_invite/reject_highlighted");
 
 	public final ColorPickerIncludedScreen screen;
 	public GuiEventListener targetElement;
@@ -164,7 +164,7 @@ public class ColorPickerWidget extends AbstractButton {
 		int height = this.getHeight();
 
 		//background
-		context.blit(RenderPipelines.GUI_TEXTURED, ResourceLocation.withDefaultNamespace("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
+		context.blit(RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
 		if (this.isHoveredOrFocused()) {
 			//outline
 			drawOutline(context, x, y, width, height, Color.white);

@@ -4,10 +4,10 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import dev.hephaestus.glowcase.Glowcase;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public abstract class GlowcaseRenderLayers extends RenderType {
 	public static final Function<Boolean, RenderPipeline> SCREEN_PROGRAM = Util.memoize((culling) -> RenderPipelines.register(
@@ -35,7 +35,7 @@ public abstract class GlowcaseRenderLayers extends RenderType {
 		RenderType.CompositeState.builder().setTextureState(NO_TEXTURE).createCompositeState(false));
 
 
-	private static final BiFunction<ResourceLocation, Boolean, RenderType> SCREEN = Util.memoize((texture, culling) -> {
+	private static final BiFunction<Identifier, Boolean, RenderType> SCREEN = Util.memoize((texture, culling) -> {
 		return RenderType.create(
 			"glowcase_screen",
 			786432,
@@ -52,7 +52,7 @@ public abstract class GlowcaseRenderLayers extends RenderType {
 		super(name, size, hasCrumbling, translucent, begin, end);
 	}
 
-	public static RenderType getScreen(ResourceLocation texture, boolean culling) {
+	public static RenderType getScreen(Identifier texture, boolean culling) {
 		return SCREEN.apply(texture, culling);
 	}
 }

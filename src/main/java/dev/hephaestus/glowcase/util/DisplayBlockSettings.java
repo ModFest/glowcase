@@ -7,8 +7,9 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.ExtraCodecs;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-public record DisplayBlockSettings(Vector3f offset, Vector3f scale, float pitch, float yaw, boolean renderAsBlock) {
+public record DisplayBlockSettings(Vector3fc offset, Vector3fc scale, float pitch, float yaw, boolean renderAsBlock) {
 	public static final Codec<DisplayBlockSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 		ExtraCodecs.VECTOR3F.lenientOptionalFieldOf("offset", new Vector3f()).forGetter(DisplayBlockSettings::offset),
 		ExtraCodecs.VECTOR3F.lenientOptionalFieldOf("scale", new Vector3f(1.0F)).forGetter(DisplayBlockSettings::scale),

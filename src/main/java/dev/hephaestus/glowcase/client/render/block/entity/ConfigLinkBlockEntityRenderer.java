@@ -8,17 +8,17 @@ import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font.DisplayMode;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public record ConfigLinkBlockEntityRenderer(
 	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ConfigLinkBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/config_link_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/config_link_block.png");
 
 	public void render(ConfigLinkBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
@@ -38,7 +38,7 @@ public record ConfigLinkBlockEntityRenderer(
 			matrices.translate(-context.getFont().width(entity.getText()) / 2F, -4, -scale);
 			// Fixes shadow being rendered in front of actual text
 			matrices.scale(1, 1, -1);
-			context.getFont().drawInBatch(entity.getText(), 0, 0, 0xFFFFFF, true, matrices.last().pose(), vertexConsumers, DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+			context.getFont().drawInBatch(entity.getText(), 0, 0, 0xFFFFFF, true, matrices.last().pose(), vertexConsumers, DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 		}
 		matrices.popPose();
 	}

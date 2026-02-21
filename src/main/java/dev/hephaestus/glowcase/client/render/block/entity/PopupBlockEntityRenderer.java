@@ -9,18 +9,18 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font.DisplayMode;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.PlainTextContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public record PopupBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<PopupBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/popup_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/popup_block.png");
 
 	public void render(PopupBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
@@ -47,7 +47,7 @@ public record PopupBlockEntityRenderer(BlockEntityRendererProvider.Context conte
 			matrices.translate(-context.getFont().width(title) / 2F, -4, -scale);
 			// Fixes shadow being rendered in front of actual text
 			matrices.scale(1, 1, -1);
-			context.getFont().drawInBatch(title, 0, 0, 0xFFFFFFFF, true, matrices.last().pose(), vertexConsumers, DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+			context.getFont().drawInBatch(title, 0, 0, 0xFFFFFFFF, true, matrices.last().pose(), vertexConsumers, DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 		}
 		matrices.popPose();
 	}

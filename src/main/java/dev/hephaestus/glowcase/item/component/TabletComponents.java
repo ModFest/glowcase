@@ -5,12 +5,12 @@ import com.mojang.serialization.Codec;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.util.Util;
 
 public class TabletComponents {
 

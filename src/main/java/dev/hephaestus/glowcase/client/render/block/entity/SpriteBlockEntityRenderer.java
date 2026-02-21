@@ -11,7 +11,7 @@ import dev.hephaestus.glowcase.mixin.client.TextureManagerAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -31,8 +31,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public record SpriteBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<SpriteBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/sprite_block.png");
-	private static final Map<String, ResourceLocation> modIconCache = new ConcurrentHashMap<>();
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/sprite_block.png");
+	private static final Map<String, Identifier> modIconCache = new ConcurrentHashMap<>();
 
 	private static final Vector3f[] vertices = new Vector3f[] {
 		new Vector3f(-0.5F, -0.5F, 0.0F),
@@ -62,12 +62,12 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 			client.getItemRenderer().renderStatic(entity.getRenderItem(),
 				ItemDisplayContext.FIXED, light, overlay, matrices, vertexConsumers, entity.getLevel(), 0);
 		} else {
-			ResourceLocation identifier = ResourceLocation.tryBuild(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
+			Identifier identifier = Identifier.tryBuild(Glowcase.MODID, "textures/sprite/" + entity.getSprite() + ".png");
 			boolean isMod = false; // Used for the invalid texture check further down
 			if (identifier == null) {
 				// Identifiers ending in / are always invalid, but tryParse logs an error when attempting to parse.
 				// Just force the identifier to null here instead.
-				identifier = entity.getSprite().endsWith("/") ? null : ResourceLocation.tryParse(entity.getSprite());
+				identifier = entity.getSprite().endsWith("/") ? null : Identifier.tryParse(entity.getSprite());
 				if (identifier == null) {
 					identifier = Glowcase.id("textures/sprite/invalid.png");
 				} else if (identifier.getNamespace().equals("mod")) { // Special mod namespace uses mod icon.
@@ -81,7 +81,7 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 						DynamicTexture icon = mod.map(modContainer -> ModMetaUtil.getIcon(modContainer, 64 * client.options.guiScale().get())).orElse(null);
 						if (icon != null) {
 							// Needs to end in .png for the missing texture check further below.
-							modIconCache.put(modId, ResourceLocation.fromNamespaceAndPath(Glowcase.MODID, modId + "_icon.png"));
+							modIconCache.put(modId, Identifier.fromNamespaceAndPath(Glowcase.MODID, modId + "_icon.png"));
 							client.getTextureManager().register(modIconCache.get(modId), icon);
 							identifier = modIconCache.get(modId);
 						} else {
@@ -123,7 +123,7 @@ public record SpriteBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 			.setColor(color)
 			.setUv(u, v)
 			.setOverlay(OverlayTexture.NO_OVERLAY)
-			.setLight(LightTexture.FULL_BRIGHT)
+			.setLight(Lightmap.FULL_BRIGHT)
 			.setNormal(0, 1, 0);
 	}
 }

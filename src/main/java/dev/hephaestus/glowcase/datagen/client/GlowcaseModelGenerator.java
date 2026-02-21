@@ -4,8 +4,7 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.ItemAcceptorBlock;
 import dev.hephaestus.glowcase.client.render.item.tint.GlowcaseTintSource;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.minecraft.client.data.*;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.MultiVariant;
@@ -17,7 +16,7 @@ import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -25,7 +24,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 public class GlowcaseModelGenerator extends FabricModelProvider {
 	public static final TexturedModel.Provider PARTICLE_FACTORY = TexturedModel.createDefault(block -> TextureMapping.cube(Blocks.BEDROCK), ModelTemplates.PARTICLE_ONLY);
 
-	public GlowcaseModelGenerator(FabricDataOutput output) {
+	public GlowcaseModelGenerator(FabricPackOutput output) {
 		super(output);
 	}
 
@@ -91,7 +90,7 @@ public class GlowcaseModelGenerator extends FabricModelProvider {
 	}
 
 	public final void registerGlowcaseDyeable(ItemModelGenerators generator, Item item, int defaultColor) {
-		ResourceLocation identifier = generator.createFlatItemModel(item, ModelTemplates.FLAT_ITEM);
+		Identifier identifier = generator.createFlatItemModel(item, ModelTemplates.FLAT_ITEM);
 		generator.itemModelOutput.accept(item, ItemModelUtils.tintedModel(identifier, new GlowcaseTintSource(defaultColor)));
 	}
 }

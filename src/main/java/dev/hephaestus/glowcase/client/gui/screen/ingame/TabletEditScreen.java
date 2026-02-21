@@ -18,11 +18,11 @@ import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 public class TabletEditScreen extends GlowcaseScreen {
-	private static final ResourceLocation TEXTURE = Glowcase.id("textures/gui/tablet.png");
+	private static final Identifier TEXTURE = Glowcase.id("textures/gui/tablet.png");
 	private static final int TXT_COLOR = 0x8af4b9;
 
 	private static final int BG_WIDTH = 256;

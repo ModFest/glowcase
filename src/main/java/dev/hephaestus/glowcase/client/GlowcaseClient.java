@@ -13,7 +13,7 @@ import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
@@ -22,7 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -30,7 +30,7 @@ import net.minecraft.world.item.ItemStack;
 public class GlowcaseClient implements ClientModInitializer {
 	public static final Boolean EMI_LOADED = FabricLoader.getInstance().isModLoaded("emi");
 	public static final ScreenImageCache screenImageCache = new ScreenImageCache();
-	public static final ResourceLocation PROVIDER_CROSSHAIR_TEXTURE = Glowcase.id("hud/provider_crosshair");
+	public static final Identifier PROVIDER_CROSSHAIR_TEXTURE = Glowcase.id("hud/provider_crosshair");
 
 	private double accScroll = 0;
 
@@ -58,7 +58,7 @@ public class GlowcaseClient implements ClientModInitializer {
 
 		ItemTintSources.ID_MAPPER.put(Glowcase.id("auto"), GlowcaseTintSource.CODEC);
 
-		WorldRenderEvents.AFTER_ENTITIES.register(BakedBlockEntityRenderer.Manager::render);
+		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
 		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
 
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new NoteTextColorResource());

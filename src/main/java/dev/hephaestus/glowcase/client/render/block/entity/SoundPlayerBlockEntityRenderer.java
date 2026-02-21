@@ -7,11 +7,11 @@ import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 public record SoundPlayerBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<SoundPlayerBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/sound_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/sound_block.png");
 
 	@Override
 	public void render(SoundPlayerBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {

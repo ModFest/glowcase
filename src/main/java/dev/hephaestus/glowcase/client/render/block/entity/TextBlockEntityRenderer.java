@@ -10,18 +10,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Font.DisplayMode;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
 	private boolean wasOutOfRange = false;
 
 	public TextBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
@@ -134,7 +134,7 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 				matrices.last().pose(),
 				DisplayMode.NORMAL,
 				// TODO: use the light param and add a toggle to make it glow (use LightmapTextureManager.MAX_LIGHT_COORDINATE)
-				LightTexture.FULL_BRIGHT
+				Lightmap.FULL_BRIGHT
 			);
 
 			// Yep, we're back to that hack again.

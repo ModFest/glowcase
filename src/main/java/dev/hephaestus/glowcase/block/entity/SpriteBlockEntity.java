@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,7 +28,7 @@ public class SpriteBlockEntity extends GlowcaseBlockEntity {
 	public void setSprite(String newSprite) {
 		sprite = newSprite;
 		if (newSprite.contains(":")) {
-			Optional<Item> item = BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(newSprite));
+			Optional<Item> item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(newSprite));
 			renderItem = item.map(ItemStack::new).orElse(null);
 		} else {
 			renderItem = null;

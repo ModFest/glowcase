@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -58,9 +58,9 @@ public record C2SEditSoundBlock(SoundInfo soundInfo, PositionalInfo positionalIn
 		be.setChanged();
 	}
 
-	public record SoundInfo(ResourceLocation id, String category, float volume, float pitch, int repeatDelay, boolean cancelOthers) {
+	public record SoundInfo(Identifier id, String category, float volume, float pitch, int repeatDelay, boolean cancelOthers) {
 		public static final StreamCodec<RegistryFriendlyByteBuf, SoundInfo> PACKET_CODEC = StreamCodec.composite(
-			ResourceLocation.STREAM_CODEC, SoundInfo::id,
+			Identifier.STREAM_CODEC, SoundInfo::id,
 			ByteBufCodecs.STRING_UTF8, SoundInfo::category,
 			ByteBufCodecs.FLOAT, SoundInfo::volume,
 			ByteBufCodecs.FLOAT, SoundInfo::pitch,

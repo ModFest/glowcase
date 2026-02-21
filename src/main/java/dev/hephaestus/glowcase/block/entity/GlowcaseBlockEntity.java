@@ -38,7 +38,7 @@ public class GlowcaseBlockEntity extends BlockEntity {
 	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
 	@Override
 	public void setRemoved() {
-		if (level != null && level.isClientSide) {
+		if (level != null && level.isClientSide()) {
 			BakedBlockEntityRenderer.Manager.markForRebuild(getBlockPos());
 		}
 		super.setRemoved();

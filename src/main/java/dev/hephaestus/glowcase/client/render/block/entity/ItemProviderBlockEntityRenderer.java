@@ -9,14 +9,14 @@ import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public record ItemProviderBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemProviderBlockEntity> {
-	public static ResourceLocation ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
 
 	@Override
 	public void render(ItemProviderBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
@@ -109,7 +109,7 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererProvider.Contex
 			int color = ARGB.opaque(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getValue());
 			matrices.pushPose();
 			matrices.translate(-context.getFont().width(name) / 2F, -4, 0);
-			context.getFont().drawInBatch(name, 0, 0, color, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+			context.getFont().drawInBatch(name, 0, 0, color, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 			matrices.popPose();
 
 			if (!stack.isEmpty()) {
@@ -117,12 +117,12 @@ public record ItemProviderBlockEntityRenderer(BlockEntityRendererProvider.Contex
 				if (entity.canGiveTo(Minecraft.getInstance().player)) {
 					Component countText = Component.literal("%dx".formatted(entity.getStack().getCount()));
 					matrices.translate(-context.getFont().width(countText) + 16, 32, 0);
-					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 				} else {
 					long cooldownMS = entity.getCooldownTicks(Minecraft.getInstance().player) * 50;
 					Component countText = Component.literal("[%s]".formatted(entity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).withStyle(ChatFormatting.YELLOW);
 					matrices.translate(-context.getFont().width(countText) + 16, 24, 0);
-					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
 				}
 				matrices.popPose();
 			}

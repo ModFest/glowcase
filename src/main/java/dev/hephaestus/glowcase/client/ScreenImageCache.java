@@ -8,12 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -164,12 +164,12 @@ public class ScreenImageCache {
 	public static class ScreenTexture {
 		private final CompletableFuture<Integer> loader;
 		@Nullable
-		private ResourceLocation texture;
+		private Identifier texture;
 
 		private int width = 0;
 		private int height = 0;
 
-		public Pair<Integer, ResourceLocation> getTexture() {
+		public Pair<Integer, Identifier> getTexture() {
 			if (loader.isDone()) {
 				return new Pair<>(loader.join(), texture);
 			}
@@ -195,7 +195,7 @@ public class ScreenImageCache {
 		/**
 		 * Creates a reference to a local resource.
 		 */
-		public ScreenTexture(@NotNull ResourceLocation texture) {
+		public ScreenTexture(@NotNull Identifier texture) {
 			// Get width/height
 			Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
 			if (resource.isPresent())

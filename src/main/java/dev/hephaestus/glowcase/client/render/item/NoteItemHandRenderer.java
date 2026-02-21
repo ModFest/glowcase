@@ -17,12 +17,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
 
 public class NoteItemHandRenderer extends ItemHandRenderer {
-	private static final ResourceLocation NOTE_TEXTURE = Glowcase.id("textures/gui/note.png");
+	private static final Identifier NOTE_TEXTURE = Glowcase.id("textures/gui/note.png");
 
 	private static final int BG_SIZE = 256;
 
