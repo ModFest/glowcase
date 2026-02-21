@@ -28,7 +28,7 @@
 		"placeholder-api": ">=${placeholder}"
 	},
 	"suggests": {
-		"polydex": ">=${polydex}"
+		"polydex": "*"
 	},
 	"entrypoints": {
 		"fabric-datagen": [

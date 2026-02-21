@@ -36,12 +36,14 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 			this.itemWidget.setValue((this.itemAcceptorBlockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
-		this.itemWidget.setFilter(s -> s.matches("#?[a-z0-9_.-]*:?[a-z0-9_./-]*"));
+//FIXME 26.1
+		//		this.itemWidget.setFilter(s -> s.matches("#?[a-z0-9_.-]*:?[a-z0-9_./-]*"));
 
 		this.countWidget = new EditBox(this.font, width / 2 + 60, height / 2 - 25, 40, 20, Component.empty());
 		this.countWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.count));
 		this.countWidget.setHint(TextUtils.placeholder("gui.glowcase.count"));
-		this.countWidget.setFilter(s -> s.matches("\\d*"));
+		//FIXME 26.1
+//		this.countWidget.setFilter(s -> s.matches("\\d*"));
 
 		this.outputDirectionToggle = Button.builder(Component.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()), action -> {
 			switch (itemAcceptorBlockEntity.outputDirection) {
@@ -56,7 +58,8 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 		this.pulseWidget = new EditBox(this.font, width / 2 + 60, height / 2 + 5, 40, 20, Component.empty());
 		this.pulseWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.pulse));
 		this.pulseWidget.setHint(TextUtils.placeholder("gui.glowcase.pulse"));
-		this.pulseWidget.setFilter(s -> s.matches("\\d*"));
+//FIXME 26.1
+		//		this.pulseWidget.setFilter(s -> s.matches("\\d*"));
 
 		this.addRenderableWidget(this.itemWidget);
 		this.addRenderableWidget(this.countWidget);

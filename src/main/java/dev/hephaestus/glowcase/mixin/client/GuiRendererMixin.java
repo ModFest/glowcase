@@ -10,6 +10,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -134,7 +135,7 @@ public abstract class GuiRendererMixin {
 			renderPass.setUniform("DynamicTransforms", dynamicTransformsBuffer);
 			renderPass.setIndexBuffer(indexBuffer, shapeIndexBuffer.type());
 			renderPass.setVertexBuffer(0, texColorBuffer);
-			renderPass.bindSampler("Sampler0", sourceBuffer.getColorTextureView());
+			renderPass.bindTexture("Sampler0", sourceBuffer.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
 
 			renderPass.drawIndexed(0, 0, 6, 1);
 		}

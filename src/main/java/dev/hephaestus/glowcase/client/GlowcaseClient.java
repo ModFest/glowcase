@@ -38,7 +38,7 @@ public class GlowcaseClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		Glowcase.proxy = new GlowcaseClientProxy();
 
-		BlockEntityRenderers.register(Glowcase.TEXT_BLOCK_ENTITY.get(), TextBlockEntityRenderer::new);
+		BlockEntityRenderers.register(Glowcase.TEXT_BLOCK_ENTITY.get(), (ctx) -> new TextBlockEntityRenderer());
 		BlockEntityRenderers.register(Glowcase.HYPERLINK_BLOCK_ENTITY.get(), HyperlinkBlockEntityRenderer::new);
 		BlockEntityRenderers.register(Glowcase.CONFIG_LINK_BLOCK_ENTITY.get(), ConfigLinkBlockEntityRenderer::new);
 		BlockEntityRenderers.register(Glowcase.ITEM_DISPLAY_BLOCK_ENTITY.get(), ItemDisplayBlockEntityRenderer::new);
@@ -58,8 +58,9 @@ public class GlowcaseClient implements ClientModInitializer {
 
 		ItemTintSources.ID_MAPPER.put(Glowcase.id("auto"), GlowcaseTintSource.CODEC);
 
-		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
-		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
+		//FIXME 26.1
+//		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
+//		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
 
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new NoteTextColorResource());
 

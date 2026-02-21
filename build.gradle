@@ -116,7 +116,7 @@ processResources {
 		mc            : compatibleVersions.split(", ")[0],
 		fl            : libs.versions.fl.get(),
 		fapi          : libs.versions.fapi.get(),
-//		placeholder   : libs.versions.placeholder.get(),
+		placeholder   : libs.versions.placeholder.get(),
 //		polydex       : libs.versions.polydex.get()
 	]
 	inputs.properties meta
@@ -160,7 +160,7 @@ modrinth {
 	syncBodyFrom = "<!--DO NOT EDIT MANUALLY: synced from gh readme-->\n" + rootProject.file("README.md").text
 	dependencies {
 		required.version "fabric-api", libs.versions.fapi.get()
-//		embedded.version "placeholder-api", libs.versions.placeholder.get()
+		embedded.version "placeholder-api", libs.versions.placeholder.get()
 //		optional.version "polydex", libs.versions.polydex.get()
 	}
 }

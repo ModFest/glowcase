@@ -77,7 +77,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty());
 		this.volume.setMaxLength(16);
 		this.volume.setValue(String.valueOf(soundBlock.volume));
-		this.volume.setFilter(ParseUtil::canParseDouble);
+		//FIXME 26.1
+//		this.volume.setFilter(ParseUtil::canParseDouble);
 		this.addRenderableWidget(this.volume);
 
 		this.pitch = new EditBox(
@@ -87,7 +88,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty());
 		this.pitch.setMaxLength(16);
 		this.pitch.setValue(String.valueOf(soundBlock.pitch));
-		this.pitch.setFilter(ParseUtil::canParseDouble);
+		//FIXME 26.1
+//		this.pitch.setFilter(ParseUtil::canParseDouble);
 		this.addRenderableWidget(this.pitch);
 
 		this.repeatDelay = new EditBox(
@@ -97,7 +99,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty());
 		this.repeatDelay.setMaxLength(16);
 		this.repeatDelay.setValue(String.valueOf(soundBlock.repeatDelay));
-		this.repeatDelay.setFilter(ParseUtil::canParseInt);
+		//FIXME 26.1
+//		this.repeatDelay.setFilter(ParseUtil::canParseInt);
 		this.addRenderableWidget(this.repeatDelay);
 
 		this.distance = new EditBox(
@@ -107,7 +110,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty());
 		this.distance.setMaxLength(16);
 		this.distance.setValue(String.valueOf(soundBlock.distance));
-		this.distance.setFilter(ParseUtil::canParseDouble);
+		//FIXME 26.1
+//		this.distance.setFilter(ParseUtil::canParseDouble);
 		this.addRenderableWidget(this.distance);
 
 		this.relativeButton = new Button.Builder(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative), (action) -> {

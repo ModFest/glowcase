@@ -14,8 +14,6 @@
 		"client.KeyboardHandlerMixin",
 		"client.ItemInHandRendererMixin",
 		"client.GuiMixin",
-		"client.CompositeRenderTypeAccessor",
-		"client.CompositeStateAccessor",
 		"client.FontAccessor",
 		"client.TextureManagerAccessor",
 		"client.sound.SoundManagerMixin",

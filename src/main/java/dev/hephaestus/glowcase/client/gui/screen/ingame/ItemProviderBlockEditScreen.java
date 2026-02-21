@@ -35,7 +35,8 @@ public class ItemProviderBlockEditScreen extends GlowcaseScreen {
 			this.cooldownWidget = new EditBox(this.font, width / 2 - 30, height / 2 + 5, 60, 20, Component.empty());
 			this.cooldownWidget.setValue(this.providerBlock.cooldown == 0 ? "" : String.valueOf(this.providerBlock.cooldown));
 			this.cooldownWidget.setHint(TextUtils.placeholder("gui.glowcase.cooldown"));
-			this.cooldownWidget.setFilter(s -> s.matches("\\d*"));
+			//FIXME 26.1
+//			this.cooldownWidget.setFilter(s -> s.matches("\\d*"));
 			this.cooldownWidget.setVisible(this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED);
 
 			this.secondsLabel = new StringWidget(width / 2 + 30, height / 2 + 5, 10, 20, Component.nullToEmpty("s"), this.font);

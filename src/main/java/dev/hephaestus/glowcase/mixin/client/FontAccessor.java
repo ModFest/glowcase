@@ -12,5 +12,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
  **/
 @Mixin(Font.class)
 public interface FontAccessor {
-	@Invoker("getFontSet") FontSet invokeGetFontStorage(Identifier id);
+//	@Invoker("getFontSet") FontSet invokeGetFontStorage(Identifier id);
 }

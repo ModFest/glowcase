@@ -142,7 +142,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		countMean.setValue(String.valueOf(blockEntity.count.mean()));
-		countMean.setFilter(ParseUtil::canParseInt);
+		//FIXME 26.1
+//		countMean.setFilter(ParseUtil::canParseInt);
 
 		this.addRenderableWidget(countMean);
 
@@ -154,7 +155,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		countStdDev.setValue(String.valueOf(blockEntity.count.stdDev()));
-		countStdDev.setFilter(ParseUtil::canParseInt);
+		//FIXME 26.1
+//		countStdDev.setFilter(ParseUtil::canParseInt);
 
 		this.addRenderableWidget(countStdDev);
 		// endregion
@@ -168,7 +170,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		tickRateMean.setValue(String.valueOf(blockEntity.tickRate.mean()));
-		tickRateMean.setFilter(ParseUtil::canParseInt);
+		//FIXME 26.1
+//		tickRateMean.setFilter(ParseUtil::canParseInt);
 
 		this.addRenderableWidget(tickRateMean);
 
@@ -180,7 +183,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		tickRateStdDev.setValue(String.valueOf(blockEntity.tickRate.stdDev()));
-		tickRateStdDev.setFilter(ParseUtil::canParseInt);
+		//FIXME 26.1
+//		tickRateStdDev.setFilter(ParseUtil::canParseInt);
 
 		this.addRenderableWidget(tickRateStdDev);
 		// endregion

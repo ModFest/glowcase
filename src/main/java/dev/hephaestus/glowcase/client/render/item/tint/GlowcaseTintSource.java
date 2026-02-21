@@ -12,6 +12,8 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
@@ -22,10 +24,10 @@ public record GlowcaseTintSource(int defaultColor) implements ItemTintSource {
 
 	@Override
 	public int calculate(ItemStack stack, @Nullable ClientLevel world, @Nullable LivingEntity user) {
-		CustomData component = stack.get(DataComponents.BLOCK_ENTITY_DATA);
+		TypedEntityData<BlockEntityType<?>> component = stack.get(DataComponents.BLOCK_ENTITY_DATA);
 		if (component == null) return defaultColor;
 
-		CompoundTag nbt = component.copyTag();
+		CompoundTag nbt = component.getUnsafe();
 		int color = nbt.getIntOr("color", 0);
 		if (color != 0 && color != defaultColor) return color;
 		return 0xFFAA00AA;

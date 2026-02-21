@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block.entity;
 
-import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -35,12 +34,12 @@ public class GlowcaseBlockEntity extends BlockEntity {
 		return ClientboundBlockEntityDataPacket.create(this);
 	}
 
-	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
-	@Override
-	public void setRemoved() {
-		if (level != null && level.isClientSide()) {
-			BakedBlockEntityRenderer.Manager.markForRebuild(getBlockPos());
-		}
-		super.setRemoved();
-	}
+//	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
+//	@Override
+//	public void setRemoved() {
+//		if (level != null && level.isClientSide()) {
+//			BakedBlockEntityRenderer.Manager.markForRebuild(getBlockPos());
+//		}
+//		super.setRemoved();
+//	}
 }

@@ -6,18 +6,36 @@ import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
-public record ParticleDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ParticleDisplayBlockEntity> {
+public record ParticleDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ParticleDisplayBlockEntity, ParticleDisplayBlockEntityRenderer.ParticleDisplayRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/particle_display.png");
 
-	public void render(ParticleDisplayBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
-		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
-		if (entity.count.equals(DeviatedInteger.ZERO) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos(), false)) {
-			BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getBlockEntityRenderDispatcher().camera);
-		}
+	public static class ParticleDisplayRenderState extends BlockEntityRenderState {
+
 	}
+
+	@Override
+	public ParticleDisplayRenderState createRenderState() {
+		return new ParticleDisplayRenderState();
+	}
+
+	@Override
+	public void submit(ParticleDisplayRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+
+	}
+
+//	FIXME 26.1
+//	public void render(ParticleDisplayBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
+//		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
+//		if (entity.count.equals(DeviatedInteger.ZERO) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos(), false)) {
+//			BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getBlockEntityRenderDispatcher().camera);
+//		}
+//	}
 }

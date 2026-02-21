@@ -54,12 +54,13 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 		this.yScaleWidget.setValue(String.valueOf(this.outlineBlockEntity.scale.getY()));
 		this.zScaleWidget.setValue(String.valueOf(this.outlineBlockEntity.scale.getZ()));
 
-		this.xOffsetWidget.setFilter(TEXT_PREDICATE);
-		this.yOffsetWidget.setFilter(TEXT_PREDICATE);
-		this.zOffsetWidget.setFilter(TEXT_PREDICATE);
-		this.xScaleWidget.setFilter(TEXT_PREDICATE);
-		this.yScaleWidget.setFilter(TEXT_PREDICATE);
-		this.zScaleWidget.setFilter(TEXT_PREDICATE);
+//		FIXME 26.1
+//		this.xOffsetWidget.setFilter(TEXT_PREDICATE);
+//		this.yOffsetWidget.setFilter(TEXT_PREDICATE);
+//		this.zOffsetWidget.setFilter(TEXT_PREDICATE);
+//		this.xScaleWidget.setFilter(TEXT_PREDICATE);
+//		this.yScaleWidget.setFilter(TEXT_PREDICATE);
+//		this.zScaleWidget.setFilter(TEXT_PREDICATE);
 
 		this.xOffsetWidget.setResponder(string -> {
 			if (Ints.tryParse(string) instanceof Integer x) {
