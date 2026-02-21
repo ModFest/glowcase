@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemInHandRenderer.class)
-public class MixinHeldItemRenderer {
+public class ItemInHandRendererMixin {
 	@Inject(method = "renderMap", at = @At("HEAD"), cancellable = true)
 	void glowcase$renderFirstPersonTablet(PoseStack matrices, MultiBufferSource vertexConsumers, int light, ItemStack stack, CallbackInfo ci) {
 		if (Minecraft.getInstance().player == null || Minecraft.getInstance().level == null) return;

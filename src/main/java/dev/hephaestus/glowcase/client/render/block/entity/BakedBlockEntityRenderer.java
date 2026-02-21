@@ -18,8 +18,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.logging.LogUtils;
 import dev.hephaestus.glowcase.mixin.client.GameRendererAccessor;
-import dev.hephaestus.glowcase.mixin.client.MultiPhaseRenderLayerAccessor;
-import dev.hephaestus.glowcase.mixin.client.RenderLayerMultiPhaseParametersAccessor;
+import dev.hephaestus.glowcase.mixin.client.CompositeRenderTypeAccessor;
+import dev.hephaestus.glowcase.mixin.client.CompositeStateAccessor;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -152,14 +152,14 @@ public abstract class BakedBlockEntityRenderer<T extends BlockEntity> implements
 			public void render(RenderType layer, PoseStack matrices) {
 				RenderTarget framebuffer;
 				if (layer instanceof RenderType.CompositeRenderType) {
-					framebuffer = ((RenderLayerMultiPhaseParametersAccessor) (Object) ((MultiPhaseRenderLayerAccessor) layer).getPhases()).getTarget().getRenderTarget();
+					framebuffer = ((CompositeStateAccessor) (Object) ((CompositeRenderTypeAccessor) layer).getPhases()).getTarget().getRenderTarget();
 				} else {
 					framebuffer = Minecraft.getInstance().getMainRenderTarget();
 				}
 
 				RenderPipeline pipeline;
 				if (layer instanceof RenderType.CompositeRenderType) {
-					pipeline = ((MultiPhaseRenderLayerAccessor) layer).getPipeline();
+					pipeline = ((CompositeRenderTypeAccessor) layer).getPipeline();
 				} else {
 					pipeline = RenderPipelines.SOLID;
 				}

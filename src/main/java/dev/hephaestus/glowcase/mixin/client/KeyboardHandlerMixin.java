@@ -8,8 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(KeyboardHandler.class)
-public class KeyboardMixin {
-
+public class KeyboardHandlerMixin {
 	@ModifyExpressionValue(
 		method = "keyPress",
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameNarrator;isActive()Z")

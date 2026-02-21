@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LockCode.class)
-public class ContainerLockMixin {
+public class LockCodeMixin {
 	@SuppressWarnings("EqualsBetweenInconvertibleTypes")
 	@Inject(at = @At("HEAD"), method = "unlocksWith", cancellable = true)
 	private void canOpen(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {

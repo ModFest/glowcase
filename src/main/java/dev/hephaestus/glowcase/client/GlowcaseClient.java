@@ -8,7 +8,7 @@ import dev.hephaestus.glowcase.client.render.item.TabletItemHandRenderer;
 import dev.hephaestus.glowcase.client.render.item.tint.GlowcaseTintSource;
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.ScrollableItem;
-import dev.hephaestus.glowcase.mixin.HandledScreenInvoker;
+import dev.hephaestus.glowcase.mixin.AbstractContainerScreenInvoker;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -106,7 +106,7 @@ public class GlowcaseClient implements ClientModInitializer {
 	 * @author zacharybarbanell
 	 */
 	private boolean allowMouseScroll(AbstractContainerScreen<?> screen, double x, double y, double scroll) {
-		Slot slot = ((HandledScreenInvoker) screen).invokeGetSlotAt(x, y);
+		Slot slot = ((AbstractContainerScreenInvoker) screen).invokeGetSlotAt(x, y);
 		if (slot == null) return true;
 		ItemStack stack = slot.getItem();
 		if (!(stack.getItem() instanceof ScrollableItem si)) return true;

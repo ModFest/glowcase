@@ -15,7 +15,7 @@ import net.minecraft.client.sounds.SoundEngine;
  * @author Ampflower
  **/
 @Mixin(SoundEngine.class)
-public abstract class SoundSystemMixin implements SoundPlayerProxy {
+public abstract class SoundEngineMixin implements SoundPlayerProxy {
 	@Shadow
 	public abstract boolean isActive(final SoundInstance sound);
 

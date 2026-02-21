@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.util;
 
+import dev.hephaestus.glowcase.mixin.client.sound.SoundEngineMixin;
 import net.minecraft.client.resources.sounds.SoundInstance;
 
 /**
@@ -7,7 +8,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
  *
  * @author Ampflower
  * @see dev.hephaestus.glowcase.mixin.client.sound.SoundManagerMixin
- * @see dev.hephaestus.glowcase.mixin.client.sound.SoundSystemMixin
+ * @see SoundEngineMixin
  **/
 public interface SoundPlayerProxy {
 	/**

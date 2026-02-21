@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 /**
  * @author Ampflower
  * @implNote Functions here generally need to proxy to the {@link SoundEngine sound system}.
- * @see SoundSystemMixin
+ * @see SoundEngineMixin
  **/
 @Mixin(SoundManager.class)
 public class SoundManagerMixin implements SoundPlayerProxy {

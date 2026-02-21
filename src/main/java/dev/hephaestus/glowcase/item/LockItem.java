@@ -1,7 +1,7 @@
 package dev.hephaestus.glowcase.item;
 
-import dev.hephaestus.glowcase.mixin.LockableContainerBlockEntityAccessor;
-import java.util.List;
+import dev.hephaestus.glowcase.mixin.BaseContainerBlockEntityAccessor;
+
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.critereon.ItemPredicate;
@@ -42,7 +42,7 @@ public class LockItem extends Item {
 			return InteractionResult.PASS;
 		}
 
-		var bea = (LockableContainerBlockEntityAccessor) be;
+		var bea = (BaseContainerBlockEntityAccessor) be;
 		Component message;
 		SoundEvent soundEvent;
 

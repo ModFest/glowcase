@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(RenderType.CompositeRenderType.class)
-public interface MultiPhaseRenderLayerAccessor {
+public interface CompositeRenderTypeAccessor {
 	@Accessor("renderPipeline")
 	RenderPipeline getPipeline();
 

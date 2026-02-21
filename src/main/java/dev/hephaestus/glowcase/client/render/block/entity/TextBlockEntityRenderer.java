@@ -5,7 +5,7 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
-import dev.hephaestus.glowcase.mixin.client.TextRendererAccessor;
+import dev.hephaestus.glowcase.mixin.client.FontAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Font.DisplayMode;
@@ -139,7 +139,7 @@ public class TextBlockEntityRenderer extends BakedBlockEntityRenderer<TextBlockE
 
 			// Yep, we're back to that hack again.
 			if (entity.backgroundColor != 0) {
-				BakedGlyph rectangleBakedGlyph = ((TextRendererAccessor) textRenderer)
+				BakedGlyph rectangleBakedGlyph = ((FontAccessor) textRenderer)
 					.invokeGetFontStorage(Style.DEFAULT_FONT)
 					.whiteGlyph();
 
