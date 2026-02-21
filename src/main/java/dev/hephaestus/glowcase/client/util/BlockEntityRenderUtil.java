@@ -4,16 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-
-import java.util.stream.IntStream;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Lightmap;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -23,6 +17,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class BlockEntityRenderUtil {
 	private static final Vector3f[] placeholderVertices = new Vector3f[]{
@@ -47,8 +43,8 @@ public class BlockEntityRenderUtil {
 	public static void renderBillboardPlaceholder(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers, Camera camera) {
 		matrices.pushPose();
 		matrices.translate(0.5, 0.5, 0.5);
-		matrices.mulPose(Axis.YP.rotationDegrees(180.0F - camera.getYRot()));
-		matrices.mulPose(Axis.XP.rotationDegrees(-camera.getXRot()));
+		matrices.mulPose(Axis.YP.rotationDegrees(180.0F - camera.yRot()));
+		matrices.mulPose(Axis.XP.rotationDegrees(-camera.xRot()));
 		matrices.scale(scale, scale, scale);
 		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.entityCutout(texture));
 		renderPlaceholderFace(matrices.last(), vertexConsumer, entity.getBlockPos());

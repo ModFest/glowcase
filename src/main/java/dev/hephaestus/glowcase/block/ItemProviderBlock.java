@@ -62,7 +62,7 @@ public class ItemProviderBlock extends StackInteractableBlock {
 		if (!(world.getBlockEntity(pos) instanceof ItemProviderBlockEntity be)) return InteractionResult.CONSUME;
 
 		if (be.canGiveTo(player)) {
-			if (!world.isClientSide) be.giveTo(player);
+			if (!world.isClientSide()) be.giveTo(player);
 			return InteractionResult.SUCCESS;
 		}
 

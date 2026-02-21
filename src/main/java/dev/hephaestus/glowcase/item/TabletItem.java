@@ -89,7 +89,7 @@ public class TabletItem extends Item {
 			return InteractionResult.PASS;
 
 		if (!canEditGlowcase(player, pos)) {
-			player.displayClientMessage(Component.translatable("gui.glowcase.linking_denied"), true);
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.linking_denied"));
 			return InteractionResult.SUCCESS;
 		}
 
@@ -98,10 +98,10 @@ public class TabletItem extends Item {
 		Pair<UUID, BlockPos> linkedScreen = stack.getOrDefault(Glowcase.LINKED_SCREEN_COMPONENT.get(), null);
 		if (linkedScreen != null && screen.macaddress.equals(linkedScreen.getFirst()) && linkedScreen.getSecond().equals(pos)) {
 			stack.remove(Glowcase.LINKED_SCREEN_COMPONENT.get());
-			player.displayClientMessage(Component.translatable("gui.glowcase.unlinked_screen"), true);
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.unlinked_screen"));
 		} else {
 			stack.set(Glowcase.LINKED_SCREEN_COMPONENT.get(), new Pair<>(screen.macaddress, pos));
-			player.displayClientMessage(Component.translatable("gui.glowcase.updated_linked_screen", pos.toShortString()), true);
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.updated_linked_screen", pos.toShortString()));
 		}
 
 		return InteractionResult.SUCCESS;

@@ -10,6 +10,7 @@ import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.lwjgl.glfw.GLFW;
 
@@ -325,7 +326,7 @@ public class NoteEditScreen extends TextEditorScreen {
 
 			if (caretStart != caretEnd) {
 				int endX = startX + font.width(line.substring(selectionStart, selectionEnd));
-				context.textHighlight(startX, caretStartY, endX, caretStartY + 9);
+				context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 			}
 		}
 
@@ -344,9 +345,10 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
 		boolean result;
 
+		int keyCode = event.key();
 		if (this.colorPickerWidget.active && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
 			if (keyCode == GLFW.GLFW_KEY_ENTER) {
 				this.colorPickerWidget.confirmColor();
@@ -421,7 +423,7 @@ public class NoteEditScreen extends TextEditorScreen {
 				currentRow = (currentRow == 6 ? 7 : 6);
 			} else {
 				// Rest
-				result = selectionManager.keyPressed(keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
+				result = selectionManager.keyPressed(event) || super.keyPressed(event);
 			}
 		}
 
@@ -542,7 +544,7 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	public void setRawLine(int i, String string) {
-		var parsed = PARSER.parseText(string, ParserContext.of());
+		var parsed = PARSER.parseComponent(string, ParserContext.of());
 
 		if (parsed.getString().equals(string)) {
 			this.lines.set(i, Component.literal(string));
@@ -585,7 +587,7 @@ public class NoteEditScreen extends TextEditorScreen {
 			// Remove insertion for optimization as it is not needed anymore
 			for (int i = 0; i < lines.size(); i++) {
 				String rawLine = getRawLine(i);
-				Component text = PARSER.parseText(rawLine, ParserContext.of());
+				Component text = PARSER.parseComponent(rawLine, ParserContext.of());
 				lines.set(i, text);
 			}
 		}

@@ -3,6 +3,8 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -64,7 +66,7 @@ public class TextBlock extends RotatableBlock {
 		textConsumer.accept(Component.translatable("block.glowcase.text_block.tooltip.0").withStyle(ChatFormatting.GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.text_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
-		CustomData component = stack.get(DataComponents.BLOCK_ENTITY_DATA);
+		TypedEntityData<BlockEntityType<?>> component = stack.get(DataComponents.BLOCK_ENTITY_DATA);
 		if (component == null) return;
 		CompoundTag nbt = component.getUnsafe(); //TODO: use codecs
 		if (nbt == null) return;

@@ -58,7 +58,7 @@ public class HyperlinkBlock extends WaterloggableGlowcaseBlock {
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof HyperlinkBlockEntity be)) return InteractionResult.CONSUME;
-		if (world.isClientSide && !be.getUrl().isBlank()) {
+		if (world.isClientSide() && !be.getUrl().isBlank()) {
 			Glowcase.proxy.openUrlWithConfirmation(be.getUrl());
 		}
 		return InteractionResult.SUCCESS;

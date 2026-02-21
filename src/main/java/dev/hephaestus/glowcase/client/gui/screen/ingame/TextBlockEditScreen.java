@@ -69,12 +69,12 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		int middle = width / 2;
 
 		Button decreaseSize = Button.builder(Component.literal("-"), action -> {
-			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (Screen.hasShiftDown() ? 1F : 0.125F));
+			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (/* FIXME store shift state somewhere Screen.hasShiftDown() ? 1F : */ 0.125F));
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 130, 0, 20, 20).build();
 
 		Button increaseSize = Button.builder(Component.literal("+"), action -> {
-			this.textBlockEntity.scale += Screen.hasShiftDown() ? 1F : 0.125F;
+			this.textBlockEntity.scale += /* FIXME store shift state somewhere Screen.hasShiftDown() ? 1F : */ 0.125F;
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 110, 0, 20, 20).build();
 
@@ -328,7 +328,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			} else {
 
 				//formatting hotkeys
-				if (Screen.hasControlDown()) {
+				if (event.hasControlDown()) {
 					if (keyCode == GLFW.GLFW_KEY_B) {
 						insertTag(TagRegistry.SAFE.getTag("bold"), true);
 						return true;

@@ -228,7 +228,9 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 				3, height - this.minecraft.font.lineHeight - 1,
 				width, this.minecraft.font.lineHeight,
 				Component.translatableWithFallback("gui.glowcase.screen.mac_address", "%s", this.screenBlockEntity.macaddress),
-				this.minecraft.font).alignLeft().setColor(0x696969)
+				this.minecraft.font)
+//				FIXME these seem to no longer exist
+//				.alignLeft().setColor(0x696969)
 			);
 
 		this.addRenderableWidget(this.widthEntryWidget);

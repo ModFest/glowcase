@@ -186,8 +186,8 @@ public class ColorPickerWidget extends AbstractButton {
 			drawPresets(context, mouseX, mouseY, delta, previewX, presetY, y + height - presetY, z + 1, presetSize, width / (presetSize + presetPadding), presetPadding);
 		}
 
-		this.confirmButton.renderWidget(context, mouseX, mouseY, delta);
-		this.cancelButton.renderWidget(context, mouseX, mouseY, delta);
+		this.confirmButton.render(context, mouseX, mouseY, delta);
+		this.cancelButton.render(context, mouseX, mouseY, delta);
 
 
 		matrices.popMatrix();

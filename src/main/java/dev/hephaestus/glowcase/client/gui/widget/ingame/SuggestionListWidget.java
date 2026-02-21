@@ -195,7 +195,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 		int y = SuggestionListWidget.this.getY();
 		context.enableScissor(x, y, x + listWidth, y + dynamicHeight);
 
-		context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
+		context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
 
 		context.fill(x, y, x + listWidth, y + dynamicHeight, bgColor);
 
@@ -239,7 +239,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 			context.enableScissor(sbX, y, sbX + scrollbarWidth, y + dynamicHeight);
 
-			context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
+			context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(),RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
 
 			context.fill(sbX, y, sbX + scrollbarWidth, y + dynamicHeight, bgColor);
 			context.disableScissor();

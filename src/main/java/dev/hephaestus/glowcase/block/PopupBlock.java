@@ -57,7 +57,7 @@ public class PopupBlock extends WaterloggableGlowcaseBlock {
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		if (!(world.getBlockEntity(pos) instanceof PopupBlockEntity be)) return InteractionResult.CONSUME;
-		if (world.isClientSide && !(be.lines.size() == 1 && be.lines.getFirst().getContents().equals(PlainTextContents.EMPTY))) {
+		if (world.isClientSide() && !(be.lines.size() == 1 && be.lines.getFirst().getContents().equals(PlainTextContents.EMPTY))) {
 			Glowcase.proxy.openPopupBlockViewScreen(pos);
 		}
 		return InteractionResult.SUCCESS;

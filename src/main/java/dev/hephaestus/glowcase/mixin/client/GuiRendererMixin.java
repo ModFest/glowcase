@@ -43,7 +43,7 @@ public abstract class GuiRendererMixin {
 
 	@Shadow protected abstract void executeDrawRange(Supplier debugGroup, RenderTarget renderTarget, GpuBufferSlice fog, GpuBufferSlice dynamicTransforms, GpuBuffer buffer, VertexFormat.IndexType indexType, int start, int end);
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicUniforms;writeTransform(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;F)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;", shift = At.Shift.AFTER), method = "draw")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicUniforms;writeTransform(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;", shift = At.Shift.AFTER), method = "draw")
 	private void findBlurDraw(GpuBufferSlice fogBuffer, CallbackInfo ci, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer) {
 		suggestionBlurLayer.set(Integer.MAX_VALUE);
 		for (int i = 0; i < this.draws.size(); i++) {
@@ -101,10 +101,10 @@ public abstract class GuiRendererMixin {
 
 			Matrix3x2f matrices = new Matrix3x2f();
 			BufferBuilder bufferBuilder = new BufferBuilder(this.byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-			bufferBuilder.addVertexWith2DPose(matrices, 0, 	0, 	from).setUv(0, 0).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(matrices, 0, 	height,	from).setUv(0, 1).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(matrices, width, 	height,	from).setUv(1, 1).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(matrices, width, 	0, 	from).setUv(1, 0).setColor(0XFFFFFFFF);
+			bufferBuilder.addVertexWith2DPose(matrices, 0, 	0).setUv(0, 0).setColor(0XFFFFFFFF);
+			bufferBuilder.addVertexWith2DPose(matrices, 0, 	height).setUv(0, 1).setColor(0XFFFFFFFF);
+			bufferBuilder.addVertexWith2DPose(matrices, width, 	height).setUv(1, 1).setColor(0XFFFFFFFF);
+			bufferBuilder.addVertexWith2DPose(matrices, width, 	0).setUv(1, 0).setColor(0XFFFFFFFF);
 
 			try (MeshData builtBuffer = bufferBuilder.buildOrThrow()) {
 				RenderSystem.getDevice().createCommandEncoder().writeToBuffer(texColorBuffer.slice(), builtBuffer.vertexBuffer());

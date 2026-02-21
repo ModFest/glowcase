@@ -91,7 +91,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public void addRawLine(int i, String string) {
-		var parsed = PARSER.parseText(string, ParserContext.of());
+		var parsed = PARSER.parseComponent(string, ParserContext.of());
 
 		if (parsed.getString().equals(string)) {
 			this.lines.add(i, Component.literal(string));
@@ -101,7 +101,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public void setRawLine(int i, String string) {
-		var parsed = PARSER.parseText(string, ParserContext.of());
+		var parsed = PARSER.parseComponent(string, ParserContext.of());
 
 		if (parsed.getString().equals(string)) {
 			this.lines.set(i, Component.literal(string));

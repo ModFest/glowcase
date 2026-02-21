@@ -35,7 +35,7 @@ public class LockItem extends Item {
 	public InteractionResult useOn(UseOnContext context) {
 		Level world = context.getLevel();
 		Player player = context.getPlayer();
-		if (world.isClientSide ||
+		if (world.isClientSide() ||
 			player == null ||
 			!player.isCreative() ||
 			!(world.getBlockEntity(context.getClickedPos()) instanceof BaseContainerBlockEntity be)) {

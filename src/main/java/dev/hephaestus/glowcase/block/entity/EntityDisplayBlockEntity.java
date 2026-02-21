@@ -27,13 +27,13 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 
 	@Override
 	public boolean matchesStack(ItemStack stack) {
-		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && eggItem.spawnsEntity(level.registryAccess(), stack, entityType));
+		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && SpawnEggItem.spawnsEntity( stack, entityType));
 	}
 
 	@Override
 	public void setFromStack(ItemStack stack) {
 		if (stack.getItem() instanceof SpawnEggItem eggItem) {
-			setDisplayEntity(eggItem.getType(level.registryAccess(), stack).create(level, EntitySpawnReason.EVENT));
+			setDisplayEntity(SpawnEggItem.getType( stack).create(level, EntitySpawnReason.EVENT));
 			setScale(new Vector3f(Math.clamp(Math.round(Math.min(1F / displayEntity.getBbHeight(), 1F / displayEntity.getBbWidth()) * 8F) / 8F, 0.125F, 10F)));
 		}
 	}
@@ -57,7 +57,8 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 		if (blockEntity.displayEntity == null && blockEntity.entityType != null) {
 			blockEntity.setDisplayEntity(blockEntity.entityType.create(world, EntitySpawnReason.EVENT));
 		}
-		if (blockEntity.getDisplayEntity() != null && blockEntity.getDisplayEntity().getType().is(TICK)) {
+//		if (blockEntity.getDisplayEntity() != null && blockEntity.getDisplayEntity().getType().is(TICK)) {
+			if (blockEntity.getDisplayEntity() != null && blockEntity.getDisplayEntity().getType().builtInRegistryHolder().is(TICK)) {
 			++blockEntity.displayEntity.tickCount;
 		}
 	}

@@ -52,7 +52,7 @@ public record CollectionComponent(ImmutableList<CollectableStack> collectables, 
 	public CollectionComponent withStackAfterSelection(ItemStack stack) {
 		if (stack.isEmpty()) return this;
 		hasSelection();
-		CollectableStack newCollectable = new CollectableStack(stack.getItemHolder(), stack.copy().getComponentsPatch(), stack.getCount(), false);
+		CollectableStack newCollectable = new CollectableStack(stack.getItem().builtInRegistryHolder(), stack.copy().getComponentsPatch(), stack.getCount(), false);
 		return new CollectionComponent(alteredCollectables(l -> l.add(selected + 1, newCollectable)), selected + 1);
 	}
 

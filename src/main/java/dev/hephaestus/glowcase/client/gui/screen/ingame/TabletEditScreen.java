@@ -78,16 +78,21 @@ public class TabletEditScreen extends GlowcaseScreen {
 
 		this.progressText = new StringWidget(width / 2 - BG_WIDTH / 2 + 5, height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .2), this.minecraft.font.lineHeight,
 			Component.empty(), this.minecraft.font)
-			.color(TXT_COLOR)
-			.alignLeft();
+//		FIXME these seem to no longer exist
+//			.color(TXT_COLOR)
+//			.alignLeft()
+		;
 
 		Component linkedText = (screen_pos == null) ? Component.translatable("gui.glowcase.tablet.not_linked")
 			: Component.translatable("gui.glowcase.tablet.linked", screen_pos.getSecond().toShortString());
 
 		StringWidget linkedTextWidget = new StringWidget(width / 2 - BG_WIDTH / 2 + 7 + (int) (BG_WIDTH * .2), height / 2 - BG_HEIGHT / 2 + 5, (int) (BG_WIDTH * .8) - 13, this.minecraft.font.lineHeight,
 			linkedText, this.minecraft.font)
-			.setColor(TXT_COLOR)
-			.alignRight();
+
+//		FIXME these seem to no longer exist
+//			.setColor(TXT_COLOR)
+//			.alignRight()
+			;
 
 		this.urlEntryWidget = new EditBox(this.minecraft.font, width / 2 - BG_WIDTH / 2 + 5, height / 2 + 30 - 1, BG_WIDTH - 10 - 55, 20, Component.empty());
 		this.urlEntryWidget.setMaxLength(ScreenBlockEntity.URL_MAX_LENGTH);

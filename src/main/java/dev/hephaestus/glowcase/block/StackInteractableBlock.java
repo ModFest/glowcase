@@ -38,13 +38,13 @@ public abstract class StackInteractableBlock extends WaterloggableGlowcaseBlock 
 			boolean holdingSameAsDisplay = be.matchesStack(stack);
 
 			if (be.matchesStack(ItemStack.EMPTY)) {
-				if (!world.isClientSide) be.setFromStack(stack);
+				if (!world.isClientSide()) be.setFromStack(stack);
 				return InteractionResult.SUCCESS;
 			} else if (holdingSameAsDisplay) {
-				if (world.isClientSide) openEditScreen(pos);
+				if (world.isClientSide()) openEditScreen(pos);
 				return InteractionResult.SUCCESS;
 			} else if (holdingGlowcaseItem) {
-				if (!world.isClientSide) be.unsetFromStack();
+				if (!world.isClientSide()) be.unsetFromStack();
 				return InteractionResult.SUCCESS;
 			}
 		}
