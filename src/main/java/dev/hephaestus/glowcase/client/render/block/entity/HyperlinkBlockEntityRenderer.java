@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
+import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font.DisplayMode;
@@ -26,8 +27,7 @@ public record HyperlinkBlockEntityRenderer(
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/hyperlink_block.png");
 
 	public static class HyperlinkRenderState extends BlockEntityRenderState {
-		public BlockPos pos;
-		public FormattedCharSequence title;
+		public FormattedCharSequence title = FormattedCharSequence.EMPTY;
 	}
 
 	@Override
@@ -38,7 +38,6 @@ public record HyperlinkBlockEntityRenderer(
 	@Override
 	public void extractRenderState(HyperlinkBlockEntity blockEntity, HyperlinkRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
-		state.pos = blockEntity.getBlockPos();
 		if (blockEntity.getUrl().isBlank()) {
 			state.title = Component.translatable("gui.glowcase.warning.no_content").withStyle(ChatFormatting.RED).getVisualOrderText();
 		} else {
@@ -48,12 +47,10 @@ public record HyperlinkBlockEntityRenderer(
 
 	@Override
 	public void submit(HyperlinkRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		// FIXME 26.1
-//		BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 0.5F, poseStack, vertexConsumers, camera);
-
+		BlockEntityRenderUtil.renderBillboardPlaceholder(state, ITEM_TEXTURE, 0.5F, poseStack, submitNodeCollector, camera);
 
 		poseStack.pushPose();
-		if (Minecraft.getInstance().hitResult instanceof BlockHitResult bhr && bhr.getBlockPos().equals(state.pos)) {
+		if (Minecraft.getInstance().hitResult instanceof BlockHitResult bhr && bhr.getBlockPos().equals(state.blockPos)) {
 			poseStack.translate(0.5D, 0.5D, 0.5D);
 			poseStack.scale(0.5F, 0.5F, 0.5F);
 			float n = -camera.yRot;
@@ -66,7 +63,7 @@ public record HyperlinkBlockEntityRenderer(
 			// Fixes shadow being rendered in front of actual text
 			poseStack.scale(1, 1, -1);
 
-			submitNodeCollector.submitText(poseStack, 0, 0, state.title, true, DisplayMode.NORMAL, 0xFF, 0xFFFFFF, 0, 0);
+			submitNodeCollector.submitText(poseStack, 0, 0, state.title, true, DisplayMode.NORMAL, 0xFF, 0xFFFFFFFF, 0x00000000, 0);
 		}
 		poseStack.popPose();
 	}

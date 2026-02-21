@@ -3,12 +3,14 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.OutlineBlockEntity;
+import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -18,6 +20,7 @@ public record OutlineBlockEntityRenderer(
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/outline_block.png");
 
 	public static class OutlineRenderState extends BlockEntityRenderState {
+		public boolean shouldRenderPlaceholder;
 	}
 
 	@Override
@@ -28,11 +31,14 @@ public record OutlineBlockEntityRenderer(
 	@Override
 	public void extractRenderState(OutlineBlockEntity blockEntity, OutlineRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
+		state.shouldRenderPlaceholder = blockEntity.scale.equals(Vec3i.ZERO) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 	}
 
 	@Override
 	public void submit(OutlineRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-
+		if (state.shouldRenderPlaceholder) {
+			BlockEntityRenderUtil.renderBillboardPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera);
+		}
 	}
 // FIXME 26.1
 //	public void render(OutlineBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
@@ -50,7 +56,5 @@ public record OutlineBlockEntityRenderer(
 //			0, 0, 0, entity.color | 0xFF000000
 //		);
 //
-//		if (entity.scale.equals(Vec3i.ZERO) || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos()))
-//			BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getBlockEntityRenderDispatcher().camera);
-//	}
+
 }

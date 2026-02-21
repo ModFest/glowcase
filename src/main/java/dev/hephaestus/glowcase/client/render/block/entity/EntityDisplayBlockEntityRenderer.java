@@ -12,11 +12,13 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<EntityDisplayBlockEntity, EntityDisplayBlockEntityRenderer.EntityDisplayRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/entity_display_block.png");
@@ -26,6 +28,11 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 	@Override
 	public EntityDisplayRenderState createRenderState() {
 		return new EntityDisplayRenderState();
+	}
+
+	@Override
+	public void extractRenderState(EntityDisplayBlockEntity blockEntity, EntityDisplayRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 	}
 
 	@Override

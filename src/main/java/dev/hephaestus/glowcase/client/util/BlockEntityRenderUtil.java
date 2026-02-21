@@ -4,10 +4,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -40,15 +42,19 @@ public class BlockEntityRenderUtil {
 		matrices.popPose();
 	}
 
-	public static void renderBillboardPlaceholder(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers, Camera camera) {
-		matrices.pushPose();
-		matrices.translate(0.5, 0.5, 0.5);
-		matrices.mulPose(Axis.YP.rotationDegrees(180.0F - camera.yRot()));
-		matrices.mulPose(Axis.XP.rotationDegrees(-camera.xRot()));
-		matrices.scale(scale, scale, scale);
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.entityCutout(texture));
-		renderPlaceholderFace(matrices.last(), vertexConsumer, entity.getBlockPos());
-		matrices.popPose();
+	public static void renderBillboardPlaceholder(BlockEntityRenderState entity, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+		poseStack.pushPose();
+		poseStack.translate(0.5, 0.5, 0.5);
+		poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - camera.yRot));
+		poseStack.mulPose(Axis.XP.rotationDegrees(-camera.xRot));
+		poseStack.scale(scale, scale, scale);
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
+			@Override
+			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
+				renderPlaceholderFace(pose, buffer, entity.blockPos);
+			}
+		});
+		poseStack.popPose();
 	}
 
 	public static void renderTrackingPlaceholder(BlockEntity entity, Identifier texture, float scale, PoseStack matrices, MultiBufferSource vertexConsumers, Entity camera, float tickDelta) {
