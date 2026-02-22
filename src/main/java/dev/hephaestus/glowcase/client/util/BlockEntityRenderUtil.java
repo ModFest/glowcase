@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -72,20 +71,22 @@ public class BlockEntityRenderUtil {
 		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
 			@Override
 			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
-				renderPlaceholderFace(poseStack.last(), buffer, state.blockPos);
+				renderPlaceholderFace(pose, buffer, state.blockPos);
 			}
 		});
 		poseStack.popPose();
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, Identifier texture,
-														  float scale, PoseStack matrices, MultiBufferSource vertexConsumers, float zOffset) {
-//		renderPlaceholder(entity, texture, scale, Axis.YP.rotationDegrees(-(entity.getBlockState().getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F), matrices, vertexConsumers, zOffset);
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
+														  float scale, PoseStack matrices, SubmitNodeCollector vertexConsumers, float zOffset) {
+		renderPlaceholder(entity, texture, scale,
+			Axis.YP.rotationDegrees(-(rotation16 * 360) / 16.0F),
+			matrices, vertexConsumers, zOffset);
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, Identifier texture,
-														  float scale, PoseStack matrices, MultiBufferSource vertexConsumers) {
-		renderPlaceholderWithBlockRotation(entity, texture, scale, matrices, vertexConsumers, 0F);
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
+														  float scale, PoseStack matrices, SubmitNodeCollector vertexConsumers) {
+		renderPlaceholderWithBlockRotation(entity, rotation16, texture, scale, matrices, vertexConsumers, 0F);
 	}
 
 	public static void renderCenteredPlaceholder(BlockEntityRenderState entity, Identifier texture,

@@ -6,19 +6,29 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.ItemProviderBlock;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jspecify.annotations.Nullable;
 
 public record ItemProviderBlockEntityRenderer(
@@ -26,10 +36,15 @@ public record ItemProviderBlockEntityRenderer(
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
 
 	public static class ItemProviderRenderState extends BlockEntityRenderState {
+		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
 		public Direction facing = Direction.UP;
 		public boolean shouldRenderPlaceholder;
 		public boolean isBlockItem;
 		public boolean isInvisible;
+		public Component name = Component.empty();
+		public int textColor;
+		public boolean canGive;
+		public Component countText;
 	}
 
 	@Override
@@ -41,10 +56,21 @@ public record ItemProviderBlockEntityRenderer(
 	public void extractRenderState(ItemProviderBlockEntity blockEntity, ItemProviderRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 
+		var stack = blockEntity.getStack();
+		this.context.itemModelResolver().updateForTopItem(state.itemRenderState, stack, ItemDisplayContext.FIXED, blockEntity.getLevel(), null, (int) state.blockPos.asLong());
 		state.facing = blockEntity.getBlockState().getValue(ItemProviderBlock.FACING);
-		state.isBlockItem = blockEntity.getStack().getItem() instanceof BlockItem;
+		state.isBlockItem = stack.getItem() instanceof BlockItem;
 		state.shouldRenderPlaceholder = !blockEntity.hasItem() || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 		state.isInvisible = blockEntity.isInvisible();
+		state.name = stack.isEmpty() ? Component.translatable("gui.glowcase.none") : (Component.literal("")).append(stack.getHoverName()).withStyle(stack.getRarity().color());
+		state.textColor = ARGB.opaque(state.name.getStyle().getColor() == null ? 0xFFFFFF : state.name.getStyle().getColor().getValue());
+		state.canGive = blockEntity.canGiveTo(Minecraft.getInstance().player);
+		if (state.canGive) {
+			state.countText = Component.literal("%dx".formatted(blockEntity.getStack().getCount()));
+		} else {
+			long cooldownMS = blockEntity.getCooldownTicks(Minecraft.getInstance().player) * 50;
+			state.countText = Component.literal("[%s]".formatted(blockEntity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).withStyle(ChatFormatting.YELLOW);
+		}
 	}
 
 	@Override
@@ -91,50 +117,47 @@ public record ItemProviderBlockEntityRenderer(
 				poseStack.mulPose(Axis.YP.rotationDegrees(180f));
 			}
 
-//			context.getItemRenderer().renderStatic(entity.getStack(), ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY, poseStack, vertexConsumers, entity.getLevel(), 0);
+			state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 
 			poseStack.popPose();
 		}
-//
-//		HitResult hitResult = Minecraft.getInstance().hitResult;
-//		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(entity.getBlockPos())) {
-//			poseStack.pushPose();
-//			if (isBack) { // Dunno, poseStack are hard
-//				poseStack.mulPose(Axis.XP.rotationDegrees(180));
-//			} else {
-//				poseStack.mulPose(Axis.ZP.rotationDegrees(180));
-//			}
-//			float scale = 0.025F;
-//
-//			poseStack.translate(0, -0.6, -0.3);
-//
-//			poseStack.scale(scale, scale, scale);
-//
-//			ItemStack stack = entity.getStack();
-//			Component name = stack.isEmpty() ? Component.translatable("gui.glowcase.none") : (Component.literal("")).append(stack.getHoverName()).withStyle(stack.getRarity().color());
-//			int color = ARGB.opaque(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getValue());
-//			poseStack.pushPose();
-//			poseStack.translate(-context.getFont().width(name) / 2F, -4, 0);
-//			context.getFont().drawInBatch(name, 0, 0, color, false, poseStack.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
-//			poseStack.popPose();
-//
-//			if (!stack.isEmpty()) {
-//				poseStack.pushPose();
-//				if (entity.canGiveTo(Minecraft.getInstance().player)) {
-//					Component countText = Component.literal("%dx".formatted(entity.getStack().getCount()));
-//					poseStack.translate(-context.getFont().width(countText) + 16, 32, 0);
-//					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, poseStack.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
-//				} else {
-//					long cooldownMS = entity.getCooldownTicks(Minecraft.getInstance().player) * 50;
-//					Component countText = Component.literal("[%s]".formatted(entity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).withStyle(ChatFormatting.YELLOW);
-//					poseStack.translate(-context.getFont().width(countText) + 16, 24, 0);
-//					context.getFont().drawInBatch(countText, 0, 0, 0xFFFFFFFF, false, poseStack.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, Lightmap.FULL_BRIGHT);
-//				}
-//				poseStack.popPose();
-//			}
-//			poseStack.popPose();
-//		}
-//
+
+		HitResult hitResult = Minecraft.getInstance().hitResult;
+		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(state.blockPos)) {
+			poseStack.pushPose();
+			if (isBack) { // Dunno, poseStack are hard
+				poseStack.mulPose(Axis.XP.rotationDegrees(180));
+			} else {
+				poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+			}
+
+			poseStack.translate(0, -0.6, -0.3);
+			float scale = 0.025F;
+			poseStack.scale(scale, scale, scale);
+
+			Component name = state.name;
+			int color = ARGB.opaque(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getValue());
+
+			poseStack.pushPose();
+			poseStack.translate(-context.font().width(name) / 2F, -4, 0);
+			submitNodeCollector.submitText(poseStack, 0, 0, state.name.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+
+			poseStack.popPose();
+
+			if (!state.itemRenderState.isEmpty()) {
+				poseStack.pushPose();
+				if (state.canGive) {
+					poseStack.translate(-context.font().width(state.countText) + 16, 32, 0);
+					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+				} else {
+					poseStack.translate(-context.font().width(state.countText) + 16, 24, 0);
+					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+				}
+				poseStack.popPose();
+			}
+			poseStack.popPose();
+		}
+
 		poseStack.popPose();
 
 

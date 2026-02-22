@@ -31,8 +31,8 @@ public record ItemAcceptorBlockEntityRenderer(
 	private static final Quaternionf ITEM_LIGHT_ROTATION_FLAT = Axis.XP.rotationDegrees(-45);
 
 	public static class ItemAcceptorRenderState extends BlockEntityRenderState {
-		public int count;
 		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
+		public int count;
 		public float rotation;
 	}
 

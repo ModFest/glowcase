@@ -2,14 +2,20 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.block.SpriteBlock;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
+import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +33,8 @@ public record SpriteBlockEntityRenderer(
 	};
 
 	public static class SpriteRenderState extends BlockEntityRenderState {
+		public String sprite;
+		public Direction facing;
 	}
 
 	@Override
@@ -35,8 +43,17 @@ public record SpriteBlockEntityRenderer(
 	}
 
 	@Override
-	public void submit(SpriteRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+	public void extractRenderState(SpriteBlockEntity blockEntity, SpriteRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
+		state.sprite = blockEntity.getSprite();
+		state.facing = blockEntity.getBlockState().getValue(SpriteBlock.FACING);
+	}
 
+	@Override
+	public void submit(SpriteRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+		if (state.sprite.isEmpty() || BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
+			BlockEntityRenderUtil.renderFacingPlaceholder(state, state.facing, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector);
+		}
 	}
 
 	// FIXME 26.1
@@ -112,9 +129,7 @@ public record SpriteBlockEntityRenderer(
 //		}
 //
 //		matrices.popPose();
-//
-//		if (entity.getSprite().isEmpty() || BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos())) BlockEntityRenderUtil.renderFacingPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers);
-//	}
+////    }
 //
 //	private void vertex(
 //		PoseStack.Pose matrix, VertexConsumer vertexConsumer, Vector3f vertex, float u, float v, int color) {

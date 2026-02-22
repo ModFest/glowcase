@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
+import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -15,7 +16,6 @@ public record SoundPlayerBlockEntityRenderer(
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/sound_block.png");
 
 	public static class SoundPlayerRenderState extends BlockEntityRenderState {
-
 	}
 
 	@Override
@@ -25,14 +25,8 @@ public record SoundPlayerBlockEntityRenderer(
 
 	@Override
 	public void submit(SoundPlayerRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-
+		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos, false)) {
+			BlockEntityRenderUtil.renderBillboardPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera);
+		}
 	}
-// FIXME 26.1
-//	@Override
-//	public void render(SoundPlayerBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
-//		if (entity.getLevel() == null || entity.getLevel().getBlockState(entity.getBlockPos()).isAir()) return;
-//		if (BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos(), false)) {
-//			BlockEntityRenderUtil.renderBillboardPlaceholder(entity, ITEM_TEXTURE, 1.0F, matrices, vertexConsumers, context.getBlockEntityRenderDispatcher().camera);
-//		}
-//	}
 }

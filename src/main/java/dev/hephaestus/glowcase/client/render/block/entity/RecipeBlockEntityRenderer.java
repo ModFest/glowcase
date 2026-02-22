@@ -3,18 +3,26 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
+import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-public record RecipeBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<RecipeBlockEntity, RecipeBlockEntityRenderer.RecipeRenderState> {
+public record RecipeBlockEntityRenderer(
+	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<RecipeBlockEntity, RecipeBlockEntityRenderer.RecipeRenderState> {
 	private static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/recipe_block.png");
 
 	public static class RecipeRenderState extends BlockEntityRenderState {
-
+		public TextBlockEntity.ZOffset zOffset;
+		public int rotation16;
 	}
 
 	@Override
@@ -23,8 +31,17 @@ public record RecipeBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 	}
 
 	@Override
-	public void submit(RecipeRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+	public void extractRenderState(RecipeBlockEntity blockEntity, RecipeRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
+		state.zOffset = blockEntity.zOffset;
+		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
+	}
 
+	@Override
+	public void submit(RecipeRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
+			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
+		}
 	}
 // FIXME 26.1
 //	public void render(RecipeBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
@@ -70,9 +87,6 @@ public record RecipeBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 //			ScreenBlockEntityRenderer.renderTextCentered("EMI not loaded", 0xFFFF8888, 1f, 1f, matrices, vertexConsumers, this.context.getFont(), light);
 //			matrices.popPose();
 //		}
-//
-//		if (BlockEntityRenderUtil.shouldRenderPlaceholder(entity.getBlockPos())) {
-//			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(entity, ITEM_TEXTURE, 1F, matrices, vertexConsumers, entity.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : entity.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
-//		}
+
 //	}
 }
