@@ -2,28 +2,25 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Util;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
-	private Identifier item = Identifier.ofVanilla("air");
+	private Identifier item = Identifier.withDefaultNamespace("air");
 	public int count = 1;
 	public int pulse = 4;
 	public OutputDirection outputDirection = OutputDirection.BACK;
@@ -35,24 +32,24 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
-		view.put("item", Identifier.CODEC, this.item);
+		view.store("item", Identifier.CODEC, this.item);
 		view.putInt("count", this.count);
 		view.putInt("pulse", this.pulse);
 		view.putBoolean("is_item_tag", this.isItemTag);
-		view.put("output_direction", OutputDirection.CODEC, this.outputDirection);
+		view.store("output_direction", OutputDirection.CODEC, this.outputDirection);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		this.setItem(view.read("item", Identifier.CODEC).orElse(Identifier.ofVanilla("air")));
-		this.count = view.getInt("count", 1);
-		this.pulse = view.getInt("pulse", 4);
-		this.isItemTag = view.getBoolean("is_item_tag", false);
+		this.setItem(view.read("item", Identifier.CODEC).orElse(Identifier.withDefaultNamespace("air")));
+		this.count = view.getIntOr("count", 1);
+		this.pulse = view.getIntOr("pulse", 4);
+		this.isItemTag = view.getBooleanOr("is_item_tag", false);
 		this.outputDirection = view.read("output_direction", OutputDirection.CODEC).orElse(OutputDirection.BACK);
 	}
 
@@ -67,8 +64,8 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 
 		this.item = item;
 
-		TagKey<Item> itemTag = TagKey.of(RegistryKeys.ITEM, item);
-		itemTagList = Registries.ITEM.stream().filter(it -> it.getDefaultStack().isIn(itemTag)).toList();
+		TagKey<Item> itemTag = TagKey.create(Registries.ITEM, item);
+		itemTagList = BuiltInRegistries.ITEM.stream().filter(it -> it.getDefaultInstance().is(itemTag)).toList();
 	}
 
 	public ItemStack getDisplayItemStack() {
@@ -77,16 +74,16 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 				return ItemStack.EMPTY;
 			}
 
-			return itemTagList.get((int) (Util.getMeasuringTimeMs() / 1000f) % itemTagList.size()).getDefaultStack();
+			return itemTagList.get((int) (Util.getMillis() / 1000f) % itemTagList.size()).getDefaultInstance();
 		} else {
-			return Registries.ITEM.get(item).getDefaultStack();
+			return BuiltInRegistries.ITEM.getValue(item).getDefaultInstance();
 		}
 	}
 
 	public boolean isItemAccepted(ItemStack stack) {
 		boolean isEqual = isItemTag
-			? stack.isIn(TagKey.of(RegistryKeys.ITEM, item))
-			: stack.isOf(Registries.ITEM.get(item));
+			? stack.is(TagKey.create(Registries.ITEM, item))
+			: stack.is(BuiltInRegistries.ITEM.getValue(item));
 
 		return isEqual && stack.getCount() >= count;
 	}
@@ -95,13 +92,13 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 		return pulse;
 	}
 
-	public enum OutputDirection implements StringIdentifiable {
+	public enum OutputDirection implements StringRepresentable {
 		TOP, BACK, BOTTOM;
 
-		public static final Codec<OutputDirection> CODEC = StringIdentifiable.createCodec(OutputDirection::values);
+		public static final Codec<OutputDirection> CODEC = StringRepresentable.fromEnum(OutputDirection::values);
 
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return name().toLowerCase(Locale.ROOT);
 		}
 	}

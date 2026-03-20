@@ -18,7 +18,7 @@ import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import dev.hephaestus.glowcase.compat.PolydexCompatibility;
+//import dev.hephaestus.glowcase.compat.PolydexCompatibility;
 import dev.hephaestus.glowcase.item.CollectionCaseItem;
 import dev.hephaestus.glowcase.item.LockItem;
 import dev.hephaestus.glowcase.item.NoteItem;
@@ -27,30 +27,30 @@ import dev.hephaestus.glowcase.item.component.CollectionComponent;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import dev.hephaestus.glowcase.item.component.TabletComponents;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.DyedColorComponent;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class Glowcase implements ModInitializer {
 	public static final GlowcaseConfig CONFIG = GlowcaseConfig.createToml(FabricLoader.getInstance().getConfigDir(), "", MODID, GlowcaseConfig.class);
 	public static GlowcaseCommonProxy proxy = new GlowcaseCommonProxy(); //Overridden in GlowcaseClient
 
-	public static final TagKey<Item> ITEM_TAG = TagKey.of(RegistryKeys.ITEM, id("items"));
+	public static final TagKey<Item> ITEM_TAG = TagKey.create(Registries.ITEM, id("items"));
 
 	public static final Supplier<HyperlinkBlock> HYPERLINK_BLOCK = registerBlock("hyperlink_block", HyperlinkBlock::new);
 	public static final Supplier<BlockItem> HYPERLINK_BLOCK_ITEM = registerBlockItem("hyperlink_block", HYPERLINK_BLOCK);
@@ -122,72 +122,72 @@ public class Glowcase implements ModInitializer {
 
 	public static final Supplier<Item> LOCK_ITEM = registerItem("lock", LockItem::new);
 
-	public static final Supplier<ComponentType<CollectionComponent>> COLLECTION_COMPONENT = registerComponent("collection", () -> CollectionComponent.TYPE);
-	public static final Supplier<Item> COLLECTION_CASE_ITEM = registerItem("collection_case", (settings) -> new CollectionCaseItem(settings.component(COLLECTION_COMPONENT.get(), new CollectionComponent()).component(DataComponentTypes.DYED_COLOR, new DyedColorComponent(0xFFFFFF))));
+	public static final Supplier<DataComponentType<CollectionComponent>> COLLECTION_COMPONENT = registerComponent("collection", () -> CollectionComponent.TYPE);
+	public static final Supplier<Item> COLLECTION_CASE_ITEM = registerItem("collection_case", (settings) -> new CollectionCaseItem(settings.component(COLLECTION_COMPONENT.get(), new CollectionComponent()).component(DataComponents.DYED_COLOR, new DyedItemColor(0xFFFFFF))));
 
 	public static final Supplier<Item> TABLET_ITEM = registerItem("tablet", TabletItem::new);
-	public static final Supplier<ComponentType<Pair<UUID, BlockPos>>> LINKED_SCREEN_COMPONENT = registerComponent("linked_screen", () -> TabletComponents.LINKED_SCREEN_TYPE);
-	public static final Supplier<ComponentType<Integer>> CURRENT_SLIDE_COMPONENT = registerComponent("current_slide", () -> TabletComponents.CURRENT_SLIDE_TYPE);
-	public static final Supplier<ComponentType<List<Pair<String, String>>>> SLIDESHOW_COMPONENT = registerComponent("slideshow", () -> TabletComponents.SLIDESHOW_COMPONENT_TYPE);
+	public static final Supplier<DataComponentType<Pair<UUID, BlockPos>>> LINKED_SCREEN_COMPONENT = registerComponent("linked_screen", () -> TabletComponents.LINKED_SCREEN_TYPE);
+	public static final Supplier<DataComponentType<Integer>> CURRENT_SLIDE_COMPONENT = registerComponent("current_slide", () -> TabletComponents.CURRENT_SLIDE_TYPE);
+	public static final Supplier<DataComponentType<List<Pair<String, String>>>> SLIDESHOW_COMPONENT = registerComponent("slideshow", () -> TabletComponents.SLIDESHOW_COMPONENT_TYPE);
 
 	public static final Supplier<Item> NOTE_ITEM = registerItem("note", NoteItem::new);
-	public static final Supplier<ComponentType<NoteComponent>> NOTE_COMPONENT = registerComponent("note", () -> NoteComponent.TYPE);
+	public static final Supplier<DataComponentType<NoteComponent>> NOTE_COMPONENT = registerComponent("note", () -> NoteComponent.TYPE);
 
 	public static final Supplier<EntityDisplayBlock> ENTITY_DISPLAY_BLOCK = registerBlock("entity_display_block", EntityDisplayBlock::new);
 	public static final Supplier<BlockItem> ENTITY_DISPLAY_BLOCK_ITEM = registerBlockItem("entity_display_block", ENTITY_DISPLAY_BLOCK);
 	public static final Supplier<BlockEntityType<EntityDisplayBlockEntity>> ENTITY_DISPLAY_BLOCK_ENTITY = registerBlockEntity("entity_display_block", () -> FabricBlockEntityTypeBuilder.create(EntityDisplayBlockEntity::new, ENTITY_DISPLAY_BLOCK.get()).build(null));
 
-	public static final Supplier<ItemGroup> ITEM_GROUP = registerItemGroup("items", () -> FabricItemGroup.builder()
-		.displayName(Text.translatable("itemGroup.glowcase.items"))
+	public static final Supplier<CreativeModeTab> ITEM_GROUP = registerItemGroup("items", () -> FabricCreativeModeTab.builder()
+		.title(Component.translatable("itemGroup.glowcase.items"))
 		.icon(() -> new ItemStack(SPRITE_BLOCK_ITEM.get()))
-		.entries((displayContext, entries) -> {
-			entries.add(TEXT_BLOCK_ITEM.get());
-			entries.add(ENTITY_DISPLAY_BLOCK_ITEM.get());
-			entries.add(ITEM_DISPLAY_BLOCK_ITEM.get());
-			entries.add(RECIPE_BLOCK_ITEM.get());
-			entries.add(SPRITE_BLOCK_ITEM.get());
-			entries.add(PARTICLE_DISPLAY_ITEM.get());
-			entries.add(SOUND_BLOCK_ITEM.get());
-			entries.add(SCREEN_BLOCK_ITEM.get());
-			entries.add(OUTLINE_BLOCK_ITEM.get());
-			entries.add(HYPERLINK_BLOCK_ITEM.get());
-			entries.add(CONFIG_LINK_BLOCK_ITEM.get());
-			entries.add(POPUP_BLOCK_ITEM.get());
-			entries.add(ITEM_PROVIDER_BLOCK_ITEM.get());
-			entries.add(ITEM_ACCEPTOR_BLOCK_ITEM.get());
-			entries.add(LOCK_ITEM.get());
-			entries.add(COLLECTION_CASE_ITEM.get());
-			entries.add(TABLET_ITEM.get());
-			entries.add(NOTE_ITEM.get());
+		.displayItems((displayContext, entries) -> {
+			entries.accept(TEXT_BLOCK_ITEM.get());
+			entries.accept(ENTITY_DISPLAY_BLOCK_ITEM.get());
+			entries.accept(ITEM_DISPLAY_BLOCK_ITEM.get());
+			entries.accept(RECIPE_BLOCK_ITEM.get());
+			entries.accept(SPRITE_BLOCK_ITEM.get());
+			entries.accept(PARTICLE_DISPLAY_ITEM.get());
+			entries.accept(SOUND_BLOCK_ITEM.get());
+			entries.accept(SCREEN_BLOCK_ITEM.get());
+			entries.accept(OUTLINE_BLOCK_ITEM.get());
+			entries.accept(HYPERLINK_BLOCK_ITEM.get());
+			entries.accept(CONFIG_LINK_BLOCK_ITEM.get());
+			entries.accept(POPUP_BLOCK_ITEM.get());
+			entries.accept(ITEM_PROVIDER_BLOCK_ITEM.get());
+			entries.accept(ITEM_ACCEPTOR_BLOCK_ITEM.get());
+			entries.accept(LOCK_ITEM.get());
+			entries.accept(COLLECTION_CASE_ITEM.get());
+			entries.accept(TABLET_ITEM.get());
+			entries.accept(NOTE_ITEM.get());
 		})
 		.build()
 	);
 
 	public static Identifier id(String... path) {
-		return Identifier.of(MODID, String.join("/", path));
+		return Identifier.fromNamespaceAndPath(MODID, String.join("/", path));
 	}
 
-	public static <T extends Block> Supplier<T> registerBlock(String path, Function<Block.Settings, T> supplier) {
+	public static <T extends Block> Supplier<T> registerBlock(String path, Function<BlockBehaviour.Properties, T> supplier) {
 		Identifier identifier = id(path);
-		AbstractBlock.Settings settings = GlowcaseBlock.defaultSettings().registryKey(RegistryKey.of(RegistryKeys.BLOCK, identifier));
+		BlockBehaviour.Properties settings = GlowcaseBlock.defaultSettings().setId(ResourceKey.create(Registries.BLOCK, identifier));
 		
-		return Suppliers.ofInstance(Registry.register(Registries.BLOCK, identifier, supplier.apply(settings)));
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.BLOCK, identifier, supplier.apply(settings)));
 	}
 
 	public static Supplier<BlockItem> registerBlockItem(String path, Supplier<? extends Block> block) {
 		return registerBlockItem(path, block, settings -> {});
 	}
 
-	public static Supplier<BlockItem> registerBlockItem(String path, Supplier<? extends Block> blockSupplier, Consumer<Item.Settings> seetingsConsumer) {
+	public static Supplier<BlockItem> registerBlockItem(String path, Supplier<? extends Block> blockSupplier, Consumer<Item.Properties> seetingsConsumer) {
 		Identifier identifier = id(path);
 		Block block = blockSupplier.get();
-		Item.Settings settings = defaultItemSettings().registryKey(RegistryKey.of(RegistryKeys.ITEM, identifier));
+		Item.Properties settings = defaultItemSettings().setId(ResourceKey.create(Registries.ITEM, identifier));
 		seetingsConsumer.accept(settings);
 		BlockItem blockItem;
 		if (block instanceof GlowcaseBlock glowcaseBlock) {
 			blockItem = new BlockItem(block, settings) {
 				@Override
-				public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
+				public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
 					glowcaseBlock.appendTooltip(stack, context, displayComponent, textConsumer, type);
 				}
 			};
@@ -195,39 +195,39 @@ public class Glowcase implements ModInitializer {
 			blockItem = new BlockItem(block, settings);
 		}
 
-		return Suppliers.ofInstance(Registry.register(Registries.ITEM, identifier, blockItem));
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.ITEM, identifier, blockItem));
 	}
 
-	public static <T extends Item> Supplier<T> registerItem(String path, Function<Item.Settings, T> supplier) {
+	public static <T extends Item> Supplier<T> registerItem(String path, Function<Item.Properties, T> supplier) {
 		Identifier identifier = id(path);
-		Item.Settings settings = defaultItemSettings().registryKey(RegistryKey.of(RegistryKeys.ITEM, identifier));
+		Item.Properties settings = defaultItemSettings().setId(ResourceKey.create(Registries.ITEM, identifier));
 
-		return Suppliers.ofInstance(Registry.register(Registries.ITEM, identifier, supplier.apply(settings)));
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.ITEM, identifier, supplier.apply(settings)));
 	}
 
-	public static <T extends ComponentType<U>, U> Supplier<T> registerComponent(String path, Supplier<T> supplier) {
-		return Suppliers.ofInstance(Registry.register(Registries.DATA_COMPONENT_TYPE, id(path), supplier.get()));
+	public static <T extends DataComponentType<U>, U> Supplier<T> registerComponent(String path, Supplier<T> supplier) {
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, id(path), supplier.get()));
 	}
 
-	public static <T extends ItemGroup> Supplier<T> registerItemGroup(String path, Supplier<T> supplier) {
-		return Suppliers.ofInstance(Registry.register(Registries.ITEM_GROUP, id(path), supplier.get()));
+	public static <T extends CreativeModeTab> Supplier<T> registerItemGroup(String path, Supplier<T> supplier) {
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, id(path), supplier.get()));
 	}
 
 	public static <T extends BlockEntity> Supplier<BlockEntityType<T>> registerBlockEntity(String path, Supplier<BlockEntityType<T>> supplier) {
-		return Suppliers.ofInstance(Registry.register(Registries.BLOCK_ENTITY_TYPE, id(path), supplier.get()));
+		return Suppliers.ofInstance(Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, id(path), supplier.get()));
 	}
 	
-	private static Item.Settings defaultItemSettings() {
-		return new Item.Settings().maxCount(1);
+	private static Item.Properties defaultItemSettings() {
+		return new Item.Properties().stacksTo(1);
 	}
 
 	@Override
 	public void onInitialize() {
 		GlowcaseNetworking.init();
 
-		if (FabricLoader.getInstance().isModLoaded("polydex2")) {
-			PolydexCompatibility.onInitialize();
-		}
+//		if (FabricLoader.getInstance().isModLoaded("polydex2")) {
+//			PolydexCompatibility.onInitialize();
+//		}
 
 		// Never make this command available outside of dev
 		/*if (FabricLoader.getInstance().isDevelopmentEnvironment()) {

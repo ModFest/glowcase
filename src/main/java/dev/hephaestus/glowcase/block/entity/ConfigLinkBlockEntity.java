@@ -2,12 +2,10 @@ package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.util.ConfigLinkUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ConfigLinkBlockEntity extends GlowcaseBlockEntity {
 	public static final int TITLE_MAX_LENGTH = 1024;
@@ -33,7 +31,7 @@ public class ConfigLinkBlockEntity extends GlowcaseBlockEntity {
 
 	public void setTitle(String newTitle) {
 		title = newTitle;
-		markDirty();
+		setChanged();
 	}
 
 	public String getUrl() {
@@ -42,22 +40,22 @@ public class ConfigLinkBlockEntity extends GlowcaseBlockEntity {
 
 	public void setUrl(String newUrl) {
 		url = newUrl;
-		markDirty();
+		setChanged();
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
 		view.putString("title", this.title);
 		view.putString("url", this.url);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		this.title = view.getString("title", "");
-		this.url = view.getString("url", "glowcase:mod/modmenu");
+		this.title = view.getStringOr("title", "");
+		this.url = view.getStringOr("url", "glowcase:mod/modmenu");
 	}
 }

@@ -5,26 +5,29 @@ import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.SelectionManager;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.font.TextFieldHelper;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class PopupBlockEditScreen extends GlowcaseScreen {
 	private final PopupBlockEntity popupBlockEntity;
 
-	private SelectionManager selectionManager;
+	private TextFieldHelper selectionManager;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
-	private TextFieldWidget titleEntryWidget;
-	private ButtonWidget changeAlignment;
-	private TextFieldWidget colorEntryWidget;
+	private EditBox titleEntryWidget;
+	private Button changeAlignment;
+	private EditBox colorEntryWidget;
 
 	public PopupBlockEditScreen(PopupBlockEntity popupBlockEntity) {
 		this.popupBlockEntity = popupBlockEntity;
@@ -36,26 +39,26 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 
 		int innerPadding = width / 100;
 
-		this.selectionManager = new SelectionManager(
+		this.selectionManager = new TextFieldHelper(
 			() -> this.popupBlockEntity.getRawLine(this.currentRow),
 			(string) -> {
 				popupBlockEntity.setRawLine(this.currentRow, string);
 				this.popupBlockEntity.renderDirty = true;
 			},
-			SelectionManager.makeClipboardGetter(this.client),
-			SelectionManager.makeClipboardSetter(this.client),
+			TextFieldHelper.createClipboardGetter(this.minecraft),
+			TextFieldHelper.createClipboardSetter(this.minecraft),
 			(string) -> true);
 
-		this.titleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 10, 0, 8 * width / 10, 20, Text.empty());
+		this.titleEntryWidget = new EditBox(this.minecraft.font, width / 10, 0, 8 * width / 10, 20, Component.empty());
 		this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
-		this.titleEntryWidget.setText(this.popupBlockEntity.title);
-		this.titleEntryWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.title"));
-		this.titleEntryWidget.setChangedListener(string -> {
-			this.popupBlockEntity.title = this.titleEntryWidget.getText();
+		this.titleEntryWidget.setValue(this.popupBlockEntity.title);
+		this.titleEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.title"));
+		this.titleEntryWidget.setResponder(string -> {
+			this.popupBlockEntity.title = this.titleEntryWidget.getValue();
 			this.popupBlockEntity.renderDirty = true;
 		});
 
-		this.changeAlignment = ButtonWidget.builder(Text.stringifiedTranslatable("gui.glowcase.alignment", this.popupBlockEntity.textAlignment), action -> {
+		this.changeAlignment = Button.builder(Component.translatableEscape("gui.glowcase.alignment", this.popupBlockEntity.textAlignment), action -> {
 			switch (popupBlockEntity.textAlignment) {
 				case LEFT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
 				case CENTER, CENTER_LEFT, CENTER_RIGHT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
@@ -63,21 +66,21 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 			}
 			this.popupBlockEntity.renderDirty = true;
 
-			this.changeAlignment.setMessage(Text.stringifiedTranslatable("gui.glowcase.alignment", this.popupBlockEntity.textAlignment));
-		}).dimensions(120 + innerPadding, 20 + innerPadding, 160, 20).build();
+			this.changeAlignment.setMessage(Component.translatableEscape("gui.glowcase.alignment", this.popupBlockEntity.textAlignment));
+		}).bounds(120 + innerPadding, 20 + innerPadding, 160, 20).build();
 
-		this.colorEntryWidget = new TextFieldWidget(this.client.textRenderer, 280 + innerPadding * 2, 20 + innerPadding, 50, 20, Text.empty());
-		this.colorEntryWidget.setText("#" + Integer.toHexString(this.popupBlockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setChangedListener(string -> {
-			TextColor.parse(this.colorEntryWidget.getText()).ifSuccess(color -> {
-				this.popupBlockEntity.color = color == null ? 0xFFFFFFFF : color.getRgb() | 0xFF000000;
+		this.colorEntryWidget = new EditBox(this.minecraft.font, 280 + innerPadding * 2, 20 + innerPadding, 50, 20, Component.empty());
+		this.colorEntryWidget.setValue("#" + Integer.toHexString(this.popupBlockEntity.color & 0x00FFFFFF));
+		this.colorEntryWidget.setResponder(string -> {
+			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
+				this.popupBlockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
 				this.popupBlockEntity.renderDirty = true;
 			});
 		});
 
-		this.addDrawableChild(this.titleEntryWidget);
-		this.addDrawableChild(this.changeAlignment);
-		this.addDrawableChild(this.colorEntryWidget);
+		this.addRenderableWidget(this.titleEntryWidget);
+		this.addRenderableWidget(this.changeAlignment);
+		this.addRenderableWidget(this.colorEntryWidget);
 	}
 
 	@Override
@@ -86,130 +89,131 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		C2SEditPopupBlock.of(popupBlockEntity).send();
-		super.close();
+		super.onClose();
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		if (this.client == null) return;
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+		if (this.minecraft == null) return;
 
 		super.render(context, mouseX, mouseY, delta);
 
-		context.getMatrices().pushMatrix();
-		context.getMatrices().translate(0, 40 + 2 * this.width / 100F);
+		context.pose().pushMatrix();
+		context.pose().translate(0, 40 + 2 * this.width / 100F);
 		for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
-			var text = this.currentRow == i ? Text.literal(this.popupBlockEntity.getRawLine(i)) : this.popupBlockEntity.lines.get(i);
+			var text = this.currentRow == i ? Component.literal(this.popupBlockEntity.getRawLine(i)) : this.popupBlockEntity.lines.get(i);
 
-			int lineWidth = this.textRenderer.getWidth(text);
+			int lineWidth = this.font.width(text);
 			switch (this.popupBlockEntity.textAlignment) {
-				case LEFT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 10, i * 12, this.popupBlockEntity.color);
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
-				case RIGHT -> context.drawTextWithShadow(client.textRenderer, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
+				case LEFT -> context.drawString(minecraft.font, text, this.width / 10, i * 12, this.popupBlockEntity.color);
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawString(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
+				case RIGHT -> context.drawString(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
 			}
 		}
 
-		int caretStart = this.selectionManager.getSelectionStart();
-		int caretEnd = this.selectionManager.getSelectionEnd();
+		int caretStart = this.selectionManager.getCursorPos();
+		int caretEnd = this.selectionManager.getSelectionPos();
 
 		if (caretStart >= 0) {
 			String line = this.popupBlockEntity.getRawLine(this.currentRow);
-			int selectionStart = MathHelper.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-			int selectionEnd = MathHelper.clamp(Math.max(caretStart, caretEnd), 0, line.length());
+			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
+			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
 
-			String preSelection = line.substring(0, MathHelper.clamp(line.length(), 0, selectionStart));
-			int startX = this.client.textRenderer.getWidth(preSelection);
+			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
+			int startX = this.minecraft.font.width(preSelection);
 
 			float push = switch (this.popupBlockEntity.textAlignment) {
 				case LEFT -> this.width / 10F;
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.textRenderer.getWidth(line) / 2F;
-				case RIGHT -> this.width - this.width / 10F - this.textRenderer.getWidth(line);
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
+				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
 			};
 
 			startX += (int) push;
 
 
 			int caretStartY = this.currentRow * 12;
-			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.titleEntryWidget.isActive() && !this.colorEntryWidget.isActive()) {
+			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.titleEntryWidget.canConsumeInput() && !this.colorEntryWidget.canConsumeInput()) {
 				if (selectionStart < line.length()) {
 					context.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
 				} else {
-					context.drawText(client.textRenderer, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
+					context.drawString(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
 				}
 			}
 
 			if (caretStart != caretEnd) {
-				int endX = startX + this.client.textRenderer.getWidth(line.substring(selectionStart, selectionEnd));
-				context.drawSelection(startX, caretStartY, endX, caretStartY + 9);
+				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
+				context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 			}
 		}
 
-		context.getMatrices().popMatrix();
+		context.pose().popMatrix();
 	}
 
 	@Override
-	public boolean charTyped(char chr, int keyCode) {
-		if (this.titleEntryWidget.isActive()) {
-			return this.titleEntryWidget.charTyped(chr, keyCode);
-		} else if (this.colorEntryWidget.isActive()) {
-			return this.colorEntryWidget.charTyped(chr, keyCode);
+	public boolean charTyped(CharacterEvent event) {
+		if (this.titleEntryWidget.canConsumeInput()) {
+			return this.titleEntryWidget.charTyped(event);
+		} else if (this.colorEntryWidget.canConsumeInput()) {
+			return this.colorEntryWidget.charTyped(event);
 		} else {
-			this.selectionManager.insert(chr);
+			this.selectionManager.charTyped(event);
 			return true;
 		}
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (this.titleEntryWidget.isActive()) {
+	public boolean keyPressed(KeyEvent event) {
+		int keyCode = event.key();
+		if (this.titleEntryWidget.canConsumeInput()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-				this.close();
+				this.onClose();
 				return true;
 			} else {
-				return this.titleEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+				return this.titleEntryWidget.keyPressed(event);
 			}
-		} else if (this.colorEntryWidget.isActive()) {
+		} else if (this.colorEntryWidget.canConsumeInput()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-				this.close();
+				this.onClose();
 				return true;
 			} else {
-				return this.colorEntryWidget.keyPressed(keyCode, scanCode, modifiers);
+				return this.colorEntryWidget.keyPressed(event);
 			}
 		} else {
 			setFocused(null);
 			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
 				this.popupBlockEntity.addRawLine(this.currentRow + 1,
 					this.popupBlockEntity.getRawLine(this.currentRow).substring(
-						MathHelper.clamp(this.selectionManager.getSelectionStart(), 0, this.popupBlockEntity.getRawLine(this.currentRow).length())
+						Mth.clamp(this.selectionManager.getCursorPos(), 0, this.popupBlockEntity.getRawLine(this.currentRow).length())
 					));
 				this.popupBlockEntity.setRawLine(this.currentRow,
-					this.popupBlockEntity.getRawLine(this.currentRow).substring(0, MathHelper.clamp(this.selectionManager.getSelectionStart(), 0, this.popupBlockEntity.getRawLine(this.currentRow).length())
+					this.popupBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.popupBlockEntity.getRawLine(this.currentRow).length())
 					));
 				this.popupBlockEntity.renderDirty = true;
 				++this.currentRow;
-				this.selectionManager.moveCursorToStart();
+				this.selectionManager.setCursorToStart();
 				return true;
 			} else if (keyCode == GLFW.GLFW_KEY_UP) {
 				this.currentRow = Math.max(this.currentRow - 1, 0);
-				this.selectionManager.putCursorAtEnd();
+				this.selectionManager.setCursorToEnd();
 				return true;
 			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
 				this.currentRow = Math.min(this.currentRow + 1, (this.popupBlockEntity.lines.size() - 1));
-				this.selectionManager.putCursorAtEnd();
+				this.selectionManager.setCursorToEnd();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.popupBlockEntity.lines.size() > 1 && this.selectionManager.getSelectionStart() == 0 && this.selectionManager.getSelectionEnd() == this.selectionManager.getSelectionStart()) {
+			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.popupBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
 				--this.currentRow;
-				this.selectionManager.putCursorAtEnd();
+				this.selectionManager.setCursorToEnd();
 				deleteLine();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.popupBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionEnd() == this.popupBlockEntity.getRawLine(this.currentRow).length()) {
+			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.popupBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.popupBlockEntity.getRawLine(this.currentRow).length()) {
 				deleteLine();
 				return true;
 			} else {
 				try {
-					boolean val = this.selectionManager.handleSpecialKey(keyCode) || super.keyPressed(keyCode, scanCode, modifiers);
-					int selectionOffset = this.popupBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getSelectionStart();
+					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
+					int selectionOffset = this.popupBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
 
 					// Find line feed characters and create proper newlines
 					for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
@@ -218,21 +222,21 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 						if (lineFeedIndex >= 0) {
 							this.popupBlockEntity.addRawLine(i + 1,
 								this.popupBlockEntity.getRawLine(i).substring(
-									MathHelper.clamp(lineFeedIndex + 1, 0, this.popupBlockEntity.getRawLine(i).length())
+									Mth.clamp(lineFeedIndex + 1, 0, this.popupBlockEntity.getRawLine(i).length())
 								));
 							this.popupBlockEntity.setRawLine(i,
-								this.popupBlockEntity.getRawLine(i).substring(0, MathHelper.clamp(lineFeedIndex, 0, this.popupBlockEntity.getRawLine(i).length())
+								this.popupBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.popupBlockEntity.getRawLine(i).length())
 								));
 							this.popupBlockEntity.renderDirty = true;
 							++this.currentRow;
-							this.selectionManager.putCursorAtEnd();
-							this.selectionManager.moveCursor(-selectionOffset);
+							this.selectionManager.setCursorToEnd();
+							this.selectionManager.moveByChars(-selectionOffset);
 						}
 					}
 					return val;
 				} catch (StringIndexOutOfBoundsException e) {
 					e.printStackTrace();
-					MinecraftClient.getInstance().setScreen(null);
+					Minecraft.getInstance().setScreen(null);
 					return false;
 				}
 			}
@@ -249,19 +253,21 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		int topOffset = (int) (40 + 2 * this.width / 100F);
-		if (!this.titleEntryWidget.mouseClicked(mouseX, mouseY, button)) {
+		if (!this.titleEntryWidget.mouseClicked(event, doubleClick)) {
 			this.titleEntryWidget.setFocused(false);
 		}
-		if (!this.colorEntryWidget.mouseClicked(mouseX, mouseY, button)) {
+		if (!this.colorEntryWidget.mouseClicked(event, doubleClick)) {
 			this.colorEntryWidget.setFocused(false);
 		}
 		if (mouseY > topOffset) {
-			this.currentRow = MathHelper.clamp((int) (mouseY - topOffset) / 12, 0, this.popupBlockEntity.lines.size() - 1);
+			this.currentRow = Mth.clamp((int) (mouseY - topOffset) / 12, 0, this.popupBlockEntity.lines.size() - 1);
 			this.setFocused(null);
 			String baseContents = this.popupBlockEntity.getRawLine(currentRow);
-			int baseContentsWidth = this.textRenderer.getWidth(baseContents);
+			int baseContentsWidth = this.font.width(baseContents);
 			int contentsStart;
 			int contentsEnd;
 			switch (this.popupBlockEntity.textAlignment) {
@@ -285,20 +291,20 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 			}
 
 			if (mouseX <= contentsStart) {
-				this.selectionManager.moveCursorToStart();
+				this.selectionManager.setCursorToStart();
 			} else if (mouseX >= contentsEnd) {
-				this.selectionManager.putCursorAtEnd();
+				this.selectionManager.setCursorToEnd();
 			} else {
 				int lastWidth = 0;
 				for (int i = 1; i < baseContents.length(); i++) {
 					String testContents = baseContents.substring(0, i);
-					int width = this.textRenderer.getWidth(testContents);
+					int width = this.font.width(testContents);
 					int midpointWidth = (width + lastWidth) / 2;
 					if (mouseX < contentsStart + midpointWidth) {
-						this.selectionManager.moveCursorTo(i - 1, false);
+						this.selectionManager.setCursorPos(i - 1, false);
 						break;
 					} else if (mouseX <= contentsStart + width) {
-						this.selectionManager.moveCursorTo(i, false);
+						this.selectionManager.setCursorPos(i, false);
 						break;
 					}
 					lastWidth = width;
@@ -306,7 +312,7 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 			}
 			return true;
 		} else {
-			return super.mouseClicked(mouseX, mouseY, button);
+			return super.mouseClicked(event, doubleClick);
 		}
 	}
 }

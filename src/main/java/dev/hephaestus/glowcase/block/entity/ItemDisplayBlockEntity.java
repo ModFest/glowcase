@@ -1,14 +1,11 @@
 package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ItemDisplayBlockEntity extends DisplayBlockEntity implements StackInteractable {
 	protected ItemStack stack = ItemStack.EMPTY;
@@ -19,19 +16,19 @@ public class ItemDisplayBlockEntity extends DisplayBlockEntity implements StackI
 
 	@Override
 	public boolean matchesStack(ItemStack stack) {
-		return ItemStack.areItemsEqual(this.stack, stack);
+		return ItemStack.isSameItem(this.stack, stack);
 	}
 
 	@Override
 	public void setFromStack(ItemStack stack) {
 		this.stack = stack.copy();
-		this.markDirty();
+		this.setChanged();
 	}
 
 	@Override
 	public void unsetFromStack() {
 		this.stack = ItemStack.EMPTY;
-		this.markDirty();
+		this.setChanged();
 	}
 
 	public ItemDisplayBlockEntity(BlockPos pos, BlockState state) {
@@ -39,15 +36,15 @@ public class ItemDisplayBlockEntity extends DisplayBlockEntity implements StackI
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
-		if (!this.stack.isEmpty()) view.put("item", ItemStack.CODEC, this.stack);
+		if (!this.stack.isEmpty()) view.store("item", ItemStack.CODEC, this.stack);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
 		this.stack = view.read("item", ItemStack.CODEC).orElse(ItemStack.EMPTY);
 	}

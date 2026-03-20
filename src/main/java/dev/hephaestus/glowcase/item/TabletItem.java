@@ -3,20 +3,22 @@ package dev.hephaestus.glowcase.item;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.StackReference;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -24,16 +26,16 @@ import java.util.function.Consumer;
 import static dev.hephaestus.glowcase.block.GlowcaseBlock.canEditGlowcase;
 
 public class TabletItem extends Item {
-	public TabletItem(Settings settings) {
+	public TabletItem(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity user, Hand hand) {
-		ItemStack stack = user.getStackInHand(hand);
+	public InteractionResult use(Level world, Player user, InteractionHand hand) {
+		ItemStack stack = user.getItemInHand(hand);
 
-		if (world.isClient() || !stack.contains(Glowcase.SLIDESHOW_COMPONENT.get()) || !stack.contains(Glowcase.LINKED_SCREEN_COMPONENT.get()))
-			return ActionResult.PASS;
+		if (world.isClientSide() || !stack.has(Glowcase.SLIDESHOW_COMPONENT.get()) || !stack.has(Glowcase.LINKED_SCREEN_COMPONENT.get()))
+			return InteractionResult.PASS;
 
 		// Get components
 
@@ -44,7 +46,7 @@ public class TabletItem extends Item {
 		assert screenPos != null;
 
 		int index = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
-		int step = user.isSneaking() ? -1 : 1;
+		int step = user.isShiftKeyDown() ? -1 : 1;
 		index += step;
 
 		// Ensure boundaries
@@ -58,7 +60,7 @@ public class TabletItem extends Item {
 		if (!(world.getBlockEntity(screenPos.getSecond()) instanceof ScreenBlockEntity screen && screen.macaddress.equals(screenPos.getFirst()))) {
 			// Link is invalid
 			stack.remove(Glowcase.LINKED_SCREEN_COMPONENT.get());
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		}
 
 		Pair<String, String> slide = slideshow.get(index);
@@ -70,25 +72,25 @@ public class TabletItem extends Item {
 		} else
 			screen.setImage(slide.getFirst(), slide.getSecond(), null);
 
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
-		PlayerEntity player = context.getPlayer();
-		BlockPos pos = context.getBlockPos();
-		ItemStack stack = context.getStack();
-		World world = context.getWorld();
+	public InteractionResult useOn(UseOnContext context) {
+		Player player = context.getPlayer();
+		BlockPos pos = context.getClickedPos();
+		ItemStack stack = context.getItemInHand();
+		Level world = context.getLevel();
 
-		if (world.isClient() || player == null)
-			return ActionResult.PASS;
+		if (world.isClientSide() || player == null)
+			return InteractionResult.PASS;
 
-		if (!(player.isSneaking() && world.getBlockEntity(pos) instanceof ScreenBlockEntity screen))
-			return ActionResult.PASS;
+		if (!(player.isShiftKeyDown() && world.getBlockEntity(pos) instanceof ScreenBlockEntity screen))
+			return InteractionResult.PASS;
 
 		if (!canEditGlowcase(player, pos)) {
-			player.sendMessage(Text.translatable("gui.glowcase.linking_denied"), true);
-			return ActionResult.SUCCESS;
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.linking_denied"));
+			return InteractionResult.SUCCESS;
 		}
 
 		// Update linked block
@@ -96,40 +98,40 @@ public class TabletItem extends Item {
 		Pair<UUID, BlockPos> linkedScreen = stack.getOrDefault(Glowcase.LINKED_SCREEN_COMPONENT.get(), null);
 		if (linkedScreen != null && screen.macaddress.equals(linkedScreen.getFirst()) && linkedScreen.getSecond().equals(pos)) {
 			stack.remove(Glowcase.LINKED_SCREEN_COMPONENT.get());
-			player.sendMessage(Text.translatable("gui.glowcase.unlinked_screen"), true);
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.unlinked_screen"));
 		} else {
 			stack.set(Glowcase.LINKED_SCREEN_COMPONENT.get(), new Pair<>(screen.macaddress, pos));
-			player.sendMessage(Text.translatable("gui.glowcase.updated_linked_screen", pos.toShortString()), true);
+			player.sendOverlayMessage(Component.translatable("gui.glowcase.updated_linked_screen", pos.toShortString()));
 		}
 
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public boolean onClicked(ItemStack stack, ItemStack otherStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
-		if (clickType == ClickType.RIGHT && otherStack.isEmpty()) {
+	public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack otherStack, Slot slot, ClickAction clickType, Player player, SlotAccess cursorStackReference) {
+		if (clickType == ClickAction.SECONDARY && otherStack.isEmpty()) {
 			// Open Editor on Client
 
-			if (stack.contains(Glowcase.LINKED_SCREEN_COMPONENT.get())) {
+			if (stack.has(Glowcase.LINKED_SCREEN_COMPONENT.get())) {
 				// Ensure linked screen is correct before we send the client a wrong connection
 				Pair<UUID, BlockPos> linkedScreen = stack.get(Glowcase.LINKED_SCREEN_COMPONENT.get());
 				assert linkedScreen != null;
-				if (!(player.getWorld().getBlockEntity(linkedScreen.getSecond()) instanceof ScreenBlockEntity screen && screen.macaddress.equals(linkedScreen.getFirst()))) {
+				if (!(player.level().getBlockEntity(linkedScreen.getSecond()) instanceof ScreenBlockEntity screen && screen.macaddress.equals(linkedScreen.getFirst()))) {
 					stack.remove(Glowcase.LINKED_SCREEN_COMPONENT.get());
 				}
 			}
 
-			if (player.getWorld().isClient())
+			if (player.level().isClientSide())
 				Glowcase.proxy.openTabletEditScreen(stack);
 
 			return true;
 		}
-		return super.onClicked(stack, otherStack, slot, clickType, player, cursorStackReference);
+		return super.overrideOtherStackedOnMe(stack, otherStack, slot, clickType, player, cursorStackReference);
 	}
 
 	@Override
-	public boolean isItemBarVisible(ItemStack stack) {
-		if (stack.contains(Glowcase.LINKED_SCREEN_COMPONENT.get()) && stack.contains(Glowcase.SLIDESHOW_COMPONENT.get()) && stack.contains(Glowcase.CURRENT_SLIDE_COMPONENT.get())) {
+	public boolean isBarVisible(ItemStack stack) {
+		if (stack.has(Glowcase.LINKED_SCREEN_COMPONENT.get()) && stack.has(Glowcase.SLIDESHOW_COMPONENT.get()) && stack.has(Glowcase.CURRENT_SLIDE_COMPONENT.get())) {
 			List<Pair<String, String>> slideshow = stack.get(Glowcase.SLIDESHOW_COMPONENT.get());
 			Integer index = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
 
@@ -137,28 +139,28 @@ public class TabletItem extends Item {
 				return true;
 		}
 
-		return super.isItemBarVisible(stack);
+		return super.isBarVisible(stack);
 	}
 
 	@Override
-	public int getItemBarStep(ItemStack stack) {
+	public int getBarWidth(ItemStack stack) {
 		List<Pair<String, String>> slideshow = stack.get(Glowcase.SLIDESHOW_COMPONENT.get());
 
 		int max = (slideshow != null && !slideshow.isEmpty()) ? slideshow.size()-1 : 0;
 		Integer index = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
 
-		return MathHelper.clamp(Math.round((float)index * 13.0F / (float)max), 0, 13);
+		return Mth.clamp(Math.round((float)index * 13.0F / (float)max), 0, 13);
 	}
 
 	@Override
-	public int getItemBarColor(ItemStack stack) {
+	public int getBarColor(ItemStack stack) {
 		return 0xFFFFFF;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("item.glowcase.tablet.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("item.glowcase.tablet.tooltip.1").formatted(Formatting.DARK_GRAY));
-		textConsumer.accept(Text.translatable("item.glowcase.tablet.tooltip.2").formatted(Formatting.DARK_GRAY));
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("item.glowcase.tablet.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("item.glowcase.tablet.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
+		textConsumer.accept(Component.translatable("item.glowcase.tablet.tooltip.2").withStyle(ChatFormatting.DARK_GRAY));
 	}
 }

@@ -3,60 +3,60 @@ package dev.hephaestus.glowcase.packet;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public record C2SEditScreenBlock(BlockPos pos, float width, float height, ScreenBlockEntity.Offset xOffset, ScreenBlockEntity.Offset yOffset, ScreenBlockEntity.Offset zOffset, float pitch, float yaw, boolean renderBackface, boolean eink, boolean stretch, String url, String alt, float preciseX, float preciseY, float preciseZ) implements C2SEditBlockEntity {
-	public static final Id<C2SEditScreenBlock> ID = new Id<>(Glowcase.id("channel.screen_block"));
-	public static final PacketCodec<RegistryByteBuf, C2SEditScreenBlock> PACKET_CODEC = PacketCodec.of(
+	public static final Type<C2SEditScreenBlock> ID = new Type<>(Glowcase.id("channel.screen_block"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditScreenBlock> PACKET_CODEC = StreamCodec.ofMember(
 		(packet, buf) -> {
 			Pair<String, String> trimmed = ScreenBlockEntity.trimStr(packet.url, packet.alt);
 
-			BlockPos.PACKET_CODEC.encode(buf, packet.pos);
-			PacketCodecs.FLOAT.encode(buf, packet.width);
-			PacketCodecs.FLOAT.encode(buf, packet.height);
-			PacketCodecs.BYTE.encode(buf, (byte) packet.xOffset.ordinal());
-			PacketCodecs.BYTE.encode(buf, (byte) packet.yOffset.ordinal());
-			PacketCodecs.BYTE.encode(buf, (byte) packet.zOffset.ordinal());
-			PacketCodecs.FLOAT.encode(buf, packet.pitch);
-            PacketCodecs.FLOAT.encode(buf, packet.yaw);
-			PacketCodecs.BOOLEAN.encode(buf, packet.renderBackface);
-			PacketCodecs.BOOLEAN.encode(buf, packet.eink);
-			PacketCodecs.BOOLEAN.encode(buf, packet.stretch);
-			PacketCodecs.STRING.encode(buf, trimmed.getFirst());
-			PacketCodecs.STRING.encode(buf, trimmed.getSecond());
-			PacketCodecs.FLOAT.encode(buf, packet.preciseX);
-            PacketCodecs.FLOAT.encode(buf, packet.preciseY);
-            PacketCodecs.FLOAT.encode(buf, packet.preciseZ);
+			BlockPos.STREAM_CODEC.encode(buf, packet.pos);
+			ByteBufCodecs.FLOAT.encode(buf, packet.width);
+			ByteBufCodecs.FLOAT.encode(buf, packet.height);
+			ByteBufCodecs.BYTE.encode(buf, (byte) packet.xOffset.ordinal());
+			ByteBufCodecs.BYTE.encode(buf, (byte) packet.yOffset.ordinal());
+			ByteBufCodecs.BYTE.encode(buf, (byte) packet.zOffset.ordinal());
+			ByteBufCodecs.FLOAT.encode(buf, packet.pitch);
+            ByteBufCodecs.FLOAT.encode(buf, packet.yaw);
+			ByteBufCodecs.BOOL.encode(buf, packet.renderBackface);
+			ByteBufCodecs.BOOL.encode(buf, packet.eink);
+			ByteBufCodecs.BOOL.encode(buf, packet.stretch);
+			ByteBufCodecs.STRING_UTF8.encode(buf, trimmed.getFirst());
+			ByteBufCodecs.STRING_UTF8.encode(buf, trimmed.getSecond());
+			ByteBufCodecs.FLOAT.encode(buf, packet.preciseX);
+            ByteBufCodecs.FLOAT.encode(buf, packet.preciseY);
+            ByteBufCodecs.FLOAT.encode(buf, packet.preciseZ);
 		},
-		(buf) -> new C2SEditScreenBlock(BlockPos.PACKET_CODEC.decode(buf),
-			PacketCodecs.FLOAT.decode(buf),
-			PacketCodecs.FLOAT.decode(buf),
-			ScreenBlockEntity.Offset.values()[PacketCodecs.BYTE.decode(buf)],
-			ScreenBlockEntity.Offset.values()[PacketCodecs.BYTE.decode(buf)],
-			ScreenBlockEntity.Offset.values()[PacketCodecs.BYTE.decode(buf)],
-			PacketCodecs.FLOAT.decode(buf),
-            PacketCodecs.FLOAT.decode(buf),
-			PacketCodecs.BOOLEAN.decode(buf),
-			PacketCodecs.BOOLEAN.decode(buf),
-			PacketCodecs.BOOLEAN.decode(buf),
-			PacketCodecs.STRING.decode(buf),
-			PacketCodecs.STRING.decode(buf),
-			PacketCodecs.FLOAT.decode(buf),
-            PacketCodecs.FLOAT.decode(buf),
-            PacketCodecs.FLOAT.decode(buf))
+		(buf) -> new C2SEditScreenBlock(BlockPos.STREAM_CODEC.decode(buf),
+			ByteBufCodecs.FLOAT.decode(buf),
+			ByteBufCodecs.FLOAT.decode(buf),
+			ScreenBlockEntity.Offset.values()[ByteBufCodecs.BYTE.decode(buf)],
+			ScreenBlockEntity.Offset.values()[ByteBufCodecs.BYTE.decode(buf)],
+			ScreenBlockEntity.Offset.values()[ByteBufCodecs.BYTE.decode(buf)],
+			ByteBufCodecs.FLOAT.decode(buf),
+            ByteBufCodecs.FLOAT.decode(buf),
+			ByteBufCodecs.BOOL.decode(buf),
+			ByteBufCodecs.BOOL.decode(buf),
+			ByteBufCodecs.BOOL.decode(buf),
+			ByteBufCodecs.STRING_UTF8.decode(buf),
+			ByteBufCodecs.STRING_UTF8.decode(buf),
+			ByteBufCodecs.FLOAT.decode(buf),
+            ByteBufCodecs.FLOAT.decode(buf),
+            ByteBufCodecs.FLOAT.decode(buf))
 	);
 
 	public static C2SEditScreenBlock of(ScreenBlockEntity be) {
-		return new C2SEditScreenBlock(be.getPos(), be.width, be.height, be.xOffset, be.yOffset, be.zOffset, be.pitch, be.yaw, be.renderBackface, be.eink, be.stretch, be.url, be.alt, be.preciseX, be.preciseY, be.preciseZ);
+		return new C2SEditScreenBlock(be.getBlockPos(), be.width, be.height, be.xOffset, be.yOffset, be.zOffset, be.pitch, be.yaw, be.renderBackface, be.eink, be.stretch, be.url, be.alt, be.preciseX, be.preciseY, be.preciseZ);
 	}
 
 	@Override
-	public void receive(ServerWorld world, BlockEntity blockEntity) {
+	public void receive(ServerLevel world, BlockEntity blockEntity) {
 		if (!(blockEntity instanceof ScreenBlockEntity be)) return;
 
 		Pair<String, String> trimmed = ScreenBlockEntity.trimStr(url, alt);
@@ -71,7 +71,7 @@ public record C2SEditScreenBlock(BlockPos pos, float width, float height, Screen
 	}
 
 	@Override
-	public Id<C2SEditScreenBlock> getId() {
+	public Type<C2SEditScreenBlock> type() {
 		return ID;
 	}
 }

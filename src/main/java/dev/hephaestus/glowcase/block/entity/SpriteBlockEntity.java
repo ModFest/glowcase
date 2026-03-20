@@ -1,19 +1,17 @@
 package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.Glowcase;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class SpriteBlockEntity extends GlowcaseBlockEntity {
 	protected String sprite = "arrow";
@@ -30,7 +28,7 @@ public class SpriteBlockEntity extends GlowcaseBlockEntity {
 	public void setSprite(String newSprite) {
 		sprite = newSprite;
 		if (newSprite.contains(":")) {
-			Optional<Item> item = Registries.ITEM.getOptionalValue(Identifier.tryParse(newSprite));
+			Optional<Item> item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(newSprite));
 			renderItem = item.map(ItemStack::new).orElse(null);
 		} else {
 			renderItem = null;
@@ -47,29 +45,29 @@ public class SpriteBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
 		view.putString("sprite", this.sprite);
 		view.putInt("rotation", this.rotation);
-		view.put("z_offset", TextBlockEntity.ZOffset.CODEC, this.zOffset);
+		view.store("z_offset", TextBlockEntity.ZOffset.CODEC, this.zOffset);
 		view.putInt("color", this.color);
 		view.putFloat("scale", this.scale);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		setSprite(view.getString("sprite", "arrow"));
-		this.rotation = view.getInt("rotation", 0);
+		setSprite(view.getStringOr("sprite", "arrow"));
+		this.rotation = view.getIntOr("rotation", 0);
 		this.zOffset = view.read("z_offset", TextBlockEntity.ZOffset.CODEC).orElse(TextBlockEntity.ZOffset.BACK);
-		this.color = view.getInt("color", 0xFFFFFF);
-		this.scale = view.getFloat("scale", 1);
+		this.color = view.getIntOr("color", 0xFFFFFF);
+		this.scale = view.getFloatOr("scale", 1);
 	}
 
 	public void setRotation(int rotation) {
 		this.rotation = rotation;
-		markDirty();
+		setChanged();
 	}
 }

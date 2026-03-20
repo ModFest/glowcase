@@ -3,15 +3,15 @@ package dev.hephaestus.glowcase.block.entity;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
-import net.minecraft.block.BlockState;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ScreenBlockEntity extends GlowcaseBlockEntity {
 	public static final int URL_MAX_LENGTH = 1024;
@@ -77,10 +77,10 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
-		view.put("macaddress", Uuids.INT_STREAM_CODEC, macaddress);
+		view.store("macaddress", UUIDUtil.CODEC, macaddress);
 
 		view.putFloat("width", width);
 		view.putFloat("height", height);
@@ -107,39 +107,39 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		macaddress = view.read("macaddress", Uuids.INT_STREAM_CODEC).orElseGet(UUID::randomUUID);
+		macaddress = view.read("macaddress", UUIDUtil.CODEC).orElseGet(UUID::randomUUID);
 
-		width = view.getFloat("width", 1);
-		height = view.getFloat("height", 1);
+		width = view.getFloatOr("width", 1);
+		height = view.getFloatOr("height", 1);
 
-		renderBackface = view.getBoolean("renderBackface", false);
-		stretch = view.getBoolean("stretch", false);
-		eink = view.getBoolean("eink", false);
+		renderBackface = view.getBooleanOr("renderBackface", false);
+		stretch = view.getBooleanOr("stretch", false);
+		eink = view.getBooleanOr("eink", false);
 
-		xOffset = Offset.fromOffset(view.getInt("x_offset", 0));
-		yOffset = Offset.fromOffset(view.getInt("y_offset", 0));
-		zOffset = Offset.fromOffset(view.getInt("z_offset", 0));
+		xOffset = Offset.fromOffset(view.getIntOr("x_offset", 0));
+		yOffset = Offset.fromOffset(view.getIntOr("y_offset", 0));
+		zOffset = Offset.fromOffset(view.getIntOr("z_offset", 0));
 
-		preciseX = view.getFloat("px", 0);
-		preciseY = view.getFloat("py", 0);
-		preciseZ = view.getFloat("pz", 0);
+		preciseX = view.getFloatOr("px", 0);
+		preciseY = view.getFloatOr("py", 0);
+		preciseZ = view.getFloatOr("pz", 0);
 
-		pitch = view.getFloat("pitch", 0);
-		yaw = view.getFloat("yaw", 0);
+		pitch = view.getFloatOr("pitch", 0);
+		yaw = view.getFloatOr("yaw", 0);
 
-		url = view.getString("url", "");
-		alt = view.getString("alt", "");
+		url = view.getStringOr("url", "");
+		alt = view.getStringOr("alt", "");
 
 		// Cache preview before needed for smooth experience
-		preview = view.getString("preview", "");
-		if (this.getWorld() != null && this.getWorld().isClient()) {
+		preview = view.getStringOr("preview", "");
+		if (this.getLevel() != null && this.getLevel().isClientSide()) {
 			GlowcaseClient.screenImageCache.getImage(preview, null);
 		}
 
-		markDirty();
+		setChanged();
 	}
 
 	public void setImage(String url, String alt, @Nullable String preview) {
@@ -149,7 +149,7 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		if (preview != null)
 			this.preview = preview;
 
-		markDirty();
+		setChanged();
 	}
 
 	public void setupScreen(float width, float height, Offset xOffset, Offset yOffset, Offset zOffset, float pitch, float yaw, boolean eink, boolean stretch, boolean renderBackface) {
@@ -203,6 +203,6 @@ public class ScreenBlockEntity extends GlowcaseBlockEntity {
 		this.preciseY = offset.y();
 		this.preciseZ = offset.z();
 
-		markDirty();
+		setChanged();
 	}
 }

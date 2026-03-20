@@ -6,25 +6,21 @@ import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 public class ParticleDisplayBlockEntity extends GlowcaseBlockEntity {
 	private static final Logger LOGGER = LogUtils.getLogger();
 
-	public ParticleEffect particle = ParticleTypes.FLAME;
+	public ParticleOptions particle = ParticleTypes.FLAME;
 	public DeviatedVec3d position = DeviatedVec3d.ZERO;
 	public DeviatedVec3d velocity = DeviatedVec3d.ZERO;
 	public DeviatedInteger count = DeviatedInteger.ZERO;
@@ -37,21 +33,21 @@ public class ParticleDisplayBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
-		view.put("particle", ParticleTypes.TYPE_CODEC, this.particle);
-		view.put("position", DeviatedVec3d.CODEC, this.position);
-		view.put("velocity", DeviatedVec3d.CODEC, this.velocity);
-		view.put("count", DeviatedInteger.CODEC, this.count);
-		view.put("tick_rate", DeviatedInteger.CODEC, this.tickRate);
+		view.store("particle", ParticleTypes.CODEC, this.particle);
+		view.store("position", DeviatedVec3d.CODEC, this.position);
+		view.store("velocity", DeviatedVec3d.CODEC, this.velocity);
+		view.store("count", DeviatedInteger.CODEC, this.count);
+		view.store("tick_rate", DeviatedInteger.CODEC, this.tickRate);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		this.particle = view.read("particle", ParticleTypes.TYPE_CODEC).orElse(ParticleTypes.FLAME);
+		this.particle = view.read("particle", ParticleTypes.CODEC).orElse(ParticleTypes.FLAME);
 		this.position = view.read("position", DeviatedVec3d.CODEC).orElse(DeviatedVec3d.ZERO);
 		this.velocity = view.read("velocity", DeviatedVec3d.CODEC).orElse(DeviatedVec3d.ZERO);
 		this.count = view.read("count", DeviatedInteger.CODEC).orElse(DeviatedInteger.ZERO);
@@ -59,16 +55,17 @@ public class ParticleDisplayBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	@Environment(EnvType.CLIENT)
-	public static void clientTick(World world, BlockPos pos, BlockState state, ParticleDisplayBlockEntity entity) {
+	public static void clientTick(Level world, BlockPos pos, BlockState state, ParticleDisplayBlockEntity entity) {
 		entity.tickCounter--;
 		if (entity.tickCounter > 0) return;
 
-		entity.tickCounter = entity.tickRate.get(world.random::nextDouble);
-		for (int i = 0; i < entity.count.get(world.random::nextDouble); i++) {
-			Vec3d particlePos = entity.position.get(world.random::nextGaussian).add(pos.toCenterPos());
-			Vec3d particleVelocity = entity.velocity.get(world.random::nextGaussian);
+		var random = world.getRandom();
+		entity.tickCounter = entity.tickRate.get(random::nextDouble);
+		for (int i = 0; i < entity.count.get(random::nextDouble); i++) {
+			Vec3 particlePos = entity.position.get(random::nextGaussian).add(pos.getCenter());
+			Vec3 particleVelocity = entity.velocity.get(random::nextGaussian);
 
-			world.addParticleClient(
+			world.addParticle(
 				entity.particle,
 				particlePos.x, particlePos.y, particlePos.z,
 				particleVelocity.x, particleVelocity.y, particleVelocity.z

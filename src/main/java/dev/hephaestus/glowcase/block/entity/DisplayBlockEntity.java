@@ -1,14 +1,14 @@
 package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.util.DisplayBlockSettings;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.math.BlockPos;
 import org.joml.Vector3f;
 
 import java.util.Optional;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 	private Vector3f offset = new Vector3f(0.0F);
@@ -37,19 +37,19 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 		this.pitch = settings.pitch();
 		this.yaw = settings.yaw();
 		this.renderAsBlock = settings.renderAsBlock();
-		markDirty();
+		setChanged();
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 		DisplayBlockSettings settings = toSettings();
-		if (!settings.isEmpty()) view.put("display", DisplayBlockSettings.CODEC, settings);
+		if (!settings.isEmpty()) view.store("display", DisplayBlockSettings.CODEC, settings);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 		loadSettings(view.read("display", DisplayBlockSettings.CODEC).orElseGet(DisplayBlockSettings::new));
 	}
 
@@ -71,22 +71,22 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 
 	public void setOffset(Vector3f offset) {
 		this.offset = offset;
-		markDirty();
+		setChanged();
 	}
 
 	public void setScale(Vector3f scale) {
 		this.scale = scale;
-		markDirty();
+		setChanged();
 	}
 
 	public void setYaw(float yaw) {
 		this.yaw = yaw;
-		markDirty();
+		setChanged();
 	}
 
 	public void setPitch(float pitch) {
 		this.pitch = pitch;
-		markDirty();
+		setChanged();
 	}
 
 	public boolean getRenderAsBlock() {
@@ -95,6 +95,6 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 
 	public void setRenderAsBlock(boolean renderAsBlock) {
 		this.renderAsBlock = renderAsBlock;
-		markDirty();
+		setChanged();
 	}
 }

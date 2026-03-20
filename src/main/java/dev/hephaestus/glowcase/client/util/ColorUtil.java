@@ -1,7 +1,7 @@
 package dev.hephaestus.glowcase.client.util;
 
 import com.mojang.serialization.DataResult;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
 
 /**
  * @author Ampflower
@@ -41,12 +41,12 @@ public final class ColorUtil {
 				return DataResult.error(() -> "Not a number: " + string);
 			}
 		} else {
-			final Formatting formatting = Formatting.byName(string);
+			final ChatFormatting formatting = ChatFormatting.getByName(string);
 			if (formatting == null || !formatting.isColor()) {
 				return DataResult.error(() -> "Unknown color: " + string);
 			}
 
-			int rgb = formatting.getColorValue() & COLOR_MASK;
+			int rgb = formatting.getColor() & COLOR_MASK;
 			int a = reference & ALPHA_MASK;
 
 			return DataResult.success(a | rgb);

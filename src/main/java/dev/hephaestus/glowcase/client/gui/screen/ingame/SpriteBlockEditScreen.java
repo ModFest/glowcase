@@ -6,17 +6,18 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.FormattedCharSequence;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -24,14 +25,14 @@ import java.util.function.Function;
 public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private final SpriteBlockEntity spriteBlockEntity;
 
-	private TextFieldWidget spriteWidget;
-	private ButtonWidget spriteWidgetHelpButton;
-	private ButtonWidget rotationWidget;
-	private ButtonWidget zOffsetToggle;
-	private TextFieldWidget colorEntryWidget;
-	private TextFieldWidget scaleEntryWidget;
+	private EditBox spriteWidget;
+	private Button spriteWidgetHelpButton;
+	private Button rotationWidget;
+	private Button zOffsetToggle;
+	private EditBox colorEntryWidget;
+	private EditBox scaleEntryWidget;
 
-	private List<OrderedText> spriteHelpTooltipText;
+	private List<FormattedCharSequence> spriteHelpTooltipText;
 
 	private SuggestionListWidget<String> suggestionWidget;
     private List<String> validSprites = new ArrayList<>();
@@ -44,63 +45,63 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.client == null) return;
+		if (this.minecraft == null) return;
 
-		this.spriteWidget = new GlowcaseTextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 - 55, 180, 20, Text.empty());
+		this.spriteWidget = new GlowcaseTextFieldWidget(this.minecraft.font, width / 2 - 90, height / 2 - 55, 180, 20, Component.empty());
 		this.spriteWidget.setMaxLength(255);
-		this.spriteWidget.setText(spriteBlockEntity.getSprite());
-		this.spriteWidget.setChangedListener(string -> {
-			this.spriteBlockEntity.setSprite(this.spriteWidget.getText());
+		this.spriteWidget.setValue(spriteBlockEntity.getSprite());
+		this.spriteWidget.setResponder(string -> {
+			this.spriteBlockEntity.setSprite(this.spriteWidget.getValue());
 		});
 
-		Tooltip spriteHelpTooltip =  Tooltip.of(Text.translatable("gui.glowcase.screen.sprite_edit.sprite"));
+		Tooltip spriteHelpTooltip =  Tooltip.create(Component.translatable("gui.glowcase.screen.sprite_edit.sprite"));
 
-		this.spriteWidgetHelpButton = ButtonWidget.builder(Text.literal("?"), action -> {})
-			.dimensions(spriteWidget.getX() + spriteWidget.getWidth() + 4, spriteWidget.getY(), spriteWidget.getHeight(), spriteWidget.getHeight())
+		this.spriteWidgetHelpButton = Button.builder(Component.literal("?"), action -> {})
+			.bounds(spriteWidget.getX() + spriteWidget.getWidth() + 4, spriteWidget.getY(), spriteWidget.getHeight(), spriteWidget.getHeight())
 			.tooltip(spriteHelpTooltip)
 			.build();
 
-		this.rotationWidget = ButtonWidget.builder(Text.translatable("gui.glowcase.rotate"), (action) -> {
+		this.rotationWidget = Button.builder(Component.translatable("gui.glowcase.rotate"), (action) -> {
 			this.spriteBlockEntity.rotation = (this.spriteBlockEntity.rotation + 45) % 360;
-		}).dimensions(width / 2 - 90, height / 2 - 25, 180, 20).build();
+		}).bounds(width / 2 - 90, height / 2 - 25, 180, 20).build();
 
-		this.zOffsetToggle = ButtonWidget.builder(Text.literal(this.spriteBlockEntity.zOffset.name()), action -> {
+		this.zOffsetToggle = Button.builder(Component.literal(this.spriteBlockEntity.zOffset.name()), action -> {
 			switch (spriteBlockEntity.zOffset) {
 				case FRONT -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
 				case CENTER -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
 				case BACK -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
 			}
 
-			this.zOffsetToggle.setMessage(Text.literal(this.spriteBlockEntity.zOffset.name()));
-		}).dimensions(width / 2 - 90, height / 2 + 5, 180, 20).build();
+			this.zOffsetToggle.setMessage(Component.literal(this.spriteBlockEntity.zOffset.name()));
+		}).bounds(width / 2 - 90, height / 2 + 5, 180, 20).build();
 
-		this.colorEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 + 35, 180, 20, Text.empty());
-		this.colorEntryWidget.setText("#" + String.format("%1$06X", this.spriteBlockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setChangedListener(string -> {
-			TextColor.parse(this.colorEntryWidget.getText()).ifSuccess(color -> {
-				this.spriteBlockEntity.color = color == null ? 0xFFFFFFFF : color.getRgb() | 0xFF000000;
+		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 35, 180, 20, Component.empty());
+		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.spriteBlockEntity.color & 0x00FFFFFF));
+		this.colorEntryWidget.setResponder(string -> {
+			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
+				this.spriteBlockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
 			});
 		});
 
-		this.scaleEntryWidget = new TextFieldWidget(this.client.textRenderer, width / 2 - 90, height / 2 + 65, 180, 20, Text.empty());
-		this.scaleEntryWidget.setText(String.valueOf(this.spriteBlockEntity.scale));
-		this.scaleEntryWidget.setChangedListener(string -> {
+		this.scaleEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 65, 180, 20, Component.empty());
+		this.scaleEntryWidget.setValue(String.valueOf(this.spriteBlockEntity.scale));
+		this.scaleEntryWidget.setResponder(string -> {
 			 try {
 				 this.spriteBlockEntity.scale = Float.parseFloat(string);
 			 } catch (NumberFormatException ignored) {}
 		});
 
-		this.addDrawableChild(this.spriteWidget);
-		this.addDrawableChild(this.spriteWidgetHelpButton);
-		this.addDrawableChild(this.rotationWidget);
-		this.addDrawableChild(this.zOffsetToggle);
-		this.addDrawableChild(this.colorEntryWidget);
-		this.addDrawableChild(this.scaleEntryWidget);
+		this.addRenderableWidget(this.spriteWidget);
+		this.addRenderableWidget(this.spriteWidgetHelpButton);
+		this.addRenderableWidget(this.rotationWidget);
+		this.addRenderableWidget(this.zOffsetToggle);
+		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(this.scaleEntryWidget);
 
-		ResourceManager resourceManager = this.client.getResourceManager();
+		ResourceManager resourceManager = this.minecraft.getResourceManager();
 		validSprites = allValidSprites(resourceManager);
 
-		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(spriteWidget, client.textRenderer, validSprites, Function.identity(), this);
+		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(spriteWidget, minecraft.font, validSprites, Function.identity(), this);
 	}
 
 	/**
@@ -111,19 +112,19 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
 		// Add all sprites inside /textures/sprite, these are explicitly meant for the sprite block
 		// and can be used with just their filename. As these are intended to be used here, we'll list them first
-		resourceManager.findResources("textures/sprite", id -> id.getPath().endsWith(".png")).forEach((sprite, res) -> {
+		resourceManager.listResources("textures/sprite", id -> id.getPath().endsWith(".png")).forEach((sprite, res) -> {
 			validSprites.add(sprite.getPath().substring("textures/sprite/".length(), sprite.getPath().length() - 4));
 		});
 
 		// You can use any texture. Technically I think you can also use ones outside of texture
 		// But findResources requires us to filter
-		resourceManager.findResources("textures", id -> id.getPath().endsWith(".png")).forEach((sprite, res) -> {
+		resourceManager.listResources("textures", id -> id.getPath().endsWith(".png")).forEach((sprite, res) -> {
 			validSprites.add(sprite.toString());
 		});
 
 		// You can also display any item
-		Registries.ITEM.stream()
-			.map(Registries.ITEM::getId)
+		BuiltInRegistries.ITEM.stream()
+			.map(BuiltInRegistries.ITEM::getKey)
 			.map(Identifier::toString)
 			.forEach(validSprites::add);
 
@@ -136,7 +137,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 		// Tooltip is handled this way, since setting the tooltip directly on the help button widget causes the tooltip
 		// to clip off-screen at higher GUI scales.
@@ -149,24 +150,26 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
         if (suggestionWidget.isMouseOver(mouseX, mouseY) && spriteWidget.isFocused()) {
-            return suggestionWidget.mouseClicked(mouseX, mouseY, button);
+            return suggestionWidget.mouseClicked(event, doubleClick);
         } else {
             suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
 		if (suggestionWidget.draggingScrollbar) {
-			if (suggestionWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY))
+			if (suggestionWidget.mouseDragged(event, dx, dy))
 				return true;
 		}
 
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(event, dx, dy);
 	}
 
     @Override
@@ -180,18 +183,18 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
     }
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+	public boolean keyPressed(KeyEvent event) {
+		if (suggestionWidget.keyPressed(event)) {
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override
-	public void close() {
-		spriteBlockEntity.setSprite(spriteWidget.getText());
-		spriteBlockEntity.markDirty();
+	public void onClose() {
+		spriteBlockEntity.setSprite(spriteWidget.getValue());
+		spriteBlockEntity.setChanged();
 		C2SEditSpriteBlock.of(spriteBlockEntity).send();
-		super.close();
+		super.onClose();
 	}
 }

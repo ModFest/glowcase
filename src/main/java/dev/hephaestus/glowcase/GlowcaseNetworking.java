@@ -20,30 +20,30 @@ import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseNetworking {
 	public static void init() {
-		PayloadTypeRegistry.playC2S().register(C2SEditHyperlinkBlock.ID, C2SEditHyperlinkBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditConfigLinkBlock.ID, C2SEditConfigLinkBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditItemDisplayBlock.ID, C2SEditItemDisplayBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditTextBlock.ID, C2SEditTextBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditPopupBlock.ID, C2SEditPopupBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditRecipeBlock.ID, C2SEditRecipeBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditSpriteBlock.ID, C2SEditSpriteBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditOutlineBlock.ID, C2SEditOutlineBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditParticleDisplayBlock.ID, C2SEditParticleDisplayBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditSoundBlock.ID, C2SEditSoundBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditItemAcceptorBlock.ID, C2SEditItemAcceptorBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditScreenBlock.ID, C2SEditScreenBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditItemProviderBlock.ID, C2SEditItemProviderBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditTabletItem.ID, C2SEditTabletItem.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditNoteItem.ID, C2SEditNoteItem.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SEditEntityDisplayBlock.ID, C2SEditEntityDisplayBlock.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SSlotScrolled.ID, C2SSlotScrolled.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditHyperlinkBlock.ID, C2SEditHyperlinkBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditConfigLinkBlock.ID, C2SEditConfigLinkBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditItemDisplayBlock.ID, C2SEditItemDisplayBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditTextBlock.ID, C2SEditTextBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditPopupBlock.ID, C2SEditPopupBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditRecipeBlock.ID, C2SEditRecipeBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditSpriteBlock.ID, C2SEditSpriteBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditOutlineBlock.ID, C2SEditOutlineBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditParticleDisplayBlock.ID, C2SEditParticleDisplayBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditSoundBlock.ID, C2SEditSoundBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditItemAcceptorBlock.ID, C2SEditItemAcceptorBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditScreenBlock.ID, C2SEditScreenBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditItemProviderBlock.ID, C2SEditItemProviderBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditTabletItem.ID, C2SEditTabletItem.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditNoteItem.ID, C2SEditNoteItem.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SEditEntityDisplayBlock.ID, C2SEditEntityDisplayBlock.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SSlotScrolled.ID, C2SSlotScrolled.PACKET_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditHyperlinkBlock.ID, C2SEditHyperlinkBlock::receive);
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditConfigLinkBlock.ID, C2SEditConfigLinkBlock::receive);
@@ -69,37 +69,37 @@ public class GlowcaseNetworking {
 	 */
 	private static void slotScrolled(C2SSlotScrolled packet, ServerPlayNetworking.Context ctx) {
 		ctx.server().execute(() -> {
-			ServerPlayerEntity player = ctx.player();
-			player.updateLastActionTime();
-			ScreenHandler screenHandler = player.currentScreenHandler;
+			ServerPlayer player = ctx.player();
+			player.resetLastActionTime();
+			AbstractContainerMenu screenHandler = player.containerMenu;
 
-			if (screenHandler.syncId != packet.syncId()) {
+			if (screenHandler.containerId != packet.syncId()) {
 				return;
 			}
 			if (player.isSpectator()) {
-				screenHandler.syncState();
+				screenHandler.sendAllDataToRemote();
 				return;
 			}
-			if (!screenHandler.canUse(player)) {
+			if (!screenHandler.stillValid(player)) {
 				Glowcase.LOGGER.debug("Player {} interacted with invalid menu {}", player, screenHandler);
 				return;
 			}
-			if (!screenHandler.isValid(packet.slotIndex())) {
+			if (!screenHandler.isValidSlotIndex(packet.slotIndex())) {
 				Glowcase.LOGGER.debug("Player {} clicked invalid slot index: {}, available slots: {}", player.getName(), packet.slotIndex(), screenHandler.slots.size());
 				return;
 			}
-			boolean flag = packet.revision() == player.currentScreenHandler.getRevision();
-			screenHandler.disableSyncing();
+			boolean flag = packet.revision() == player.containerMenu.getStateId();
+			screenHandler.suppressRemoteUpdates();
 			Slot slot = screenHandler.getSlot(packet.slotIndex());
-			ItemStack stack = slot.getStack();
+			ItemStack stack = slot.getItem();
 			if (stack.getItem() instanceof ScrollableItem si) {
 				si.scroll(stack, player, packet.amount());
 			}
-			screenHandler.enableSyncing();
+			screenHandler.resumeRemoteUpdates();
 			if (flag) {
-				screenHandler.updateToClient();
+				screenHandler.broadcastFullState();
 			} else {
-				screenHandler.sendContentUpdates();
+				screenHandler.broadcastChanges();
 			}
 		});
 	}

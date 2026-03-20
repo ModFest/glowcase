@@ -1,98 +1,99 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
 import dev.hephaestus.glowcase.util.ParseUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ContainerWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractContainerWidget;
+import net.minecraft.client.gui.components.AbstractScrollArea;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
-public class Vec3FieldsWidget extends ContainerWidget {
-	private final TextFieldWidget x;
-	private final TextFieldWidget y;
-	private final TextFieldWidget z;
+public class Vec3FieldsWidget extends AbstractContainerWidget {
+	private final EditBox x;
+	private final EditBox y;
+	private final EditBox z;
 
-	private Vec3d value;
+	private Vec3 value;
 
-	public Vec3FieldsWidget(int x, int y, int width, int height, MinecraftClient client, Vec3d defaultValue) {
-		super(x, y, width, height, Text.empty());
-		this.x = new TextFieldWidget(
-			client.textRenderer,
+	public Vec3FieldsWidget(int x, int y, int width, int height, Minecraft client, Vec3 defaultValue) {
+		super(x, y, width, height, Component.empty(),  AbstractScrollArea.defaultSettings(10));
+		this.x = new EditBox(
+			client.font,
 			x, y,
 			width / 3, height,
-			Text.empty()
+			Component.empty()
 		);
 
-		this.y = new TextFieldWidget(
-			client.textRenderer,
+		this.y = new EditBox(
+			client.font,
 			x + width / 3, y,
 			width / 3, height,
-			Text.empty()
+			Component.empty()
 		);
 
-		this.z = new TextFieldWidget(
-			client.textRenderer,
+		this.z = new EditBox(
+			client.font,
 			x + (width / 3 * 2), y,
 			width / 3, height,
-			Text.empty()
+			Component.empty()
 		);
 
 		this.value = defaultValue;
 
-		this.x.setText(String.valueOf(defaultValue.x));
-		this.y.setText(String.valueOf(defaultValue.y));
-		this.z.setText(String.valueOf(defaultValue.z));
+		this.x.setValue(String.valueOf(defaultValue.x));
+		this.y.setValue(String.valueOf(defaultValue.y));
+		this.z.setValue(String.valueOf(defaultValue.z));
 
-		this.x.setTextPredicate(ParseUtil::canParseDouble);
-		this.y.setTextPredicate(ParseUtil::canParseDouble);
-		this.z.setTextPredicate(ParseUtil::canParseDouble);
+		// FIXME removed in 26.1+
+//		this.x.setFilter(ParseUtil::canParseDouble);
+//		this.y.setFilter(ParseUtil::canParseDouble);
+//		this.z.setFilter(ParseUtil::canParseDouble);
 
-		this.x.setChangedListener(s -> value = new Vec3d(ParseUtil.parseOrDefault(s, value.x), value.y , value.z));
-		this.y.setChangedListener(s -> value = new Vec3d(value.x, ParseUtil.parseOrDefault(s, value.y), value.z));
-		this.z.setChangedListener(s -> value = new Vec3d(value.x, value.y, ParseUtil.parseOrDefault(s, value.z)));
+		this.x.setResponder(s -> value = new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z));
+		this.y.setResponder(s -> value = new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z));
+		this.z.setResponder(s -> value = new Vec3(value.x, value.y, ParseUtil.parseOrDefault(s, value.z)));
 	}
 
-	public void setVec(Vec3d newVec) {
-		this.x.setText(String.valueOf(newVec.x));
-		this.y.setText(String.valueOf(newVec.y));
-		this.z.setText(String.valueOf(newVec.z));
+	public void setVec(Vec3 newVec) {
+		this.x.setValue(String.valueOf(newVec.x));
+		this.y.setValue(String.valueOf(newVec.y));
+		this.z.setValue(String.valueOf(newVec.z));
 	}
 
 	@Override
-	public List<? extends Element> children() {
+	public List<? extends GuiEventListener> children() {
 		return List.of(x, y, z);
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		x.renderWidget(context, mouseX, mouseY, delta);
 		y.renderWidget(context, mouseX, mouseY, delta);
 		z.renderWidget(context, mouseX, mouseY, delta);
 	}
 
 	@Override
-	protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-		x.appendClickableNarrations(builder);
-		y.appendClickableNarrations(builder);
-		z.appendClickableNarrations(builder);
+	protected void updateWidgetNarration(NarrationElementOutput builder) {
+		x.updateWidgetNarration(builder);
+		y.updateWidgetNarration(builder);
+		z.updateWidgetNarration(builder);
 	}
 
-	public Vec3d value() {
+	public Vec3 value() {
 		return value;
 	}
 
 	@Override
-	protected int getContentsHeightWithPadding() {
+	protected int contentHeight() {
 		return 9 + 4; //FIXME: get this right
 	}
 
 	@Override
-	protected double getDeltaYPerScroll() {
+	protected double scrollRate() {
 		return 9.0 / 2.0;
 	}
 }

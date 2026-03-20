@@ -33,157 +33,157 @@ import dev.hephaestus.glowcase.client.gui.screen.ingame.SpriteBlockEditScreen;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.TabletEditScreen;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.TextBlockEditScreen;
 import dev.hephaestus.glowcase.client.util.ConfigLinkClientUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 
 	@Override
 	public void openConfigLinkBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ConfigLinkBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ConfigLinkBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ConfigLinkBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ConfigLinkBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openConfigScreen(String link) {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		client.setScreen(ConfigLinkClientUtil.getConfigScreen(client, link));
 	}
 
 	@Override
 	public void openHyperlinkBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof HyperlinkBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new HyperlinkBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof HyperlinkBlockEntity be) {
+			Minecraft.getInstance().setScreen(new HyperlinkBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openUrlWithConfirmation(String url) {
-		ConfirmLinkScreen.open(MinecraftClient.getInstance().currentScreen, url);
+		ConfirmLinkScreen.confirmLinkNow(Minecraft.getInstance().screen, url);
 	}
 
 	@Override
 	public void openItemDisplayBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ItemDisplayBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ItemDisplayEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemDisplayBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ItemDisplayEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openItemProviderBlockEditScreen(BlockPos pos){
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ItemProviderBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ItemProviderBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemProviderBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ItemProviderBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openTextBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof TextBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new TextBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof TextBlockEntity be) {
+			Minecraft.getInstance().setScreen(new TextBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openPopupBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof PopupBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new PopupBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof PopupBlockEntity be) {
+			Minecraft.getInstance().setScreen(new PopupBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openPopupBlockViewScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof PopupBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new PopupBlockViewScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof PopupBlockEntity be) {
+			Minecraft.getInstance().setScreen(new PopupBlockViewScreen(be));
 		}
 	}
 
 	@Override
 	public void openScreenBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ScreenBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ScreenBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ScreenBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ScreenBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openRecipeBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof RecipeBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new RecipeBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof RecipeBlockEntity be) {
+			Minecraft.getInstance().setScreen(new RecipeBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openSpriteBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof SpriteBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new SpriteBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof SpriteBlockEntity be) {
+			Minecraft.getInstance().setScreen(new SpriteBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openOutlineBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof OutlineBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new OutlineBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof OutlineBlockEntity be) {
+			Minecraft.getInstance().setScreen(new OutlineBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openParticleDisplayBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ParticleDisplayBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ParticleDisplayEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ParticleDisplayBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ParticleDisplayEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openSoundBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof SoundPlayerBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new SoundPlayerBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof SoundPlayerBlockEntity be) {
+			Minecraft.getInstance().setScreen(new SoundPlayerBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openItemAcceptorBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof ItemAcceptorBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new ItemAcceptorBlockEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemAcceptorBlockEntity be) {
+			Minecraft.getInstance().setScreen(new ItemAcceptorBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openTabletEditScreen(ItemStack stack) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null) {
-			MinecraftClient.getInstance().setScreen(new TabletEditScreen(stack));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null) {
+			Minecraft.getInstance().setScreen(new TabletEditScreen(stack));
 		}
 	}
 
 	@Override
 	public void openNoteEditScreen(ItemStack stack) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null) {
-			MinecraftClient.getInstance().setScreen(new NoteEditScreen(stack));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null) {
+			Minecraft.getInstance().setScreen(new NoteEditScreen(stack));
 		}
 	}
 
 	@Override
 	public void openEntityDisplayBlockEditScreen(BlockPos pos) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world != null && client.world.getBlockEntity(pos) instanceof EntityDisplayBlockEntity be) {
-			MinecraftClient.getInstance().setScreen(new EntityDisplayEditScreen(be));
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null && client.level.getBlockEntity(pos) instanceof EntityDisplayBlockEntity be) {
+			Minecraft.getInstance().setScreen(new EntityDisplayEditScreen(be));
 		}
 	}
 }

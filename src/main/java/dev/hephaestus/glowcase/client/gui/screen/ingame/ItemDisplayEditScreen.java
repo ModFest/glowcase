@@ -2,11 +2,11 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditItemDisplayBlock;
-import net.minecraft.client.gui.widget.CheckboxWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.network.chat.Component;
 
 public class ItemDisplayEditScreen extends DisplayBlockEditScreen {
-	private CheckboxWidget renderAsBlockWidget;
+	private Checkbox renderAsBlockWidget;
 
 	public ItemDisplayEditScreen(DisplayBlockEntity displayBlock) {
 		super(displayBlock);
@@ -16,13 +16,13 @@ public class ItemDisplayEditScreen extends DisplayBlockEditScreen {
     public void init() {
         super.init();
 
-        this.renderAsBlockWidget = CheckboxWidget.builder(Text.translatable("gui.glowcase.render_as_block"), this.client.textRenderer)
-			.checked(this.displayBlock.getRenderAsBlock())
-			.callback((checkbox, checked) -> this.displayBlock.setRenderAsBlock(checked))
+        this.renderAsBlockWidget = Checkbox.builder(Component.translatable("gui.glowcase.render_as_block"), this.minecraft.font)
+			.selected(this.displayBlock.getRenderAsBlock())
+			.onValueChange((checkbox, checked) -> this.displayBlock.setRenderAsBlock(checked))
 			.pos(20, 197)
 			.build();
         
-        this.addDrawableChild(this.renderAsBlockWidget);
+        this.addRenderableWidget(this.renderAsBlockWidget);
     }
 
 	@Override

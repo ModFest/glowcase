@@ -2,14 +2,14 @@ package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
-public class IconButtonWidget extends ButtonWidget {
+public class IconButtonWidget extends Button {
 	public Identifier icon;
 	@Nullable
 	public Identifier hoverIcon;
@@ -17,12 +17,12 @@ public class IconButtonWidget extends ButtonWidget {
 	public int iconHeight;
 	public int z;
 
-	public static IconButtonWidget.Builder builder(Identifier icon, ButtonWidget.PressAction onPress) {
+	public static IconButtonWidget.Builder builder(Identifier icon, Button.OnPress onPress) {
 		return new IconButtonWidget.Builder(icon, onPress);
 	}
 
-	public IconButtonWidget(int x, int y, int width, int height, int iconWidth, int iconHeight, Identifier icon, @Nullable Identifier hoverIcon, PressAction onPress) {
-		super(x, y, width, height, Text.of(""), onPress, ButtonWidget.DEFAULT_NARRATION_SUPPLIER);
+	public IconButtonWidget(int x, int y, int width, int height, int iconWidth, int iconHeight, Identifier icon, @Nullable Identifier hoverIcon, OnPress onPress) {
+		super(x, y, width, height, Component.nullToEmpty(""), onPress, Button.DEFAULT_NARRATION);
 		this.icon = icon;
 		this.hoverIcon = hoverIcon;
 		this.iconWidth = iconWidth;
@@ -30,18 +30,18 @@ public class IconButtonWidget extends ButtonWidget {
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		Identifier drawnIcon = this.icon;
 		if(this.hoverIcon != null && this.isMouseOver(mouseX, mouseY)) {
 			drawnIcon = this.hoverIcon;
 		}
-		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, drawnIcon, this.getX(), this.getY(), this.iconWidth, this.iconHeight);
+		context.blitSprite(RenderPipelines.GUI_TEXTURED, drawnIcon, this.getX(), this.getY(), this.iconWidth, this.iconHeight);
 	}
 
 	public void setPosition(int x, int y, int z, int size, int iconSize) {
 		this.setX(x);
 		this.setY(y);
-		this.setDimensions(size, size);
+		this.setSize(size, size);
 		this.iconWidth = iconSize;
 		this.iconHeight = iconSize;
 		this.z = z;
@@ -52,7 +52,7 @@ public class IconButtonWidget extends ButtonWidget {
 		private final Identifier icon;
 		@Nullable
 		private Identifier hoverIcon = null;
-		private final ButtonWidget.PressAction onPress;
+		private final Button.OnPress onPress;
 		private int x;
 		private int y;
 		private int iconWidth = 16;
@@ -60,7 +60,7 @@ public class IconButtonWidget extends ButtonWidget {
 		private int width = 150;
 		private int height = 150;
 
-		public Builder(Identifier icon, ButtonWidget.PressAction onPress) {
+		public Builder(Identifier icon, Button.OnPress onPress) {
 			this.icon = icon;
 			this.onPress = onPress;
 		}

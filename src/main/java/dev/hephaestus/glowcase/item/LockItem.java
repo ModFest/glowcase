@@ -1,73 +1,72 @@
 package dev.hephaestus.glowcase.item;
 
-import dev.hephaestus.glowcase.mixin.LockableContainerBlockEntityAccessor;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.ContainerLock;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.predicate.NumberRange;
-import net.minecraft.predicate.item.ItemPredicate;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.world.World;
+import dev.hephaestus.glowcase.mixin.BaseContainerBlockEntityAccessor;
 
-import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.advancements.criterion.ItemPredicate;
+import net.minecraft.advancements.criterion.MinMaxBounds;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.LockCode;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 
 public class LockItem extends Item {
 	/**
 	 * Use an impossible condition for the lock
 	 */
-	public static final ContainerLock CONTAINER_LOCK = new ContainerLock(ItemPredicate.Builder.create().count(NumberRange.IntRange.exactly(Integer.MIN_VALUE)).build());
+	public static final LockCode CONTAINER_LOCK = new LockCode(ItemPredicate.Builder.item().withCount(MinMaxBounds.Ints.exactly(Integer.MIN_VALUE)).build());
 
-	public LockItem(Settings settings) {
+	public LockItem(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
-		World world = context.getWorld();
-		PlayerEntity player = context.getPlayer();
-		if (world.isClient ||
+	public InteractionResult useOn(UseOnContext context) {
+		Level world = context.getLevel();
+		Player player = context.getPlayer();
+		if (world.isClientSide() ||
 			player == null ||
 			!player.isCreative() ||
-			!(world.getBlockEntity(context.getBlockPos()) instanceof LockableContainerBlockEntity be)) {
-			return ActionResult.PASS;
+			!(world.getBlockEntity(context.getClickedPos()) instanceof BaseContainerBlockEntity be)) {
+			return InteractionResult.PASS;
 		}
 
-		var bea = (LockableContainerBlockEntityAccessor) be;
-		Text message;
+		var bea = (BaseContainerBlockEntityAccessor) be;
+		Component message;
 		SoundEvent soundEvent;
 
-		if (bea.glowcase$getLock().equals(ContainerLock.EMPTY)) {
+		if (bea.glowcase$getLock().equals(LockCode.NO_LOCK)) {
 			bea.glowcase$setLock(CONTAINER_LOCK);
-			message = Text.translatable("gui.glowcase.locked_block", be.getDisplayName());
-			soundEvent = SoundEvents.BLOCK_WOODEN_TRAPDOOR_CLOSE;
+			message = Component.translatable("gui.glowcase.locked_block", be.getDisplayName());
+			soundEvent = SoundEvents.WOODEN_TRAPDOOR_CLOSE;
 		} else {
-			bea.glowcase$setLock(ContainerLock.EMPTY);
-			message = Text.translatable("gui.glowcase.unlocked_block", be.getDisplayName());
-			soundEvent = SoundEvents.BLOCK_WOODEN_TRAPDOOR_OPEN;
+			bea.glowcase$setLock(LockCode.NO_LOCK);
+			message = Component.translatable("gui.glowcase.unlocked_block", be.getDisplayName());
+			soundEvent = SoundEvents.WOODEN_TRAPDOOR_OPEN;
 		}
 
-		player.sendMessage(message, true);
-		player.playSoundToPlayer(soundEvent, SoundCategory.BLOCKS, 1.0F, 1.0F);
-		be.markDirty();
+		player.sendOverlayMessage(message);
+		player.level().playSound(player, player.getX(), player.getY(), player.getZ(), soundEvent, SoundSource.BLOCKS, 1.0F, 1.0F);
+		be.setChanged();
 
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		super.appendTooltip(stack, context, displayComponent, textConsumer, type);
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		super.appendHoverText(stack, context, displayComponent, textConsumer, type);
 
-		textConsumer.accept(Text.translatable("item.glowcase.lock.tooltip.0").formatted(Formatting.GRAY));
+		textConsumer.accept(Component.translatable("item.glowcase.lock.tooltip.0").withStyle(ChatFormatting.GRAY));
 	}
 }

@@ -1,16 +1,15 @@
 package dev.hephaestus.glowcase.block.entity;
 
-import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class GlowcaseBlockEntity extends BlockEntity {
@@ -19,28 +18,28 @@ public class GlowcaseBlockEntity extends BlockEntity {
 	}
 
 	@Override
-	public void markDirty() {
-		super.markDirty();
-		if (world instanceof ServerWorld sw) sw.getChunkManager().markForUpdate(pos);
+	public void setChanged() {
+		super.setChanged();
+		if (level instanceof ServerLevel sw) sw.getChunkSource().blockChanged(worldPosition);
 	}
 
 	@Override
-	public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
-		return createNbt(registryLookup);
+	public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup) {
+		return saveWithoutMetadata(registryLookup);
 	}
 
 	@Nullable
 	@Override
-	public Packet<ClientPlayPacketListener> toUpdatePacket() {
-		return BlockEntityUpdateS2CPacket.create(this);
+	public Packet<ClientGamePacketListener> getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 
-	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
-	@Override
-	public void markRemoved() {
-		if (world != null && world.isClient) {
-			BakedBlockEntityRenderer.Manager.markForRebuild(getPos());
-		}
-		super.markRemoved();
-	}
+//	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
+//	@Override
+//	public void setRemoved() {
+//		if (level != null && level.isClientSide()) {
+//			BakedBlockEntityRenderer.Manager.markForRebuild(getBlockPos());
+//		}
+//		super.setRemoved();
+//	}
 }

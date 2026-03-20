@@ -12,22 +12,23 @@ import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.StringNbtReader;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 
 public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	private final ParticleDisplayBlockEntity blockEntity;
-	private TextFieldWidget particleId;
+	private EditBox particleId;
 
 	private Vec3FieldsWidget positionMean;
 	private Vec3FieldsWidget positionStdDev;
@@ -44,11 +45,11 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	private Vec3FieldsWidget velocityMean;
 	private Vec3FieldsWidget velocityStdDev;
 
-	private TextFieldWidget countMean;
-	private TextFieldWidget countStdDev;
+	private EditBox countMean;
+	private EditBox countStdDev;
 
-	private TextFieldWidget tickRateMean;
-	private TextFieldWidget tickRateStdDev;
+	private EditBox tickRateMean;
+	private EditBox tickRateStdDev;
 
 	private SuggestionListWidget<Identifier> suggestionWidget;
 	private List<Identifier> validParticles = new ArrayList<>();
@@ -60,34 +61,34 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	@Override
 	protected void init() {
 		super.init();
-		Objects.requireNonNull(this.client);
-		RegistryWrapper.WrapperLookup lookup = Objects.requireNonNull(client.world).getRegistryManager();
+		Objects.requireNonNull(this.minecraft);
+		HolderLookup.Provider lookup = Objects.requireNonNull(minecraft.level).registryAccess();
 
 
 		// region Particle ID
 		particleId = new GlowcaseTextFieldWidget(
-			this.client.textRenderer,
+			this.minecraft.font,
 			width / 10, height / 2 - 110,
 			8 * width / 10, 20,
-			Text.empty()
+			Component.empty()
 		);
 
 		particleId.setMaxLength(9999);
 
-		String optionsString = effectToTag(blockEntity.particle, lookup.getOps(NbtOps.INSTANCE)).toString();
+		String optionsString = effectToTag(blockEntity.particle, lookup.createSerializationContext(NbtOps.INSTANCE)).toString();
 		if (optionsString.equals("{}")) optionsString = "";
 
-		particleId.setText(Registries.PARTICLE_TYPE.getId(blockEntity.particle.getType()) + optionsString);
+		particleId.setValue(BuiltInRegistries.PARTICLE_TYPE.getKey(blockEntity.particle.getType()) + optionsString);
 
-		this.addDrawableChild(particleId);
+		this.addRenderableWidget(particleId);
 
-		validParticles = Registries.PARTICLE_TYPE.stream()
-			.map(Registries.PARTICLE_TYPE::getId)
+		validParticles = BuiltInRegistries.PARTICLE_TYPE.stream()
+			.map(BuiltInRegistries.PARTICLE_TYPE::getKey)
 			.collect(Collectors.toList());
 
-		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, client.textRenderer, validParticles, Identifier::toString, this);
+		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, minecraft.font, validParticles, Identifier::toString, this);
 
-		particleId.setChangedListener((text) -> {
+		particleId.setResponder((text) -> {
 			suggestionWidget.updateSuggestions(validParticles, text, this);
 		});
 		// endregion
@@ -96,153 +97,157 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		positionMean = new Vec3FieldsWidget(
 			width / 10, height / 2 - 60,
 			(4 * width / 10) - 6, 20,
-			this.client,
+			this.minecraft,
 			blockEntity.position.mean()
 		);
 
-		this.addDrawableChild(positionMean);
+		this.addRenderableWidget(positionMean);
 
 		positionStdDev = new Vec3FieldsWidget(
 			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
 			(4 * width / 10) - 6, 20,
-			this.client,
+			this.minecraft,
 			blockEntity.position.stdDev()
 		);
 
-		this.addDrawableChild(positionStdDev);
+		this.addRenderableWidget(positionStdDev);
 		// endregion
 
 		// region Velocity
 		velocityMean = new Vec3FieldsWidget(
 			width / 10, (height / 2) - 10,
 			(4 * width / 10) - 6, 20,
-			this.client,
+			this.minecraft,
 			blockEntity.velocity.mean()
 		);
 
-		this.addDrawableChild(velocityMean);
+		this.addRenderableWidget(velocityMean);
 
 		velocityStdDev = new Vec3FieldsWidget(
 			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
 			(4 * width / 10) - 6, 20,
-			this.client,
+			this.minecraft,
 			blockEntity.velocity.stdDev()
 		);
 
-		this.addDrawableChild(velocityStdDev);
+		this.addRenderableWidget(velocityStdDev);
 		// endregion
 
 		// region Count
-		countMean = new TextFieldWidget(
-			this.client.textRenderer,
+		countMean = new EditBox(
+			this.minecraft.font,
 			width / 10, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
-			Text.empty()
+			Component.empty()
 		);
 
-		countMean.setText(String.valueOf(blockEntity.count.mean()));
-		countMean.setTextPredicate(ParseUtil::canParseInt);
+		countMean.setValue(String.valueOf(blockEntity.count.mean()));
+		//FIXME 26.1
+//		countMean.setFilter(ParseUtil::canParseInt);
 
-		this.addDrawableChild(countMean);
+		this.addRenderableWidget(countMean);
 
-		countStdDev = new TextFieldWidget(
-			this.client.textRenderer,
+		countStdDev = new EditBox(
+			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
-			Text.empty()
+			Component.empty()
 		);
 
-		countStdDev.setText(String.valueOf(blockEntity.count.stdDev()));
-		countStdDev.setTextPredicate(ParseUtil::canParseInt);
+		countStdDev.setValue(String.valueOf(blockEntity.count.stdDev()));
+		//FIXME 26.1
+//		countStdDev.setFilter(ParseUtil::canParseInt);
 
-		this.addDrawableChild(countStdDev);
+		this.addRenderableWidget(countStdDev);
 		// endregion
 
 		// region Tick Rate
-		tickRateMean = new TextFieldWidget(
-			this.client.textRenderer,
+		tickRateMean = new EditBox(
+			this.minecraft.font,
 			width / 10, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
-			Text.empty()
+			Component.empty()
 		);
 
-		tickRateMean.setText(String.valueOf(blockEntity.tickRate.mean()));
-		tickRateMean.setTextPredicate(ParseUtil::canParseInt);
+		tickRateMean.setValue(String.valueOf(blockEntity.tickRate.mean()));
+		//FIXME 26.1
+//		tickRateMean.setFilter(ParseUtil::canParseInt);
 
-		this.addDrawableChild(tickRateMean);
+		this.addRenderableWidget(tickRateMean);
 
-		tickRateStdDev = new TextFieldWidget(
-			this.client.textRenderer,
+		tickRateStdDev = new EditBox(
+			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
-			Text.empty()
+			Component.empty()
 		);
 
-		tickRateStdDev.setText(String.valueOf(blockEntity.tickRate.stdDev()));
-		tickRateStdDev.setTextPredicate(ParseUtil::canParseInt);
+		tickRateStdDev.setValue(String.valueOf(blockEntity.tickRate.stdDev()));
+		//FIXME 26.1
+//		tickRateStdDev.setFilter(ParseUtil::canParseInt);
 
-		this.addDrawableChild(tickRateStdDev);
+		this.addRenderableWidget(tickRateStdDev);
 		// endregion
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 
-		Objects.requireNonNull(this.client);
+		Objects.requireNonNull(this.minecraft);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.position_mean"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.position_mean"),
 			width / 10, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.position_std_dev"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.position_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.velocity_mean"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.velocity_mean"),
 			width / 10, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.velocity_std_dev"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.velocity_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.count_mean"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.count_mean"),
 			width / 10, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.count_std_dev"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.count_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.tick_rate_mean"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.tick_rate_mean"),
 			width / 10, (height / 2 + 90) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawTextWithShadow(
-			client.textRenderer,
-			Text.translatable("gui.glowcase.tick_rate_std_dev"),
+		context.drawString(
+			minecraft.font,
+			Component.translatable("gui.glowcase.tick_rate_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 + 90) - 20,
 			0xFFFFFFFF
 		);
@@ -262,60 +267,61 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
 		if (suggestionWidget.draggingScrollbar) {
-			if (suggestionWidget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY))
+			if (suggestionWidget.mouseDragged(event, dx, dy))
 				return true;
 		}
 
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(event, dx, dy);
 	}
-
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double mouseX = event.x();
+		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && particleId.isFocused()) {
-			return suggestionWidget.mouseClicked(mouseX, mouseY, button);
+			return suggestionWidget.mouseClicked(event, doubleClick);
 		} else {
 			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 		}
 
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (suggestionWidget.keyPressed(keyCode, scanCode, modifiers)) {
+	public boolean keyPressed(KeyEvent event) {
+		if (suggestionWidget.keyPressed(event)) {
 			return true;
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		setParticle();
 
 		blockEntity.position = new DeviatedVec3d(positionMean.value(), positionStdDev.value());
 		blockEntity.velocity = new DeviatedVec3d(velocityMean.value(), velocityStdDev.value());
 
 		blockEntity.count = new DeviatedInteger(
-			ParseUtil.parseOrDefault(countMean.getText(), blockEntity.count.mean()),
-			ParseUtil.parseOrDefault(countStdDev.getText(), blockEntity.count.stdDev())
+			ParseUtil.parseOrDefault(countMean.getValue(), blockEntity.count.mean()),
+			ParseUtil.parseOrDefault(countStdDev.getValue(), blockEntity.count.stdDev())
 		);
 
 		blockEntity.tickRate = new DeviatedInteger(
-			ParseUtil.parseOrDefault(tickRateMean.getText(), blockEntity.tickRate.mean()),
-			ParseUtil.parseOrDefault(tickRateStdDev.getText(), blockEntity.tickRate.stdDev())
+			ParseUtil.parseOrDefault(tickRateMean.getValue(), blockEntity.tickRate.mean()),
+			ParseUtil.parseOrDefault(tickRateStdDev.getValue(), blockEntity.tickRate.stdDev())
 		);
 
 		C2SEditParticleDisplayBlock.of(blockEntity).send();
-		super.close();
+		super.onClose();
 	}
 
 	@SuppressWarnings("unchecked")
 	private void setParticle() {
-		Objects.requireNonNull(this.client);
+		Objects.requireNonNull(this.minecraft);
 
-		String idText = particleId.getText();
+		String idText = particleId.getValue();
 
 		int paramStart = idText.indexOf('{');
 
@@ -323,24 +329,24 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 			paramStart == -1 ? idText : idText.substring(0, paramStart));
 		if (id == null) return;
 
-		RegistryWrapper.WrapperLookup lookup = Objects.requireNonNull(this.client.world).getRegistryManager();
+		HolderLookup.Provider lookup = Objects.requireNonNull(this.minecraft.level).registryAccess();
 
-		RegistryKey<ParticleType<?>> key = RegistryKey.of(RegistryKeys.PARTICLE_TYPE, id);
+		ResourceKey<ParticleType<?>> key = ResourceKey.create(Registries.PARTICLE_TYPE, id);
 
-		Optional<RegistryEntry.Reference<ParticleType<?>>> optionalType = lookup.getOrThrow(RegistryKeys.PARTICLE_TYPE).getOptional(key);
+		Optional<Holder.Reference<ParticleType<?>>> optionalType = lookup.lookupOrThrow(Registries.PARTICLE_TYPE).get(key);
 		if (optionalType.isEmpty()) return;
 
-		ParticleType<ParticleEffect> type = (ParticleType<ParticleEffect>) optionalType.get().value();
+		ParticleType<ParticleOptions> type = (ParticleType<ParticleOptions>) optionalType.get().value();
 
-		NbtCompound nbtCompound;
+		CompoundTag nbtCompound;
 		try {
-			nbtCompound = paramStart == -1 ? new NbtCompound() : StringNbtReader.readCompound(idText.substring(paramStart));
+			nbtCompound = paramStart == -1 ? new CompoundTag() : TagParser.parseCompoundFully(idText.substring(paramStart));
 		} catch (CommandSyntaxException e) {
 			return;
 		}
 
 
-		DataResult<ParticleEffect> effect = type.getCodec().codec().parse(lookup.getOps(NbtOps.INSTANCE), nbtCompound);
+		DataResult<ParticleOptions> effect = type.codec().codec().parse(lookup.createSerializationContext(NbtOps.INSTANCE), nbtCompound);
 
 		if (effect.result().isEmpty()) return;
 
@@ -348,8 +354,8 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends ParticleEffect> NbtElement effectToTag(T effect, DynamicOps<NbtElement> ops) {
-		Codec<T> codec = (Codec<T>) effect.getType().getCodec().codec();
+	private <T extends ParticleOptions> Tag effectToTag(T effect, DynamicOps<Tag> ops) {
+		Codec<T> codec = (Codec<T>) effect.getType().codec().codec();
 		return codec.encodeStart(ops, effect).getOrThrow();
 	}
 }

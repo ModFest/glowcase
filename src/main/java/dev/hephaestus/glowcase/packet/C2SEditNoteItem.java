@@ -4,29 +4,29 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.item.ItemStack;
 
-public record C2SEditNoteItem(NoteComponent noteComponent) implements CustomPayload {
-	public static final Id<C2SEditNoteItem> ID = new Id<>(Glowcase.id("channel.note_item"));
+public record C2SEditNoteItem(NoteComponent noteComponent) implements CustomPacketPayload {
+	public static final Type<C2SEditNoteItem> ID = new Type<>(Glowcase.id("channel.note_item"));
 
-	public static final PacketCodec<RegistryByteBuf, C2SEditNoteItem> PACKET_CODEC = PacketCodec.tuple(
-		NoteComponent.TYPE.getPacketCodec(), C2SEditNoteItem::noteComponent,
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditNoteItem> PACKET_CODEC = StreamCodec.composite(
+		NoteComponent.TYPE.streamCodec(), C2SEditNoteItem::noteComponent,
 		C2SEditNoteItem::new
 	);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 
 	public void receive(ServerPlayNetworking.Context context) {
-		ItemStack stack = context.player().getMainHandStack();
-		if (!(stack.isOf(Glowcase.NOTE_ITEM.get()))) return;
+		ItemStack stack = context.player().getMainHandItem();
+		if (!(stack.is(Glowcase.NOTE_ITEM.get()))) return;
 
-		if (stack.contains(Glowcase.NOTE_COMPONENT.get())) {
+		if (stack.has(Glowcase.NOTE_COMPONENT.get())) {
 			NoteComponent existingNote = stack.get(Glowcase.NOTE_COMPONENT.get());
 			assert existingNote != null;
 			if (existingNote.title().isPresent())

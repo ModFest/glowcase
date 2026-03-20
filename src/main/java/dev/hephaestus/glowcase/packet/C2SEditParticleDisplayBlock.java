@@ -4,40 +4,40 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public record C2SEditParticleDisplayBlock(
-	ParticleEffect particle,
+	ParticleOptions particle,
 	DeviatedInteger count,
 	DeviatedVec3d velocity,
 	DeviatedVec3d position,
 	DeviatedInteger tickRate,
 	BlockPos blockPos
 ) implements C2SEditBlockEntity {
-	public static final Id<C2SEditParticleDisplayBlock> ID = new Id<>(Glowcase.id("channel.particle_display.save"));
-	public static final PacketCodec<RegistryByteBuf, C2SEditParticleDisplayBlock> PACKET_CODEC = PacketCodec.tuple(
-		ParticleTypes.PACKET_CODEC, C2SEditParticleDisplayBlock::particle,
+	public static final Type<C2SEditParticleDisplayBlock> ID = new Type<>(Glowcase.id("channel.particle_display.save"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditParticleDisplayBlock> PACKET_CODEC = StreamCodec.composite(
+		ParticleTypes.STREAM_CODEC, C2SEditParticleDisplayBlock::particle,
 		DeviatedInteger.PACKET_CODEC, C2SEditParticleDisplayBlock::count,
 		DeviatedVec3d.PACKET_CODEC, C2SEditParticleDisplayBlock::velocity,
 		DeviatedVec3d.PACKET_CODEC, C2SEditParticleDisplayBlock::position,
 		DeviatedInteger.PACKET_CODEC, C2SEditParticleDisplayBlock::tickRate,
-		BlockPos.PACKET_CODEC, C2SEditParticleDisplayBlock::blockPos,
+		BlockPos.STREAM_CODEC, C2SEditParticleDisplayBlock::blockPos,
 		C2SEditParticleDisplayBlock::new
 	);
 
 	public static C2SEditParticleDisplayBlock of(ParticleDisplayBlockEntity be) {
-		return new C2SEditParticleDisplayBlock(be.particle, be.count, be.velocity, be.position, be.tickRate, be.getPos());
+		return new C2SEditParticleDisplayBlock(be.particle, be.count, be.velocity, be.position, be.tickRate, be.getBlockPos());
 	}
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 
@@ -47,7 +47,7 @@ public record C2SEditParticleDisplayBlock(
 	}
 
 	@Override
-	public void receive(ServerWorld world, BlockEntity blockEntity) {
+	public void receive(ServerLevel world, BlockEntity blockEntity) {
 		if (!(blockEntity instanceof ParticleDisplayBlockEntity be)) return;
 
 		be.particle = this.particle();
@@ -56,6 +56,6 @@ public record C2SEditParticleDisplayBlock(
 		be.position = this.position();
 		be.tickRate = this.tickRate();
 
-		be.markDirty();
+		be.setChanged();
 	}
 }

@@ -4,17 +4,17 @@ import com.google.common.primitives.Longs;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditItemProviderBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.TextWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.network.chat.Component;
 
 public class ItemProviderBlockEditScreen extends GlowcaseScreen {
 
 	private final ItemProviderBlockEntity providerBlock;
-	private ButtonWidget givesItemButton;
-	private TextFieldWidget cooldownWidget;
-	private TextWidget secondsLabel;
+	private Button givesItemButton;
+	private EditBox cooldownWidget;
+	private StringWidget secondsLabel;
 	public ItemProviderBlockEditScreen(ItemProviderBlockEntity providerBlock) {
 		this.providerBlock = providerBlock;
 	}
@@ -23,39 +23,40 @@ public class ItemProviderBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.client != null) {
-			this.givesItemButton = ButtonWidget.builder(Text.stringifiedTranslatable("gui.glowcase.gives_item", this.providerBlock.getGivesItem()), (action) -> {
+		if (this.minecraft != null) {
+			this.givesItemButton = Button.builder(Component.translatableEscape("gui.glowcase.gives_item", this.providerBlock.getGivesItem()), (action) -> {
 				this.providerBlock.cycleGiveType();
-				this.givesItemButton.setMessage(Text.stringifiedTranslatable("gui.glowcase.gives_item", this.providerBlock.getGivesItem()));
+				this.givesItemButton.setMessage(Component.translatableEscape("gui.glowcase.gives_item", this.providerBlock.getGivesItem()));
 				this.cooldownWidget.setVisible(this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED);
 				this.secondsLabel.visible = this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED;
-				if (this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED && (this.cooldownWidget.getText().isBlank() || this.cooldownWidget.getText().equals("0"))) this.cooldownWidget.setText(String.valueOf(60));
-			}).dimensions(width / 2 - 75, height / 2 - 25, 150, 20).build();
+				if (this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED && (this.cooldownWidget.getValue().isBlank() || this.cooldownWidget.getValue().equals("0"))) this.cooldownWidget.setValue(String.valueOf(60));
+			}).bounds(width / 2 - 75, height / 2 - 25, 150, 20).build();
 
-			this.cooldownWidget = new TextFieldWidget(this.textRenderer, width / 2 - 30, height / 2 + 5, 60, 20, Text.empty());
-			this.cooldownWidget.setText(this.providerBlock.cooldown == 0 ? "" : String.valueOf(this.providerBlock.cooldown));
-			this.cooldownWidget.setPlaceholder(TextUtils.placeholder("gui.glowcase.cooldown"));
-			this.cooldownWidget.setTextPredicate(s -> s.matches("\\d*"));
+			this.cooldownWidget = new EditBox(this.font, width / 2 - 30, height / 2 + 5, 60, 20, Component.empty());
+			this.cooldownWidget.setValue(this.providerBlock.cooldown == 0 ? "" : String.valueOf(this.providerBlock.cooldown));
+			this.cooldownWidget.setHint(TextUtils.placeholder("gui.glowcase.cooldown"));
+			//FIXME 26.1
+//			this.cooldownWidget.setFilter(s -> s.matches("\\d*"));
 			this.cooldownWidget.setVisible(this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED);
 
-			this.secondsLabel = new TextWidget(width / 2 + 30, height / 2 + 5, 10, 20, Text.of("s"), this.textRenderer);
+			this.secondsLabel = new StringWidget(width / 2 + 30, height / 2 + 5, 10, 20, Component.nullToEmpty("s"), this.font);
 			this.secondsLabel.visible = this.providerBlock.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED;
 
-			this.addDrawableChild(this.givesItemButton);
-			this.addDrawableChild(this.cooldownWidget);
-			this.addDrawableChild(this.secondsLabel);
+			this.addRenderableWidget(this.givesItemButton);
+			this.addRenderableWidget(this.cooldownWidget);
+			this.addRenderableWidget(this.secondsLabel);
 		}
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		if (this.providerBlock.getGivesItem() != ItemProviderBlockEntity.GivesItem.TIMED) {
 			this.providerBlock.cooldown = 0;
-		} else if (Longs.tryParse(cooldownWidget.getText()) instanceof Long l) {
+		} else if (Longs.tryParse(cooldownWidget.getValue()) instanceof Long l) {
 			this.providerBlock.cooldown = Math.clamp(l, 0, 172800000 /* 48 Hours */);
 		}
 
 		C2SEditItemProviderBlock.of(providerBlock).send();
-		super.close();
+		super.onClose();
 	}
 }

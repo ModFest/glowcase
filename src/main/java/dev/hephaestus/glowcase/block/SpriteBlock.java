@@ -3,42 +3,42 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 public class SpriteBlock extends WaterloggableGlowcaseBlock {
-	public static final MapCodec<SpriteBlock> CODEC = createCodec(SpriteBlock::new);
-	public static final EnumProperty<Direction> FACING = Properties.FACING;
+	public static final MapCodec<SpriteBlock> CODEC = simpleCodec(SpriteBlock::new);
+	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 
-	public SpriteBlock(AbstractBlock.Settings settings) {
+	public SpriteBlock(BlockBehaviour.Properties settings) {
 		super(settings);
-		this.setDefaultState(this.getDefaultState().with(FACING, Direction.UP));
+		this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
 		builder.add(FACING);
 	}
 
@@ -49,38 +49,38 @@ public class SpriteBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(FACING, ctx.getSide());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(FACING, ctx.getClickedFace());
 	}
 
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
 		loadClientSideNBT(world, pos, placer, stack);
 		if (placer != null && world.getBlockEntity(pos) instanceof SpriteBlockEntity be) {
-			if (state.get(FACING).equals(Direction.UP)) {
-				be.setRotation(Math.round(((540.0F + placer.getHeadYaw()) % 360.0F) / 45.0F) * 45);
+			if (state.getValue(FACING).equals(Direction.UP)) {
+				be.setRotation(Math.round(((540.0F + placer.getYHeadRot()) % 360.0F) / 45.0F) * 45);
 			}
-			if (state.get(FACING).equals(Direction.DOWN)) {
-				be.setRotation(Math.round(((540.0F - placer.getHeadYaw()) % 360.0F) / 45.0F) * 45);
+			if (state.getValue(FACING).equals(Direction.DOWN)) {
+				be.setRotation(Math.round(((540.0F - placer.getYHeadRot()) % 360.0F) / 45.0F) * 45);
 			}
 		}
 	}
 
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new SpriteBlockEntity(pos, state);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
-		textConsumer.accept(Text.translatable("block.glowcase.sprite_block.tooltip.0").formatted(Formatting.GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.generic.tooltip").formatted(Formatting.DARK_GRAY));
-		textConsumer.accept(Text.translatable("block.glowcase.sprite_block.tooltip.1").formatted(Formatting.DARK_GRAY));
+	public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		textConsumer.accept(Component.translatable("block.glowcase.sprite_block.tooltip.0").withStyle(ChatFormatting.GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
+		textConsumer.accept(Component.translatable("block.glowcase.sprite_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
-	protected MapCodec<? extends BlockWithEntity> getCodec() {
+	protected MapCodec<? extends BaseEntityBlock> codec() {
 		return CODEC;
 	}
 }

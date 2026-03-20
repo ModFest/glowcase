@@ -2,23 +2,23 @@ package dev.hephaestus.glowcase.util;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.jukebox.JukeboxSong;
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.JukeboxPlayableComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.JukeboxPlayable;
+import net.minecraft.world.item.JukeboxSong;
 
-public record CollectableStack(RegistryEntry<Item> item, ComponentChanges changes, int count, boolean collected) {
+public record CollectableStack(Holder<Item> item, DataComponentPatch changes, int count, boolean collected) {
 	public static final Codec<CollectableStack> CODEC = RecordCodecBuilder.create(
 		instance -> instance.group(
-			Item.ENTRY_CODEC.fieldOf("item").forGetter(CollectableStack::item),
-			ComponentChanges.CODEC.fieldOf("components").forGetter(CollectableStack::changes),
+			Item.CODEC.fieldOf("item").forGetter(CollectableStack::item),
+			DataComponentPatch.CODEC.fieldOf("components").forGetter(CollectableStack::changes),
 			Codec.INT.fieldOf("count").forGetter(CollectableStack::count),
 			Codec.BOOL.fieldOf("collected").forGetter(CollectableStack::collected)
 		).apply(instance, CollectableStack::new)
@@ -28,17 +28,17 @@ public record CollectableStack(RegistryEntry<Item> item, ComponentChanges change
 		return new ItemStack(item, count, changes);
 	}
 
-	public MutableText getCollectableName(RegistryWrapper.WrapperLookup lookup, boolean selected) {
+	public MutableComponent getCollectableName(HolderLookup.Provider lookup, boolean selected) {
 		ItemStack stack = getStack();
-		Text name = stack.getName();
-		JukeboxPlayableComponent songComponent = stack.get(DataComponentTypes.JUKEBOX_PLAYABLE);
+		Component name = stack.getHoverName();
+		JukeboxPlayable songComponent = stack.get(DataComponents.JUKEBOX_PLAYABLE);
 		if (songComponent != null) {
-			JukeboxSong song = songComponent.song().resolveEntry(lookup).map(RegistryEntry::value).orElse(null);
+			JukeboxSong song = songComponent.song().value();
 			if (song != null) {
 				name = song.description();
 			}
 		}
-		return Text.literal("%s %dx ".formatted(selected ? ">" : "-", count)).append(name).formatted(collected ? Formatting.AQUA : Formatting.GRAY).styled(selected ? s -> s.withBold(true) : s -> s);
+		return Component.literal("%s %dx ".formatted(selected ? ">" : "-", count)).append(name).withStyle(collected ? ChatFormatting.AQUA : ChatFormatting.GRAY).withStyle(selected ? s -> s.withBold(true) : s -> s);
 	}
 
 	public CollectableStack asCollected() {

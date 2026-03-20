@@ -4,53 +4,51 @@ import dev.hephaestus.glowcase.Glowcase;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
-import net.minecraft.block.BlockState;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class PopupBlockEntity extends GlowcaseBlockEntity {
 	public static final NodeParser PARSER = TagParser.DEFAULT;
 	public String title = "";
-	public List<Text> lines = new ArrayList<>();
+	public List<Component> lines = new ArrayList<>();
 	public TextBlockEntity.TextAlignment textAlignment = TextBlockEntity.TextAlignment.CENTER;
 	public int color = 0xFFFFFFFF;
 	public boolean renderDirty = true;
 
 	public PopupBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.POPUP_BLOCK_ENTITY.get(), pos, state);
-		lines.add(Text.empty());
+		lines.add(Component.empty());
 	}
 
 	@Override
-	protected void writeData(WriteView view) {
-		super.writeData(view);
+	protected void saveAdditional(ValueOutput view) {
+		super.saveAdditional(view);
 
 		view.putString("title", this.title);
 		view.putInt("color", this.color);
 
-		view.put("text_alignment", TextBlockEntity.TextAlignment.CODEC, this.textAlignment);
+		view.store("text_alignment", TextBlockEntity.TextAlignment.CODEC, this.textAlignment);
 
-		view.put("lines", TextCodecs.CODEC.listOf(), this.lines);
+		view.store("lines", ComponentSerialization.CODEC.listOf(), this.lines);
 	}
 
 	@Override
-	protected void readData(ReadView view) {
-		super.readData(view);
+	protected void loadAdditional(ValueInput view) {
+		super.loadAdditional(view);
 
-		this.title = view.getString("title", "");
-		this.color = view.getInt("color", 0xFFFFFF);
+		this.title = view.getStringOr("title", "");
+		this.color = view.getIntOr("color", 0xFFFFFF);
 
 		this.textAlignment = view.read("text_alignment", TextBlockEntity.TextAlignment.CODEC).orElse(TextBlockEntity.TextAlignment.CENTER);
 
-		this.lines = new ArrayList<>(view.read("lines", TextCodecs.CODEC.listOf()).orElse(List.of(Text.empty())));
+		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElse(List.of(Component.empty())));
 
 		this.renderDirty = true;
 	}
@@ -71,22 +69,22 @@ public class PopupBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public void addRawLine(int i, String string) {
-		var parsed = PARSER.parseText(string, ParserContext.of());
+		var parsed = PARSER.parseComponent(string, ParserContext.of());
 
 		if (parsed.getString().equals(string)) {
-			this.lines.add(i, Text.literal(string));
+			this.lines.add(i, Component.literal(string));
 		} else {
-			this.lines.add(i, Text.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
+			this.lines.add(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
 		}
 	}
 
 	public void setRawLine(int i, String string) {
-		var parsed = PARSER.parseText(string, ParserContext.of());
+		var parsed = PARSER.parseComponent(string, ParserContext.of());
 
 		if (parsed.getString().equals(string)) {
-			this.lines.set(i, Text.literal(string));
+			this.lines.set(i, Component.literal(string));
 		} else {
-			this.lines.set(i, Text.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
+			this.lines.set(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
 		}
 	}
 }
