@@ -21,6 +21,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -140,7 +141,7 @@ public record ItemProviderBlockEntityRenderer(
 
 			poseStack.pushPose();
 			poseStack.translate(-context.font().width(name) / 2F, -4, 0);
-			submitNodeCollector.submitText(poseStack, 0, 0, state.name.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+			submitNodeCollector.submitText(poseStack, 0, 0, state.name.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
 
 			poseStack.popPose();
 
@@ -148,10 +149,10 @@ public record ItemProviderBlockEntityRenderer(
 				poseStack.pushPose();
 				if (state.canGive) {
 					poseStack.translate(-context.font().width(state.countText) + 16, 32, 0);
-					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
 				} else {
 					poseStack.translate(-context.font().width(state.countText) + 16, 24, 0);
-					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, color, 0, 0);
+					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
 				}
 				poseStack.popPose();
 			}

@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -82,7 +83,7 @@ public record ItemAcceptorBlockEntityRenderer(
 			Font textRenderer = context.font();
 			String string = String.valueOf(state.count);
 
-			submitNodeCollector.submitText(poseStack, 9 - textRenderer.width(string), 1, Component.literal(string).getVisualOrderText(), true, Font.DisplayMode.NORMAL, 0xFF, 0xFFFFFFFF, 0, 0);
+			submitNodeCollector.submitText(poseStack, 9 - textRenderer.width(string), 1, Component.literal(string).getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0, 0);
 		}
 
 		poseStack.popPose();

@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -63,7 +64,7 @@ public record HyperlinkBlockEntityRenderer(
 			// Fixes shadow being rendered in front of actual text
 			poseStack.scale(1, 1, -1);
 
-			submitNodeCollector.submitText(poseStack, 0, 0, state.title, true, DisplayMode.NORMAL, 0xFF, 0xFFFFFFFF, 0x00000000, 0);
+			submitNodeCollector.submitText(poseStack, 0, 0, state.title, true, DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0x00000000, 0);
 		}
 		poseStack.popPose();
 	}
