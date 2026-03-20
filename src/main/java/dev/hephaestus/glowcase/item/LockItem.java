@@ -57,7 +57,7 @@ public class LockItem extends Item {
 		}
 
 		player.sendOverlayMessage(message);
-		player.playSound(soundEvent,1.0F, 1.0F);
+		player.level().playSound(player, player.getX(), player.getY(), player.getZ(), soundEvent, SoundSource.BLOCKS, 1.0F, 1.0F);
 		be.setChanged();
 
 		return InteractionResult.SUCCESS;
