@@ -29,7 +29,7 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 	private EditBox altEntryWidget;
 
 	private EditBox yawEntryWidget;
-    private EditBox pitchEntryWidget;
+	private EditBox pitchEntryWidget;
 
 	private EditBox offsetXField;
 	private EditBox offsetYField;
@@ -42,7 +42,6 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 	@Override
 	protected void init() {
 		super.init();
-		if (this.minecraft == null) return;
 
 		// dimension constants
 		int gap = 5;
@@ -52,53 +51,55 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		int fieldY = (height / 2) - 110;
 
 		this.widthEntryWidget = new EditBox(this.minecraft.font, leftX, fieldY + 40 + 20 + 5, 2 * leftX, 20, Component.empty());
-		this.widthEntryWidget.setValue(""+this.screenBlockEntity.width);
+		this.widthEntryWidget.setValue("" + this.screenBlockEntity.width);
 		this.widthEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.width"));
 		this.widthEntryWidget.setResponder(string -> {
-			if (Floats.tryParse(string) instanceof Float parsed)
+			if (Floats.tryParse(string) instanceof Float parsed) {
 				screenBlockEntity.width = parsed;
+			}
 		});
 
 		MutableComponent timesLiteral = Component.literal("×");
 		StringWidget timesLabel = new StringWidget(3 * leftX + gap, fieldY + 40 + 20 + 5, font.width(timesLiteral), 20, timesLiteral, this.minecraft.font);
 
 		this.heightEntryWidget = new EditBox(this.minecraft.font, 3 * leftX + 10 + font.width(timesLiteral), fieldY + 40 + 20 + 5, 2 * leftX, 20, Component.empty());
-		this.heightEntryWidget.setValue(""+this.screenBlockEntity.height);
+		this.heightEntryWidget.setValue("" + this.screenBlockEntity.height);
 		this.heightEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.height"));
 		this.heightEntryWidget.setResponder(string -> {
-			if (Floats.tryParse(string) instanceof Float parsed)
+			if (Floats.tryParse(string) instanceof Float parsed) {
 				screenBlockEntity.height = parsed;
+			}
 		});
 
 		this.yawEntryWidget = new EditBox(this.minecraft.font, leftX, fieldY + 40, (4 * leftX + 10 + font.width(timesLiteral)) / 2 - 5, 20, Component.empty());
-        if (this.screenBlockEntity.yaw == 0.0f) {
-            this.yawEntryWidget.setValue("");
-            this.yawEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.yaw"));
-        } else {
-            this.yawEntryWidget.setValue(String.valueOf(this.screenBlockEntity.yaw));
-        }
-        this.yawEntryWidget.setResponder(string -> {
+		if (this.screenBlockEntity.yaw == 0.0f) {
+			this.yawEntryWidget.setValue("");
+			this.yawEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.yaw"));
+		} else {
+			this.yawEntryWidget.setValue(String.valueOf(this.screenBlockEntity.yaw));
+		}
+		this.yawEntryWidget.setResponder(string -> {
 			if (string.isEmpty()) {
 				screenBlockEntity.yaw = 0f;
 			} else if (Floats.tryParse(string) instanceof Float parsed) {
 				screenBlockEntity.yaw = parsed;
 			}
-        });
+		});
 
-        this.pitchEntryWidget = new EditBox(this.minecraft.font, leftX + (4 * leftX + 10 + font.width(timesLiteral)) / 2, fieldY + 40, (4 * leftX + 10 + font.width(timesLiteral)) / 2, 20, Component.empty());
-        if (this.screenBlockEntity.pitch == 0.0f) {
-            this.pitchEntryWidget.setValue("");
-            this.pitchEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.pitch"));
-        } else {
-            this.pitchEntryWidget.setValue(String.valueOf(this.screenBlockEntity.pitch));
-        }
-        this.pitchEntryWidget.setResponder(string -> {
+		this.pitchEntryWidget = new EditBox(this.minecraft.font, leftX + (4 * leftX + 10 + font.width(timesLiteral)) / 2, fieldY + 40, (4 * leftX + 10 + font.width(timesLiteral)) / 2, 20, Component.empty());
+		if (this.screenBlockEntity.pitch == 0.0f) {
+			this.pitchEntryWidget.setValue("");
+			this.pitchEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.pitch"));
+		} else {
+			this.pitchEntryWidget.setValue(String.valueOf(this.screenBlockEntity.pitch));
+		}
+		this.pitchEntryWidget.setResponder(string -> {
 			if (string.isEmpty()) {
 				screenBlockEntity.pitch = 0f;
 			} else if (Floats.tryParse(string) instanceof Float parsed) {
 				screenBlockEntity.pitch = parsed;
 			}
-        });
+		});
 
 		StringWidget offsetXLabel = new StringWidget(leftX, fieldY - 5, fieldWidth, 20, Component.translatable("gui.glowcase.x_offset_label"), this.minecraft.font);
 		StringWidget offsetYLabel = new StringWidget(leftX + fieldWidth + gap, fieldY - 5, fieldWidth, 20, Component.translatable("gui.glowcase.y_offset_label"), this.minecraft.font);
@@ -144,27 +145,32 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 
 		{ // We create a button for each alignment possibility of the screen on a 2D canvas (top-left to bottom-right)
 			int xoff = 7 * width / 10;
-            int yoff = height / 2 - 65+20+10;
+			int yoff = height / 2 - 65 + 20 + 10;
 
-            int sub_width = 2 * width / 10;
+			int sub_width = 2 * width / 10;
 
-			this.addRenderableWidget(new StringWidget(
-				xoff, yoff,
-				sub_width, this.minecraft.font.lineHeight,
-				Component.translatableWithFallback("gui.glowcase.screen.alignment", "%s", this.screenBlockEntity.macaddress),
-				this.minecraft.font)
+			this.addRenderableWidget(
+				new StringWidget(
+					xoff, yoff,
+					sub_width, this.minecraft.font.lineHeight,
+					// TODO: Fix this to show the right data
+					Component.translatableWithFallback("gui.glowcase.screen.alignment", "%s", this.screenBlockEntity.macaddress),
+					this.minecraft.font
+				)
 			);
 
-			xoff += sub_width/2 - (15 * 2 + 10)/2;
+			xoff += sub_width / 2 - (15 * 2 + 10) / 2;
 			yoff += this.minecraft.font.lineHeight + 5;
 
 			int count = 0;
 			alignment = new Button[9];
-			for (int y = 0; y < 3; y++)
+			for (int y = 0; y < 3; y++) {
 				for (int x = 0; x < 3; x++) {
 					Button button = Button.builder(Component.literal(""), action -> {
-						for (Button buttonWidget : alignment)
+						for (Button buttonWidget : alignment) {
 							buttonWidget.active = true;
+						}
+
 						action.active = false;
 
 						// Update x and y offset
@@ -182,15 +188,17 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 								break;
 							}
 						}
-					}).bounds(xoff + (x*15), yoff + (y*15), 10, 10).build();
+					}).bounds(xoff + (x * 15), yoff + (y * 15), 10, 10).build();
 
 					// Current Alignment
-					if (screenBlockEntity.xOffset.offset+1 == x && screenBlockEntity.yOffset.offset+1 == y)
+					if (screenBlockEntity.xOffset.offset + 1 == x && screenBlockEntity.yOffset.offset + 1 == y) {
 						button.active = false;
+					}
 
 					alignment[count] = button;
 					count++;
 				}
+			}
 		}
 
 		this.renderBackfaceWidget = Checkbox.builder(Component.translatable("gui.glowcase.screen.backface"), this.minecraft.font)
@@ -223,15 +231,16 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		this.altEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.alt"));
 		this.altEntryWidget.setResponder(string -> screenBlockEntity.alt = string);
 
-		if (this.minecraft.options.advancedItemTooltips)
-			this.addRenderableWidget(new StringWidget(
-				3, height - this.minecraft.font.lineHeight - 1,
-				width, this.minecraft.font.lineHeight,
-				Component.translatableWithFallback("gui.glowcase.screen.mac_address", "%s", this.screenBlockEntity.macaddress),
-				this.minecraft.font)
-//				FIXME these seem to no longer exist
-//				.alignLeft().setColor(0x696969)
+		if (this.minecraft.options.advancedItemTooltips) {
+			this.addRenderableWidget(
+				new StringWidget(
+					3, height - this.minecraft.font.lineHeight - 1,
+					width, this.minecraft.font.lineHeight,
+					Component.translatableWithFallback("gui.glowcase.screen.mac_address", "%s", this.screenBlockEntity.macaddress).withColor(0x696969),
+					this.minecraft.font
+				)
 			);
+		}
 
 		this.addRenderableWidget(this.widthEntryWidget);
 		this.addRenderableWidget(timesLabel);
@@ -245,8 +254,9 @@ public class ScreenBlockEditScreen extends GlowcaseScreen {
 		this.addRenderableWidget(offsetYField);
 		this.addRenderableWidget(offsetZField);
 
-		for (Button buttonWidget : alignment)
+		for (Button buttonWidget : alignment) {
 			this.addRenderableWidget(buttonWidget);
+		}
 
 		this.addRenderableWidget(this.renderBackfaceWidget);
 		this.addRenderableWidget(this.einkCheckWidget);
