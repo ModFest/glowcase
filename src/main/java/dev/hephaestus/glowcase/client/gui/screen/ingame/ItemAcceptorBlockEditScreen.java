@@ -2,10 +2,11 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditItemAcceptorBlock;
+import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -13,9 +14,9 @@ import net.minecraft.resources.Identifier;
 public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 	private final ItemAcceptorBlockEntity itemAcceptorBlockEntity;
 
-	private EditBox itemWidget;
-	private EditBox countWidget;
-	private EditBox pulseWidget;
+	private GlowcaseEditBox itemWidget;
+	private GlowcaseEditBox countWidget;
+	private GlowcaseEditBox pulseWidget;
 	private Button outputDirectionToggle;
 
 	public ItemAcceptorBlockEditScreen(ItemAcceptorBlockEntity itemAcceptorBlockEntity) {
@@ -28,20 +29,23 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 
 		Identifier item = this.itemAcceptorBlockEntity.getItem();
 
-		this.itemWidget = new EditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
+		this.itemWidget = new GlowcaseEditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
 		if (!item.equals(Identifier.withDefaultNamespace("air"))) {
 			this.itemWidget.setValue((this.itemAcceptorBlockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
-//FIXME 26.1
-		//		this.itemWidget.setFilter(s -> s.matches("#?[a-z0-9_.-]*:?[a-z0-9_./-]*"));
+		this.itemWidget.setFilter((currentValue, newChar, cursorPos) -> {
+			if (!InputFilters.assertOptionalPrefix('#', currentValue, newChar, cursorPos)) return false;
+			if (newChar == '#' && cursorPos == 0) return true;
 
-		this.countWidget = new EditBox(this.font, width / 2 + 60, height / 2 - 25, 40, 20, Component.empty());
+			return this.isValidCharacterForName(currentValue, newChar, cursorPos);
+		});
+
+		this.countWidget = new GlowcaseEditBox(this.font, width / 2 + 60, height / 2 - 25, 40, 20, Component.empty());
 		this.countWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.count));
 		this.countWidget.setHint(TextUtils.placeholder("gui.glowcase.count"));
-		//FIXME 26.1
-//		this.countWidget.setFilter(s -> s.matches("\\d*"));
+		this.countWidget.setFilter(InputFilters::integerNumber);
 
 		this.outputDirectionToggle = Button.builder(Component.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()), action -> {
 			switch (itemAcceptorBlockEntity.outputDirection) {
@@ -53,11 +57,10 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 			this.outputDirectionToggle.setMessage(Component.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()));
 		}).bounds(width / 2 - 100, height / 2 + 5, 150, 20).build();
 
-		this.pulseWidget = new EditBox(this.font, width / 2 + 60, height / 2 + 5, 40, 20, Component.empty());
+		this.pulseWidget = new GlowcaseEditBox(this.font, width / 2 + 60, height / 2 + 5, 40, 20, Component.empty());
 		this.pulseWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.pulse));
 		this.pulseWidget.setHint(TextUtils.placeholder("gui.glowcase.pulse"));
-//FIXME 26.1
-		//		this.pulseWidget.setFilter(s -> s.matches("\\d*"));
+		this.pulseWidget.setFilter(InputFilters::integerNumber);
 
 		this.addRenderableWidget(this.itemWidget);
 		this.addRenderableWidget(this.countWidget);

@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
@@ -46,9 +46,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.minecraft == null) return;
-
-		this.spriteWidget = new GlowcaseTextFieldWidget(this.minecraft.font, width / 2 - 90, height / 2 - 55, 180, 20, Component.empty());
+		this.spriteWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 90, height / 2 - 55, 180, 20, Component.empty());
 		this.spriteWidget.setMaxLength(255);
 		this.spriteWidget.setValue(spriteBlockEntity.getSprite());
 		this.spriteWidget.setResponder(string -> {

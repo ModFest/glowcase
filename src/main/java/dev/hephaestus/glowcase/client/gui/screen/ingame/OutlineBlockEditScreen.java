@@ -2,9 +2,13 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.OutlineBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditOutlineBlock;
+import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.TextUtils;
+
 import java.util.function.Predicate;
+
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.core.Vec3i;
@@ -12,19 +16,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 
 public class OutlineBlockEditScreen extends GlowcaseScreen {
-	private static final Predicate<String> TEXT_PREDICATE = s -> s.matches("-?\\d*");
-
 	private final OutlineBlockEntity outlineBlockEntity;
 
 	private StringWidget offsetWidget;
 	private StringWidget scaleWidget;
-	private EditBox xOffsetWidget;
-	private EditBox yOffsetWidget;
-	private EditBox zOffsetWidget;
-	private EditBox xScaleWidget;
-	private EditBox yScaleWidget;
-	private EditBox zScaleWidget;
-	private EditBox colorEntryWidget;
+	private GlowcaseEditBox xOffsetWidget;
+	private GlowcaseEditBox yOffsetWidget;
+	private GlowcaseEditBox zOffsetWidget;
+	private GlowcaseEditBox xScaleWidget;
+	private GlowcaseEditBox yScaleWidget;
+	private GlowcaseEditBox zScaleWidget;
+	private GlowcaseEditBox colorEntryWidget;
 
 	public OutlineBlockEditScreen(OutlineBlockEntity outlineBlockEntity) {
 		this.outlineBlockEntity = outlineBlockEntity;
@@ -34,18 +36,16 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.minecraft == null) return;
-
 		this.offsetWidget = new StringWidget(width / 2 - 110, height / 2 - 25, 40, 20, Component.translatable("gui.glowcase.offset"), this.font);
 		this.scaleWidget = new StringWidget(width / 2 - 110, height / 2 + 5, 40, 20, Component.translatable("gui.glowcase.scale"), this.font);
 
-		this.xOffsetWidget = new EditBox(this.font, width / 2 - 65, height / 2 - 25, 40, 20, Component.empty());
-		this.yOffsetWidget = new EditBox(this.font, width / 2 - 20, height / 2 - 25, 40, 20, Component.empty());
-		this.zOffsetWidget = new EditBox(this.font, width / 2 + 25, height / 2 - 25, 40, 20, Component.empty());
+		this.xOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 65, height / 2 - 25, 40, 20, Component.empty());
+		this.yOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 20, height / 2 - 25, 40, 20, Component.empty());
+		this.zOffsetWidget = new GlowcaseEditBox(this.font, width / 2 + 25, height / 2 - 25, 40, 20, Component.empty());
 
-		this.xScaleWidget = new EditBox(this.font, width / 2 - 65, height / 2 + 5, 40, 20, Component.empty());
-		this.yScaleWidget = new EditBox(this.font, width / 2 - 20, height / 2 + 5, 40, 20, Component.empty());
-		this.zScaleWidget = new EditBox(this.font, width / 2 + 25, height / 2 + 5, 40, 20, Component.empty());
+		this.xScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 65, height / 2 + 5, 40, 20, Component.empty());
+		this.yScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 20, height / 2 + 5, 40, 20, Component.empty());
+		this.zScaleWidget = new GlowcaseEditBox(this.font, width / 2 + 25, height / 2 + 5, 40, 20, Component.empty());
 
 		this.xOffsetWidget.setValue(String.valueOf(this.outlineBlockEntity.offset.getX()));
 		this.yOffsetWidget.setValue(String.valueOf(this.outlineBlockEntity.offset.getY()));
@@ -54,13 +54,12 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 		this.yScaleWidget.setValue(String.valueOf(this.outlineBlockEntity.scale.getY()));
 		this.zScaleWidget.setValue(String.valueOf(this.outlineBlockEntity.scale.getZ()));
 
-//		FIXME 26.1
-//		this.xOffsetWidget.setFilter(TEXT_PREDICATE);
-//		this.yOffsetWidget.setFilter(TEXT_PREDICATE);
-//		this.zOffsetWidget.setFilter(TEXT_PREDICATE);
-//		this.xScaleWidget.setFilter(TEXT_PREDICATE);
-//		this.yScaleWidget.setFilter(TEXT_PREDICATE);
-//		this.zScaleWidget.setFilter(TEXT_PREDICATE);
+		this.xOffsetWidget.setFilter(InputFilters::integerNumber);
+		this.yOffsetWidget.setFilter(InputFilters::integerNumber);
+		this.zOffsetWidget.setFilter(InputFilters::integerNumber);
+		this.xScaleWidget.setFilter(InputFilters::integerNumber);
+		this.yScaleWidget.setFilter(InputFilters::integerNumber);
+		this.zScaleWidget.setFilter(InputFilters::integerNumber);
 
 		this.xOffsetWidget.setResponder(string -> {
 			if (Ints.tryParse(string) instanceof Integer x) {
@@ -107,12 +106,10 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 		this.yScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.y"));
 		this.zScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.z"));
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 25, height / 2 + 35, 50, 20, Component.empty());
+		this.colorEntryWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 25, height / 2 + 35, 50, 20, Component.empty());
 		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.outlineBlockEntity.color & 0x00FFFFFF));
 		this.colorEntryWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-				this.outlineBlockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
-			});
+			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> this.outlineBlockEntity.color = color.getValue() | 0xFF000000);
 		});
 
 		this.addRenderableWidget(this.offsetWidget);
@@ -126,7 +123,7 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 		this.addRenderableWidget(this.colorEntryWidget);
 	}
 
-		@Override
+	@Override
 	public void onClose() {
 		C2SEditOutlineBlock.of(outlineBlockEntity).send();
 		super.onClose();

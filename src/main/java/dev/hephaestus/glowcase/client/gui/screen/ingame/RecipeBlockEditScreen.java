@@ -4,7 +4,7 @@ import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.util.EmiClientUtils;
 import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
@@ -58,7 +58,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		}
 
 
-		this.recipeWidget = new GlowcaseTextFieldWidget(this.minecraft.font, width / 2 - 150, baseY + 10, 300, 20, Component.empty());
+		this.recipeWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 150, baseY + 10, 300, 20, Component.empty());
 		this.recipeWidget.setMaxLength(1024);
 		this.recipeWidget.setValue(recipeBlockEntity.recipe);
 

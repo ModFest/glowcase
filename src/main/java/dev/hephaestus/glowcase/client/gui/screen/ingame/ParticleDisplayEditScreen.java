@@ -5,7 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
@@ -47,11 +47,11 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	private Vec3FieldsWidget velocityMean;
 	private Vec3FieldsWidget velocityStdDev;
 
-	private EditBox countMean;
-	private EditBox countStdDev;
+	private GlowcaseEditBox countMean;
+	private GlowcaseEditBox countStdDev;
 
-	private EditBox tickRateMean;
-	private EditBox tickRateStdDev;
+	private GlowcaseEditBox tickRateMean;
+	private GlowcaseEditBox tickRateStdDev;
 
 	private SuggestionListWidget<Identifier> suggestionWidget;
 	private List<Identifier> validParticles = new ArrayList<>();
@@ -63,12 +63,12 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	@Override
 	protected void init() {
 		super.init();
-		Objects.requireNonNull(this.minecraft);
+
 		HolderLookup.Provider lookup = Objects.requireNonNull(minecraft.level).registryAccess();
 
 
 		// region Particle ID
-		particleId = new GlowcaseTextFieldWidget(
+		particleId = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 - 110,
 			8 * width / 10, 20,
@@ -134,7 +134,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		// endregion
 
 		// region Count
-		countMean = new EditBox(
+		countMean = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
@@ -142,12 +142,11 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		countMean.setValue(String.valueOf(blockEntity.count.mean()));
-		//FIXME 26.1
-//		countMean.setFilter(ParseUtil::canParseInt);
+		countMean.setFilter(InputFilters::integerNumber);
 
 		this.addRenderableWidget(countMean);
 
-		countStdDev = new EditBox(
+		countStdDev = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
@@ -155,14 +154,13 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		countStdDev.setValue(String.valueOf(blockEntity.count.stdDev()));
-		//FIXME 26.1
-//		countStdDev.setFilter(ParseUtil::canParseInt);
+		countStdDev.setFilter(InputFilters::integerNumber);
 
 		this.addRenderableWidget(countStdDev);
 		// endregion
 
 		// region Tick Rate
-		tickRateMean = new EditBox(
+		tickRateMean = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
@@ -170,12 +168,11 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		tickRateMean.setValue(String.valueOf(blockEntity.tickRate.mean()));
-		//FIXME 26.1
-//		tickRateMean.setFilter(ParseUtil::canParseInt);
+		tickRateMean.setFilter(InputFilters::integerNumber);
 
 		this.addRenderableWidget(tickRateMean);
 
-		tickRateStdDev = new EditBox(
+		tickRateStdDev = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
@@ -183,8 +180,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		tickRateStdDev.setValue(String.valueOf(blockEntity.tickRate.stdDev()));
-		//FIXME 26.1
-//		tickRateStdDev.setFilter(ParseUtil::canParseInt);
+		tickRateStdDev.setFilter(InputFilters::integerNumber);
 
 		this.addRenderableWidget(tickRateStdDev);
 		// endregion

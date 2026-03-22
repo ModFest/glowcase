@@ -5,6 +5,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSoundBlock;
+import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -28,11 +29,11 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	private Button categoryButton;
 	private Button cancelOthersButton;
 
-	private EditBox volume;
-	private EditBox pitch;
-	private EditBox repeatDelay;
+	private GlowcaseEditBox volume;
+	private GlowcaseEditBox pitch;
+	private GlowcaseEditBox repeatDelay;
 
-	private EditBox distance;
+	private GlowcaseEditBox distance;
 	private Button relativeButton;
 	private Vec3FieldsWidget offset;
 
@@ -49,7 +50,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		Objects.requireNonNull(this.minecraft);
 //		RegistryWrapper.WrapperLookup lookup = Objects.requireNonNull(client.world).getRegistryManager();
 
-		this.soundId = new GlowcaseTextFieldWidget(
+		this.soundId = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 - 110,
 			8 * width / 10, 20,
@@ -70,51 +71,50 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		}).bounds(width / 10 + (4 * width / 10) + 6, height / 2 - 60, (4 * width / 10) - 6, 20).build();
 		this.addRenderableWidget(this.cancelOthersButton);
 
-		this.volume = new EditBox(
+		this.volume = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 - 10,
 			(4 * width / 10) - 6, 20,
 			Component.empty());
 		this.volume.setMaxLength(16);
 		this.volume.setValue(String.valueOf(soundBlock.volume));
-		//FIXME 26.1
-//		this.volume.setFilter(ParseUtil::canParseDouble);
+		this.volume.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.volume);
 
-		this.pitch = new EditBox(
+		this.pitch = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 - 10,
 			(4 * width / 10) - 6, 20,
-			Component.empty());
+			Component.empty()
+		);
 		this.pitch.setMaxLength(16);
 		this.pitch.setValue(String.valueOf(soundBlock.pitch));
-		//FIXME 26.1
-//		this.pitch.setFilter(ParseUtil::canParseDouble);
+		this.pitch.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.pitch);
 
-		this.repeatDelay = new EditBox(
+		this.repeatDelay = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
-			Component.empty());
+			Component.empty()
+		);
 		this.repeatDelay.setMaxLength(16);
 		this.repeatDelay.setValue(String.valueOf(soundBlock.repeatDelay));
-		//FIXME 26.1
-//		this.repeatDelay.setFilter(ParseUtil::canParseInt);
+		this.repeatDelay.setFilter(InputFilters::integerNumber);
 		this.addRenderableWidget(this.repeatDelay);
 
-		this.distance = new EditBox(
+		this.distance = new GlowcaseEditBox(
 			this.minecraft.font,
 			width / 10 + (4 * width / 10) + 6, height / 2 + 40,
 			(4 * width / 10) - 6, 20,
-			Component.empty());
+			Component.empty()
+		);
 		this.distance.setMaxLength(16);
 		this.distance.setValue(String.valueOf(soundBlock.distance));
-		//FIXME 26.1
-//		this.distance.setFilter(ParseUtil::canParseDouble);
+		this.distance.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.distance);
 
-		this.relativeButton = new Button.Builder(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative), (action) -> {
+		this.relativeButton = new Button.Builder(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative), (_) -> {
 			soundBlock.relative = !soundBlock.relative;
 			this.relativeButton.setMessage(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative));
 		}).bounds(width / 10, height / 2 + 90, (4 * width / 10) - 6, 20).build();

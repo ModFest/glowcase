@@ -1,41 +1,41 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
+import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractScrollArea;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
 public class Vec3FieldsWidget extends AbstractContainerWidget {
-	private final EditBox x;
-	private final EditBox y;
-	private final EditBox z;
+	private final GlowcaseEditBox x;
+	private final GlowcaseEditBox y;
+	private final GlowcaseEditBox z;
 
 	private Vec3 value;
 
 	public Vec3FieldsWidget(int x, int y, int width, int height, Minecraft client, Vec3 defaultValue) {
 		super(x, y, width, height, Component.empty(),  AbstractScrollArea.defaultSettings(10));
-		this.x = new EditBox(
+		this.x = new GlowcaseEditBox(
 			client.font,
 			x, y,
 			width / 3, height,
 			Component.empty()
 		);
 
-		this.y = new EditBox(
+		this.y = new GlowcaseEditBox(
 			client.font,
 			x + width / 3, y,
 			width / 3, height,
 			Component.empty()
 		);
 
-		this.z = new EditBox(
+		this.z = new GlowcaseEditBox(
 			client.font,
 			x + (width / 3 * 2), y,
 			width / 3, height,
@@ -48,10 +48,9 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.y.setValue(String.valueOf(defaultValue.y));
 		this.z.setValue(String.valueOf(defaultValue.z));
 
-		// FIXME removed in 26.1+
-//		this.x.setFilter(ParseUtil::canParseDouble);
-//		this.y.setFilter(ParseUtil::canParseDouble);
-//		this.z.setFilter(ParseUtil::canParseDouble);
+		this.x.setFilter(InputFilters::realNumber);
+		this.y.setFilter(InputFilters::realNumber);
+		this.z.setFilter(InputFilters::realNumber);
 
 		this.x.setResponder(s -> value = new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z));
 		this.y.setResponder(s -> value = new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z));
