@@ -26,8 +26,6 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.minecraft == null) return;
-
 		Identifier item = this.itemAcceptorBlockEntity.getItem();
 
 		this.itemWidget = new EditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());

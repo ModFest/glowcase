@@ -7,11 +7,12 @@ import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.ScreenImageCache.ScreenTexture;
 import dev.hephaestus.glowcase.packet.C2SEditTabletItem;
 import dev.hephaestus.glowcase.util.TextUtils;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.UUID;
-import net.minecraft.client.gui.GuiGraphics;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
@@ -142,16 +143,16 @@ public class TabletEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.renderBackground(context, mouseX, mouseY, delta);
-		context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
+	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractBackground(graphics, mouseX, mouseY, delta);
+		graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2, height / 2 - BG_HEIGHT / 2,
 			0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_WIDTH
 		);
 
 		// Render Slideshow
 
-		context.enableScissor(
+		graphics.enableScissor(
 			width / 2 - BG_WIDTH / 2 + SCREEN_X1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
 			width / 2 - BG_WIDTH / 2 + SCREEN_X2,
@@ -160,14 +161,14 @@ public class TabletEditScreen extends GlowcaseScreen {
 		//RenderSystem.enableBlend();
 
 		// Previous and Next Slide
-		renderPicture(context, previous_slide, width / 2 - BG_WIDTH / 2, height / 2 - 20, .8f);
-		renderPicture(context, next_slide, width / 2 + BG_WIDTH / 2, height / 2 - 20, .8f);
+		renderPicture(graphics, previous_slide, width / 2 - BG_WIDTH / 2, height / 2 - 20, .8f);
+		renderPicture(graphics, next_slide, width / 2 + BG_WIDTH / 2, height / 2 - 20, .8f);
 
 		// Fade-out Gradient
 		// We can't really use the build-in gradient because it only goes vertical
 
 		// Left
-		context.blit(
+		graphics.blit(
 			RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2 + SCREEN_X1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
@@ -177,7 +178,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 		);
 
 		// Right
-		context.blit(
+		graphics.blit(
 			RenderPipelines.GUI_TEXTURED, TEXTURE,
 			width / 2 - BG_WIDTH / 2 + SCREEN_X2 - IMG_WIDTH + 1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
@@ -187,10 +188,10 @@ public class TabletEditScreen extends GlowcaseScreen {
 		);
 
 		// Current slide
-		renderPicture(context, current_slide, width / 2, height / 2 - 20, 1f);
+		renderPicture(graphics, current_slide, width / 2, height / 2 - 20, 1f);
 
 		//RenderSystem.disableBlend();
-		context.disableScissor();
+		graphics.disableScissor();
 	}
 
 	/**
@@ -198,7 +199,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 	 *
 	 * <p>The screen texture will be rescaled to fit within the IMG_WIDTH and IMG_HEIGHT constants.</p>
 	 */
-	public void renderPicture(GuiGraphics context, @Nullable ScreenTexture slide, int x, int y, float scale) {
+	public void renderPicture(GuiGraphicsExtractor graphics, @Nullable ScreenTexture slide, int x, int y, float scale) {
 		if (slide == null || slide.getTexture().getSecond() == null)
 			return;
 
@@ -213,7 +214,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 		int scaled_width = (int) (cur_width * final_scale);
 		int scaled_height = (int) (cur_height * final_scale);
 
-		context.blit(
+		graphics.blit(
 			RenderPipelines.GUI_TEXTURED, slide.getTexture().getSecond(),
 			x - scaled_width / 2, y - scaled_height / 2, 0, 0,
 			scaled_width, scaled_height, scaled_width, scaled_height

@@ -6,7 +6,7 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.font.TextFieldHelper;
@@ -95,21 +95,19 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		if (this.minecraft == null) return;
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-		super.render(context, mouseX, mouseY, delta);
-
-		context.pose().pushMatrix();
-		context.pose().translate(0, 40 + 2 * this.width / 100F);
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(0, 40 + 2 * this.width / 100F);
 		for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
 			var text = this.currentRow == i ? Component.literal(this.popupBlockEntity.getRawLine(i)) : this.popupBlockEntity.lines.get(i);
 
 			int lineWidth = this.font.width(text);
 			switch (this.popupBlockEntity.textAlignment) {
-				case LEFT -> context.drawString(minecraft.font, text, this.width / 10, i * 12, this.popupBlockEntity.color);
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> context.drawString(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
-				case RIGHT -> context.drawString(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
+				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.popupBlockEntity.color);
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
+				case RIGHT -> graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
 			}
 		}
 
@@ -136,19 +134,19 @@ public class PopupBlockEditScreen extends GlowcaseScreen {
 			int caretStartY = this.currentRow * 12;
 			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.titleEntryWidget.canConsumeInput() && !this.colorEntryWidget.canConsumeInput()) {
 				if (selectionStart < line.length()) {
-					context.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
+					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
 				} else {
-					context.drawString(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
+					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
 				}
 			}
 
 			if (caretStart != caretEnd) {
 				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-				context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
+				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 			}
 		}
 
-		context.pose().popMatrix();
+		graphics.pose().popMatrix();
 	}
 
 	@Override

@@ -8,11 +8,12 @@ import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;
+import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
-import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -27,12 +28,13 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
-import java.util.Objects;
-import java.util.Optional;
+import net.minecraft.resources.ResourceKey;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ParticleDisplayEditScreen extends GlowcaseScreen {
@@ -88,9 +90,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 
 		suggestionWidget = SuggestionListWidget.forTextFieldWithStaticSuggestions(particleId, minecraft.font, validParticles, Identifier::toString, this);
 
-		particleId.setResponder((text) -> {
-			suggestionWidget.updateSuggestions(validParticles, text, this);
-		});
+		particleId.setResponder((text) -> suggestionWidget.updateSuggestions(validParticles, text, this));
 		// endregion
 
 		// region Position
@@ -191,61 +191,61 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		Objects.requireNonNull(this.minecraft);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.position_mean"),
 			width / 10, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.position_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 - 60) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.velocity_mean"),
 			width / 10, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.velocity_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 - 10) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.count_mean"),
 			width / 10, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.count_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 + 40) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.tick_rate_mean"),
 			width / 10, (height / 2 + 90) - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			minecraft.font,
 			Component.translatable("gui.glowcase.tick_rate_std_dev"),
 			width / 10 + (4 * width / 10) + 6, (height / 2 + 90) - 20,
@@ -253,7 +253,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 		);
 
 		// render the list over everything
-		suggestionWidget.renderWidget(context, mouseX, mouseY, delta);
+		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override

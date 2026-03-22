@@ -22,8 +22,6 @@ public class HyperlinkBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		if (this.minecraft == null) return;
-
 		this.titleEntryWidget = new EditBox(this.minecraft.font, width / 10, height / 2 - 30, 8 * width / 10, 20, Component.empty());
 		this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
 		this.titleEntryWidget.setValue(this.hyperlinkBlockEntity.getTitle());

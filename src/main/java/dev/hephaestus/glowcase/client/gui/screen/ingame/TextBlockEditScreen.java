@@ -7,14 +7,13 @@ import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -201,65 +200,63 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		if (this.minecraft != null) {
-			super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-			context.pose().pushMatrix();
-			context.pose().translate(0, 40 + 2 * this.width / 100F);
-			for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-				var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(0, 40 + 2 * this.width / 100F);
+		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
+			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
 
-				int lineWidth = this.font.width(text);
-				switch (this.textBlockEntity.textAlignment) {
-					case LEFT ->
-						context.drawString(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
-					case CENTER, CENTER_LEFT, CENTER_RIGHT ->
-						context.drawString(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
-					case RIGHT ->
-						context.drawString(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
-				}
+			int lineWidth = this.font.width(text);
+			switch (this.textBlockEntity.textAlignment) {
+				case LEFT ->
+					graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
+				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
+					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
+				case RIGHT ->
+					graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
 			}
-
-			int caretStart = this.selectionManager.getCursorPos();
-			int caretEnd = this.selectionManager.getSelectionPos();
-
-			if (caretStart >= 0) {
-				String line = this.textBlockEntity.getRawLine(this.currentRow);
-				int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-				int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
-
-				String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
-				int startX = this.minecraft.font.width(preSelection);
-
-				float push = switch (this.textBlockEntity.textAlignment) {
-					case LEFT -> this.width / 10F;
-					case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
-					case RIGHT -> this.width - this.width / 10F - this.font.width(line);
-				};
-
-				startX += (int) push;
-
-
-				int caretStartY = this.currentRow * 12;
-				if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
-					if (selectionStart < line.length()) {
-						context.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
-					} else {
-						context.drawString(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
-					}
-				}
-
-				if (caretStart != caretEnd) {
-					int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-					context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
-				}
-			}
-
-			context.pose().popMatrix();
-			context.drawString(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
-			colorPickerWidget.render(context, mouseX, mouseY, delta);
 		}
+
+		int caretStart = this.selectionManager.getCursorPos();
+		int caretEnd = this.selectionManager.getSelectionPos();
+
+		if (caretStart >= 0) {
+			String line = this.textBlockEntity.getRawLine(this.currentRow);
+			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
+			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
+
+			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
+			int startX = this.minecraft.font.width(preSelection);
+
+			float push = switch (this.textBlockEntity.textAlignment) {
+				case LEFT -> this.width / 10F;
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
+				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
+			};
+
+			startX += (int) push;
+
+
+			int caretStartY = this.currentRow * 12;
+			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
+				if (selectionStart < line.length()) {
+					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
+				} else {
+					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
+				}
+			}
+
+			if (caretStart != caretEnd) {
+				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
+				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
+			}
+		}
+
+		graphics.pose().popMatrix();
+		graphics.text(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
+		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override

@@ -1,28 +1,27 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Floats;
-
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
 import dev.hephaestus.glowcase.client.util.EmiClientUtils;
+import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
 import dev.hephaestus.glowcase.util.EmiUtils;
 import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3x2fStack;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public class RecipeBlockEditScreen extends GlowcaseScreen {
 	private static final List<Identifier> NO_SUGGESTIONS = List.of();
@@ -116,16 +115,15 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
-		if (this.minecraft == null) return;
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		if (fontHeight == -1) {
 			fontHeight = this.minecraft.font.lineHeight;
 			baseY = height / 2 - ((2 * fontHeight + 95) / 2) + fontHeight - 46;
 		}
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.recipe"),
 			width / 2 - (this.minecraft.font.width(Component.translatable("gui.glowcase.recipe")) / 2),
@@ -133,7 +131,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.pitch"),
 			((width - 145) / 2) + 35 - (this.minecraft.font.width(Component.translatable("gui.glowcase.pitch")) / 2),
@@ -141,7 +139,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.yaw"),
 			((width - 145) / 2) + 75 + 35 - (this.minecraft.font.width(Component.translatable("gui.glowcase.yaw")) / 2),
@@ -149,7 +147,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			0xFFFFFFFF
 		);
 		// render the list over everything
-		suggestionWidget.renderWidget(context, mouseX, mouseY, delta);
+		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		if (GlowcaseClient.EMI_LOADED && glowcaseWidgetHolder.get() != null) {
 			int baseYForRecipe = (baseY + fontHeight + 95);
@@ -160,11 +158,11 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 			int holderWidth = EmiClientUtils.getHolderWidth(widgetHolder);
 			int holderHeight = EmiClientUtils.getHolderHeight(widgetHolder);
 
-			Matrix3x2fStack matrixStack = context.pose();
+			Matrix3x2fStack matrixStack = graphics.pose();
 			matrixStack.pushMatrix();
 			matrixStack.translate(width / 2f - holderWidth / 2f, baseYForRecipe + spaceForRecipe / 2f - holderHeight / 2f);
 
-			EmiClientUtils.renderEmiRecipe(widgetHolder, context, delta);
+			EmiClientUtils.renderEmiRecipe(widgetHolder, graphics, delta);
 
 			matrixStack.popMatrix();
 		}

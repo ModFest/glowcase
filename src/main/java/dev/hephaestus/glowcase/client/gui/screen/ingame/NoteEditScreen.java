@@ -9,19 +9,14 @@ import dev.hephaestus.glowcase.packet.C2SEditNoteItem;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -30,6 +25,11 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class NoteEditScreen extends TextEditorScreen {
@@ -200,16 +200,14 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		if (minecraft == null) return;
-
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		List<? extends FormattedText> screen = signing ? signing_text : lines;
 		NoteComponent.Alignment alignment = signing ? NoteComponent.Alignment.LEFT : textAlignment;
 
 		// Ensure no overflow is happening
-		context.enableScissor(
+		graphics.enableScissor(
 			width / 2 - BG_WIDTH / 2 + SCREEN_X1,
 			height / 2 - BG_HEIGHT / 2 + SCREEN_Y1,
 			width / 2 + BG_WIDTH / 2 + SCREEN_X2,
@@ -246,18 +244,18 @@ public class NoteEditScreen extends TextEditorScreen {
 				};
 			}
 
-			context.drawString(font, Language.getInstance().getVisualOrder(text), (int) x, (height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y) + (font.lineHeight * i), NoteTextColorResource.TXT_COLOR, false);
+			graphics.text(font, Language.getInstance().getVisualOrder(text), (int) x, (height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y) + (font.lineHeight * i), NoteTextColorResource.TXT_COLOR, false);
 
 			if (overflow && i == currentRow) {
 				//RenderSystem.enableBlend();
 				for (int j = 0; j < font.lineHeight; j++) {
-					context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
+					graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
 						width / 2 - BG_WIDTH / 2 + SCREEN_X1,
 						height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow) + j,
 						0, BG_SIZE - 1, 32, 1, BG_SIZE, BG_SIZE
 					);
 
-					context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
+					graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,
 						width / 2 + BG_WIDTH / 2 + SCREEN_X2 - 32,
 						height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow) + j,
 						0, BG_SIZE - 2, 32, 1, BG_SIZE, BG_SIZE
@@ -265,11 +263,11 @@ public class NoteEditScreen extends TextEditorScreen {
 				}
 
 				if (x < (width / 2f - BG_WIDTH / 2f + SCREEN_X1)) {
-					context.drawString(font, ARROW_LEFT_SYMBOL, width / 2 - BG_WIDTH / 2 + SCREEN_X1 + 1, height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow), NoteTextColorResource.TXT_COLOR, false);
+					graphics.text(font, ARROW_LEFT_SYMBOL, width / 2 - BG_WIDTH / 2 + SCREEN_X1 + 1, height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow), NoteTextColorResource.TXT_COLOR, false);
 				}
 
 				if (editing_line_offset > 0) {
-					context.drawString(font, ARROW_RIGHT_SYMBOL, width / 2 + BG_WIDTH / 2 + SCREEN_X2 - font.width(ARROW_RIGHT_SYMBOL) - 1, height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow), NoteTextColorResource.TXT_COLOR, false);
+					graphics.text(font, ARROW_RIGHT_SYMBOL, width / 2 + BG_WIDTH / 2 + SCREEN_X2 - font.width(ARROW_RIGHT_SYMBOL) - 1, height / 2 - BG_HEIGHT / 2 + TXT_OFF_Y + (font.lineHeight * currentRow), NoteTextColorResource.TXT_COLOR, false);
 				}
 
 				//RenderSystem.disableBlend();
@@ -318,19 +316,19 @@ public class NoteEditScreen extends TextEditorScreen {
 			int caretLength = 9;
 			if (this.ticksSinceOpened / 6 % 2 == 0) {
 				if (selectionStart < line.length()) {
-					context.fill(startX, caretStartY, startX + 1, caretStartY + caretLength, 0xCC000000);
+					graphics.fill(startX, caretStartY, startX + 1, caretStartY + caretLength, 0xCC000000);
 				} else {
-					context.drawString(font, "_", startX, caretStartY, NoteTextColorResource.TXT_COLOR, false);
+					graphics.text(font, "_", startX, caretStartY, NoteTextColorResource.TXT_COLOR, false);
 				}
 			}
 
 			if (caretStart != caretEnd) {
 				int endX = startX + font.width(line.substring(selectionStart, selectionEnd));
-				context.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
+				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
 			}
 		}
 
-		context.disableScissor();
+		graphics.disableScissor();
 	}
 
 	@Override
@@ -339,8 +337,8 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		this.renderTransparentBackground(context);
+	public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+		this.extractTransparentBackground(context);
 		context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, width / 2 - BG_WIDTH / 2, height / 2 - BG_HEIGHT / 2, 0, 0, BG_WIDTH, BG_HEIGHT, BG_SIZE, BG_SIZE);
 	}
 

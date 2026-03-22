@@ -6,23 +6,21 @@ import dev.hephaestus.glowcase.client.gui.screen.ingame.ColorPickerIncludedScree
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.compress.utils.Lists;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
-import org.joml.Vector3f;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -146,17 +144,17 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	@Override
-	protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
+	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		if (!visible) return;
 		updateHSL();
 
-		//context.setShaderColor(1f, 1f, 1f, this.alpha);
+		//graphics.setShaderColor(1f, 1f, 1f, this.alpha);
 		/*RenderSystem.enableBlend();
 		RenderSystem.enableDepthTest();*/
-		Matrix3x2fStack matrices = context.pose();
-		//context.applyBlur();
+		Matrix3x2fStack matrices = graphics.pose();
+		//graphics.applyBlur();
 
-		context.nextStratum();
+		graphics.nextStratum();
 		matrices.pushMatrix();
 
 		int x = this.getX();
@@ -166,10 +164,10 @@ public class ColorPickerWidget extends AbstractButton {
 		int height = this.getHeight();
 
 		//background
-		context.blit(RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
+		graphics.blit(RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("textures/gui/inworld_menu_list_background.png"), x, y, 0, 0, width, height, 32, 32);
 		if (this.isHoveredOrFocused()) {
 			//outline
-			drawOutline(context, x, y, width, height, Color.white);
+			drawOutline(graphics, x, y, width, height, Color.white);
 		}
 
 		//color picker stuff
@@ -177,22 +175,22 @@ public class ColorPickerWidget extends AbstractButton {
 		this.confirmButton.setPosition(x + width - presetSize - presetPadding, y + height - presetSize - 2, z + 1, presetSize, presetSize + 2);
 		this.cancelButton.setPosition(x + width - presetSize * 2 - presetPadding * 2 - 1, y + height - presetSize - 2, z + 1, presetSize, presetSize + 2);
 
-		drawColorPreview(context, previewX, previewY, previewWidth, previewHeight);
-		drawSatLight(context, satLightX, satLightY, satLightWidth, satLightHeight);
-		drawHueBar(context, hueX, hueY, hueWidth, hueHeight, z + 1);
+		drawColorPreview(graphics, previewX, previewY, previewWidth, previewHeight);
+		drawSatLight(graphics, satLightX, satLightY, satLightWidth, satLightHeight);
+		drawHueBar(graphics, hueX, hueY, hueWidth, hueHeight, z + 1);
 		if (this.includePresets) {
 			//sorta dynamic but also really specific to keep it all aligned
 			//I'm not going to worry about it a lot though because I do not see the custom preset thing being used a lot if at all
-			drawPresets(context, mouseX, mouseY, delta, previewX, presetY, y + height - presetY, z + 1, presetSize, width / (presetSize + presetPadding), presetPadding);
+			drawPresets(graphics, mouseX, mouseY, delta, previewX, presetY, y + height - presetY, z + 1, presetSize, width / (presetSize + presetPadding), presetPadding);
 		}
 
-		this.confirmButton.render(context, mouseX, mouseY, delta);
-		this.cancelButton.render(context, mouseX, mouseY, delta);
+		this.confirmButton.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.cancelButton.extractRenderState(graphics, mouseX, mouseY, delta);
 
 
 		matrices.popMatrix();
 
-		//context.setShaderColor(1f, 1f, 1f, 1f);
+		//graphics.setShaderColor(1f, 1f, 1f, 1f);
 	}
 
 	public void updatePositions() {
@@ -220,11 +218,11 @@ public class ColorPickerWidget extends AbstractButton {
 		presetY = hueY + hueHeight + presetPadding;
 	}
 
-	private void drawColorPreview(GuiGraphics context, int x, int y, int width, int height) {
-		context.fill(x, y, x + width, y + height, this.color.getRGB());
+	private void drawColorPreview(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+		graphics.fill(x, y, x + width, y + height, this.color.getRGB());
 	}
 
-	private void drawHueBar(GuiGraphics context, int x, int y, int width, int height, int z) {
+	private void drawHueBar(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int z) {
 		//rainbow gradient
 		int[] colors = new int[]{
 			Color.red.getRGB(), Color.yellow.getRGB(), Color.green.getRGB(),
@@ -235,7 +233,7 @@ public class ColorPickerWidget extends AbstractButton {
 		int maxColors = colors.length - 1;
 		for (int color = 0; color < maxColors; color++) {
 			sidewaysGradient(
-				context,
+				graphics,
 				x + (width / maxColors * (color)), y,
 				width / maxColors, height,
 				colors[color], colors[color + 1]
@@ -243,41 +241,41 @@ public class ColorPickerWidget extends AbstractButton {
 		}
 
 		//thumb
-		context.fill(hueThumbX - 3, y - 1, hueThumbX + 3, y + height + 1, getRgbFromHueThumb());
-		drawOutline(context, hueThumbX - 3, y - 1, 6, height + 2, Color.white);
+		graphics.fill(hueThumbX - 3, y - 1, hueThumbX + 3, y + height + 1, getRgbFromHueThumb());
+		drawOutline(graphics, hueThumbX - 3, y - 1, 6, height + 2, Color.white);
 	}
 
-	private void drawSatLight(GuiGraphics context, int x, int y, int width, int height) {
+	private void drawSatLight(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
 		//white to current color's hue, left to right
-		sidewaysGradient(context, x, y, width, height, Color.white.getRGB(), getRgbFromHueThumb());
+		sidewaysGradient(graphics, x, y, width, height, Color.white.getRGB(), getRgbFromHueThumb());
 
 		//transparent to black, top to bottom
-		context.fillGradient(x, y, x + width, y + height, 0x00000000, Color.black.getRGB());
+		graphics.fillGradient(x, y, x + width, y + height, 0x00000000, Color.black.getRGB());
 
 		//thumb
-		context.fill(satLightThumbX - 4, satLightThumbY - 4, satLightThumbX + 4, satLightThumbY + 4, this.color.getRGB());
-		drawOutline(context, satLightThumbX - 4, satLightThumbY - 4, 8, 8, Color.white);
+		graphics.fill(satLightThumbX - 4, satLightThumbY - 4, satLightThumbX + 4, satLightThumbY + 4, this.color.getRGB());
+		drawOutline(graphics, satLightThumbX - 4, satLightThumbY - 4, 8, 8, Color.white);
 	}
 
-	private void drawOutline(GuiGraphics context, int x, int y, int width, int height, Color outlineColor) {
+	private void drawOutline(GuiGraphicsExtractor graphics, int x, int y, int width, int height, Color outlineColor) {
 		int color = outlineColor.getRGB();
-		context.fill(x, y, x + width, y + 1, color);
-		context.fill(x, y, x + 1, y + height, color);
-		context.fill(x + width, y, x + width - 1, y + height, color);
-		context.fill(x, y + height, x + width, y + height - 1, color);
+		graphics.fill(x, y, x + width, y + 1, color);
+		graphics.fill(x, y, x + 1, y + height, color);
+		graphics.fill(x + width, y, x + width - 1, y + height, color);
+		graphics.fill(x, y + height, x + width, y + height - 1, color);
 	}
 
-	private void sidewaysGradient(GuiGraphics context, int x, int y, int width, int height, int startColor, int endColor) {
-		context.guiRenderState.submitGuiElement(new GuiElementRenderState() {
+	private void sidewaysGradient(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int startColor, int endColor) {
+		graphics.guiRenderState.addGuiElement(new GuiElementRenderState() {
 
 			@Override
 			public ScreenRectangle bounds() {
-				return new ScreenRectangle(x, y, width, height).transformMaxBounds(context.pose());
+				return new ScreenRectangle(x, y, width, height).transformMaxBounds(graphics.pose());
 			}
 
 			@Override
 			public void buildVertices(VertexConsumer vertices) {
-				Matrix3x2fStack matrix = context.pose();
+				Matrix3x2fStack matrix = graphics.pose();
 				vertices.addVertexWith2DPose(matrix, x, y).setColor(startColor);
 				vertices.addVertexWith2DPose(matrix, x, y + height).setColor(startColor);
 				vertices.addVertexWith2DPose(matrix, x + width, y + height).setColor(endColor);
@@ -301,13 +299,13 @@ public class ColorPickerWidget extends AbstractButton {
 		});
 	}
 
-	private void drawPresets(GuiGraphics context, int mouseX, int mouseY, float delta, int x, int y, int height, int z, int presetSize, int presetsPerLine, int presetPadding) {
+	private void drawPresets(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, int x, int y, int height, int z, int presetSize, int presetsPerLine, int presetPadding) {
 		int presetX = x;
 		int presetY = y;
 		int renderedPresets = 0;
 		for (ColorPresetWidget preset : this.presetWidgets) {
 			preset.setPosition(presetX, presetY, z, presetSize);
-			preset.render(context, mouseX, mouseY, delta);
+			preset.extractRenderState(graphics, mouseX, mouseY, delta);
 			presetX += presetSize + presetPadding;
 			renderedPresets++;
 			if (renderedPresets % presetsPerLine == 0) {

@@ -3,7 +3,7 @@ package dev.hephaestus.glowcase.client.gui.widget.ingame;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.EditBox;
@@ -70,10 +70,10 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		x.renderWidget(context, mouseX, mouseY, delta);
-		y.renderWidget(context, mouseX, mouseY, delta);
-		z.renderWidget(context, mouseX, mouseY, delta);
+	protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+		x.extractWidgetRenderState(context, mouseX, mouseY, delta);
+		y.extractWidgetRenderState(context, mouseX, mouseY, delta);
+		z.extractWidgetRenderState(context, mouseX, mouseY, delta);
 	}
 
 	@Override

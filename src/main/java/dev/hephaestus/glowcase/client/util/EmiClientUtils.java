@@ -4,10 +4,10 @@ package dev.hephaestus.glowcase.client.util;
 //import dev.emi.emi.api.recipe.EmiRecipe;
 //import dev.emi.emi.api.widget.Widget;
 //import dev.emi.emi.widget.RecipeBackground;
-import dev.hephaestus.glowcase.util.EmiUtils;
 import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
 import java.util.concurrent.atomic.AtomicReference;
-import net.minecraft.client.gui.GuiGraphics;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 public class EmiClientUtils {
@@ -46,7 +46,7 @@ public class EmiClientUtils {
 		recipe.addWidgets(glowcaseWidgetHolder);*/
 	}
 
-	public static void renderEmiRecipe(RequiresEmiLoaded widgetHolder, GuiGraphics context, float delta) {
+	public static void renderEmiRecipe(RequiresEmiLoaded widgetHolder, GuiGraphicsExtractor context, float delta) {
 		/*GlowcaseWidgetHolder holder = (GlowcaseWidgetHolder) widgetHolder;
 
 		for (Widget widget : holder.getWidgets()) {

@@ -6,7 +6,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
@@ -18,6 +18,7 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -137,8 +138,8 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 		// Tooltip is handled this way, since setting the tooltip directly on the help button widget causes the tooltip
 		// to clip off-screen at higher GUI scales.
 		/*if (this.spriteWidgetHelpButton.isHovered() || (this.spriteWidgetHelpButton.isFocused() && this.client.getNavigationType().isKeyboard())) {
@@ -146,7 +147,7 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 		}*/
 
 		// render the list over everything
-		suggestionWidget.renderWidget(context, mouseX, mouseY, delta);
+		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override

@@ -17,6 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
@@ -27,6 +28,7 @@ public record ItemDisplayBlockEntityRenderer(
 
 	public static class ItemDisplayRenderState extends BlockEntityRenderState {
 		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
+		public BlockState renderBlockState;
 		public boolean renderAsBlock;
 		public boolean shouldRenderPlaceholder;
 		public float yaw;
@@ -45,12 +47,15 @@ public record ItemDisplayBlockEntityRenderer(
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 
 		this.context.itemModelResolver().updateForTopItem(state.itemRenderState, blockEntity.getStack(), ItemDisplayContext.FIXED, blockEntity.getLevel(), null, (int) state.blockPos.asLong());
-		state.renderAsBlock = blockEntity.getRenderAsBlock() && blockEntity.getStack().getItem() instanceof BlockItem blockItem;
+		state.renderAsBlock = blockEntity.getRenderAsBlock() && blockEntity.getStack().getItem() instanceof BlockItem;
 		state.shouldRenderPlaceholder = blockEntity.matchesStack(ItemStack.EMPTY) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 		state.yaw = blockEntity.getYaw();
 		state.pitch = blockEntity.getPitch();
 		state.offset = blockEntity.getOffset();
 		state.scale = blockEntity.getScale();
+		if (state.renderAsBlock) {
+			state.renderBlockState = ((BlockItem) blockEntity.getStack().getItem()).getBlock().defaultBlockState();
+		}
 	}
 
 	@Override
@@ -62,12 +67,13 @@ public record ItemDisplayBlockEntityRenderer(
 
 		if (state.renderAsBlock) {
 			//		FIXME 26.1
-//			poseStack.translate(-0.5D, -0.5D, -0.5D);
-//
-//			poseStack.scale(entity.getScale().x(), entity.getScale().y(), entity.getScale().z());
-//			poseStack.mulPose(Axis.XP.rotationDegrees(entity.getPitch()));
-//
-//			Minecraft.getInstance().getBlockRenderer().renderSingleBlock(blockItem.getBlock().defaultBlockState(), poseStack, vertexConsumers, light, overlay);
+			poseStack.translate(-0.5D, -0.5D, -0.5D);
+
+			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
+			poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
+
+			submitNodeCollector.submitBlockModel(poseStack, state.renderBlockState);
+			Minecraft.getInstance().getBlockRenderer().renderSingleBlock(blockItem.getBlock().defaultBlockState(), poseStack, vertexConsumers, light, overlay);
 		} else {
 			poseStack.translate(0D, 0.5D, 0D);
 

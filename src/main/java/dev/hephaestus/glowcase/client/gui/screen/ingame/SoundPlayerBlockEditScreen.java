@@ -1,12 +1,12 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseTextFieldWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSoundBlock;
 import dev.hephaestus.glowcase.util.ParseUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
@@ -137,59 +137,59 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.sound_category_no_arg"),
 			this.categoryButton.getX(), this.categoryButton.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.cancel_others"),
 			this.cancelOthersButton.getX(), this.cancelOthersButton.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.volume"),
 			this.volume.getX(), this.volume.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.pitch"),
 			this.pitch.getX(), this.pitch.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.repeat_delay"),
 			this.repeatDelay.getX(), this.repeatDelay.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.distance"),
 			this.distance.getX(), this.distance.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.sound_positioning_no_arg"),
 			this.relativeButton.getX(), this.relativeButton.getY() - 20,
 			0xFFFFFFFF
 		);
 
-		context.drawString(
+		graphics.text(
 			this.minecraft.font,
 			Component.translatable("gui.glowcase.offset"),
 			this.offset.getX(), this.offset.getY() - 20,
@@ -197,7 +197,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 		);
 
 		// render the list over everything
-		suggestionWidget.renderWidget(context, mouseX, mouseY, delta);
+		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override

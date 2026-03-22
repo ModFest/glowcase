@@ -7,18 +7,18 @@ import java.util.function.Function;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -138,7 +138,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 	}
 
 	@Override
-	public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		if (suggestions.isEmpty()) return;
 
 		if (textFieldWidget != null && !textFieldWidget.isFocused()) {
@@ -146,11 +146,11 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			this.setFocused(false);
 		}
 
-		context.nextStratum();
-		context.guiRenderState.submitGuiElement(new GuiElementRenderState() {
+		graphics.nextStratum();
+		graphics.guiRenderState.addGuiElement(new GuiElementRenderState() {
 			@Override
 			public void buildVertices(VertexConsumer vertices) {
-				Matrix3x2fStack matrix = context.pose();
+				Matrix3x2fStack matrix = graphics.pose();
 				vertices.addVertexWith2DPose(matrix, 0, 0).setUv(0, 0).setColor(0xFFFFFFFF);
 				vertices.addVertexWith2DPose(matrix, 0, 1).setUv(0, 1).setColor(0xFFFFFFFF);
 				vertices.addVertexWith2DPose(matrix, 1, 1).setUv(1, 1).setColor(0xFFFFFFFF);
@@ -178,8 +178,8 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			}
 		});
 
-		context.nextStratum();
-		context.pose().pushMatrix();
+		graphics.nextStratum();
+		graphics.pose().pushMatrix();
 
 		int bgColor = 0x90000000;
 		int adjustedLineHeight = baseLineHeight + padding * 2;
@@ -193,13 +193,13 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 		int x = SuggestionListWidget.this.getX();
 		int y = SuggestionListWidget.this.getY();
-		context.enableScissor(x, y, x + listWidth, y + dynamicHeight);
+		graphics.enableScissor(x, y, x + listWidth, y + dynamicHeight);
 
-		context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
+		graphics.blit(FRAMEBUFFER.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1);
 
-		context.fill(x, y, x + listWidth, y + dynamicHeight, bgColor);
+		graphics.fill(x, y, x + listWidth, y + dynamicHeight, bgColor);
 
-		drawOutline(context, x, y, listWidth, dynamicHeight, 0xFFFFFFFF);
+		drawOutline(graphics, x, y, listWidth, dynamicHeight, 0xFFFFFFFF);
 
 		if (scrollOffset > totalLines - rows) {
 			scrollOffset = Math.max(0, totalLines - rows);
@@ -217,19 +217,19 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			// highlight hovered suggestion
 			boolean hover = mouseX >= x && mouseX <= x + listWidth && mouseY >= suggestionY && mouseY < suggestionY + adjustedLineHeight;
 			if (hover || suggestionIndex == selectedItem) {
-				context.fill(x, suggestionY, x + listWidth, suggestionY + adjustedLineHeight, 0xFF217C08);
-				drawOutline(context, x, suggestionY, listWidth, adjustedLineHeight, 0xFFFFFFFF);
+				graphics.fill(x, suggestionY, x + listWidth, suggestionY + adjustedLineHeight, 0xFF217C08);
+				drawOutline(graphics, x, suggestionY, listWidth, adjustedLineHeight, 0xFFFFFFFF);
 			}
 
 			// detect if the text is too long AND if the item is hovered, then scroll, otherwise don't
 			if (textRenderer.width(suggestionText) > (this.getWidth() - padding - 20)) {
-				drawOverflowText(context, textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding - 2, x + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFFFF, hover);
+				drawOverflowText(graphics, textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding - 2, x + listWidth - padding, suggestionY + adjustedLineHeight, 0xFFFFFFFF, hover);
 			} else {
-				context.drawString(textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding + 1, 0xFFFFFFFF);
+				graphics.text(textRenderer, Component.literal(suggestionText), x + padding, suggestionY + padding + 1, 0xFFFFFFFF);
 			}
 		}
 
-		context.disableScissor();
+		graphics.disableScissor();
 
 		// scrollbar thingy
 		if (scrollable) {
@@ -237,14 +237,14 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 			int sbX = x + listWidth + 5;
 
-			context.enableScissor(sbX, y, sbX + scrollbarWidth, y + dynamicHeight);
+			graphics.enableScissor(sbX, y, sbX + scrollbarWidth, y + dynamicHeight);
 
-			context.submitBlit(RenderPipelines.GUI_TEXTURED, FRAMEBUFFER.getColorTextureView(),RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1, -1);
+			graphics.blit(FRAMEBUFFER.getColorTextureView(),RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1);
 
-			context.fill(sbX, y, sbX + scrollbarWidth, y + dynamicHeight, bgColor);
-			context.disableScissor();
+			graphics.fill(sbX, y, sbX + scrollbarWidth, y + dynamicHeight, bgColor);
+			graphics.disableScissor();
 
-			drawOutline(context, sbX, y, scrollbarWidth, dynamicHeight, 0xFFFFFFFF);
+			drawOutline(graphics, sbX, y, scrollbarWidth, dynamicHeight, 0xFFFFFFFF);
 
 			float visibleRatio = (float) rows / totalLines;
 			int handleHeight = Math.max((int) (visibleRatio * (dynamicHeight - 2 * 2)), 4);
@@ -255,10 +255,10 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			int handleY = y + 2 + handleYOffset;
 			int handleWidth = scrollbarWidth - 2 * 2;
 
-			context.fill(handleX, handleY, handleX + handleWidth, handleY + handleHeight, 0xFFFFFFFF);
+			graphics.fill(handleX, handleY, handleX + handleWidth, handleY + handleHeight, 0xFFFFFFFF);
 		}
 
-		context.pose().popMatrix();
+		graphics.pose().popMatrix();
 	}
 
 	@Override
@@ -374,7 +374,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 		return overList || overScrollbar;
 	}
 
-	private void drawOutline(GuiGraphics context, int x, int y, int width, int height, int color) {
+	private void drawOutline(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
 		context.fill(x, y, x + width, y + 1, color);
 		context.fill(x, y + height - 1, x + width, y + height, color);
 		context.fill(x, y, x + 1, y + height, color);
@@ -382,7 +382,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 	}
 
 	// similar to drawScrollableText but not centered
-	private void drawOverflowText(GuiGraphics context, Font textRenderer, Component text, int startX, int startY, int endX, int endY, int color, boolean hovered) {
+	private void drawOverflowText(GuiGraphicsExtractor context, Font textRenderer, Component text, int startX, int startY, int endX, int endY, int color, boolean hovered) {
 		int textRendererWidth = textRenderer.width(text);
 		int availableWidth = endX - startX;
 		int y = startY + ((endY - startY) - 9) / 2;
@@ -396,7 +396,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			int offset = (int) (scroll * extra);
 
 			context.enableScissor(startX, startY, endX, endY);
-			context.drawString(textRenderer, text, startX - offset, y, color);
+			context.text(textRenderer, text, startX - offset, y, color);
 			context.disableScissor();
 		} else {
 			// otherwise try to shorten the text as much as possible
@@ -471,7 +471,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			}
 
 			context.enableScissor(startX, startY, endX, endY);
-			context.drawString(textRenderer, Component.literal(finalText), startX, y, color);
+			context.text(textRenderer, Component.literal(finalText), startX, y, color);
 			context.disableScissor();
 		}
 	}
