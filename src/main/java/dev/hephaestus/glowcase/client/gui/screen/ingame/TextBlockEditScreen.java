@@ -68,12 +68,12 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		int middle = width / 2;
 
 		Button decreaseSize = Button.builder(Component.literal("-"), action -> {
-			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (/* FIXME store shift state somewhere Screen.hasShiftDown() ? 1F : */ 0.125F));
+			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (minecraft.hasShiftDown() ? 1F : 0.125F));
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 130, 0, 20, 20).build();
 
 		Button increaseSize = Button.builder(Component.literal("+"), action -> {
-			this.textBlockEntity.scale += /* FIXME store shift state somewhere Screen.hasShiftDown() ? 1F : */ 0.125F;
+			this.textBlockEntity.scale += minecraft.hasShiftDown() ? 1F : 0.125F;
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 110, 0, 20, 20).build();
 
@@ -106,7 +106,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.COLOR_MASK);
 
 				this.textBlockEntity.color = color;
-				//make sure it doesn't update from the color picker updating the text
+				// make sure it doesn't update from the color picker updating the text
 				if (this.colorEntryWidget.isFocused()) {
 					this.colorPickerWidget.setColor(new Color(color));
 				}
