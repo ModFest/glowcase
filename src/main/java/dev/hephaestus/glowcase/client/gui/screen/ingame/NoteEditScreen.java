@@ -97,7 +97,6 @@ public class NoteEditScreen extends TextEditorScreen {
 	@Override
 	protected void init() {
 		super.init();
-		if (minecraft == null) return;
 
 		selectionManager = new TextFieldHelper(
 			() -> signing ? (currentRow == 6 ? title : author) : getRawLine(currentRow),
