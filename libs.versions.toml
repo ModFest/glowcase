@@ -8,7 +8,7 @@ mc = "26.1-rc-2"
 fl = "0.18.4"
 fapi = "0.144.0+26.1"
 
-placeholder = "3.0.0-beta.1+26.1"
+placeholder = "3.0.0-beta.2+26.1"
 #polydex = "1.8.1+1.21.11"
 # emi = "1.1.19+1.21.1"
 modmenu = "18.0.0-alpha.5"
