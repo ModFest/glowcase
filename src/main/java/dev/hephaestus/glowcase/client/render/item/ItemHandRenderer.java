@@ -2,12 +2,12 @@ package dev.hephaestus.glowcase.client.render.item;
 
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Called when the item is being held in hand.
@@ -16,7 +16,7 @@ public abstract class ItemHandRenderer {
 	/**
 	 * Called on each frame when the player is holding the given stack.
 	 */
-	public abstract void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, ItemStack stack);
+	public abstract void render(PoseStack matrices, SubmitNodeCollector collector, int light, ItemStack stack);
 
 	/**
 	 * Whenever the item should be rendered or not.

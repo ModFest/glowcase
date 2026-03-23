@@ -1,32 +1,30 @@
 package dev.hephaestus.glowcase.client.render.item;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.ScreenImageCache;
 import dev.hephaestus.glowcase.client.render.block.entity.ScreenBlockEntityRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import org.joml.Matrix4f;
-
-import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.List;
+
 public class TabletItemHandRenderer extends ItemHandRenderer {
 	private static final Identifier TABLET_TEXTURE = Glowcase.id("textures/gui/tablet_hand.png");
 
 	@Override
-	public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, ItemStack stack) {
+	public void render(PoseStack matrices, SubmitNodeCollector collector, int light, ItemStack stack) {
 		matrices.pushPose();
 		//RenderSystem.enableBlend();
 
@@ -38,13 +36,12 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 		matrices.translate(-0.5F, -0.5F, 0.0F);
 		matrices.scale(0.0078125F, 0.0078125F, 0.0078125F);
 
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(TABLET_TEXTURE));
-		Matrix4f matrix4f = matrices.last().pose();
-
-		vertexConsumer.addVertex(matrix4f, -7.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 1.0F).setLight(light);
-		vertexConsumer.addVertex(matrix4f, 135.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 1.0F).setLight(light);
-		vertexConsumer.addVertex(matrix4f, 135.0F, -7.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 0.0F).setLight(light);
-		vertexConsumer.addVertex(matrix4f, -7.0F, -7.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 0.0F).setLight(light);
+		collector.submitCustomGeometry(matrices, RenderTypes.text(TABLET_TEXTURE), (matrix4f, vertexConsumer) -> {
+			vertexConsumer.addVertex(matrix4f, -7.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 1.0F).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 135.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 1.0F).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 135.0F, -7.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 0.0F).setLight(light);
+			vertexConsumer.addVertex(matrix4f, -7.0F, -7.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 0.0F).setLight(light);
+		});
 
 		if (!stack.has(Glowcase.SLIDESHOW_COMPONENT.get()) || !stack.has(Glowcase.CURRENT_SLIDE_COMPONENT.get())) {
 			matrices.popPose();
@@ -77,7 +74,7 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 
 			matrices.translate(off_x, off_y, -.01f);
 			matrices.scale(font_scale, font_scale, 1f);
-			textRenderer.drawInBatch(literal, 0, 0, 0xFFFFFFFF, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, light);
+			collector.submitText(matrices, 0, 0, Language.getInstance().getVisualOrder(literal), false, Font.DisplayMode.NORMAL, light, 0xFFFFFFFF, 0, 0);
 			matrices.translate(-off_x, -off_y, .01f);
 			matrices.scale(1f/font_scale, 1f/font_scale, 1f);
 		}
@@ -93,30 +90,29 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 			return;
 		}
 
-		vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(texture));
-		matrix4f = matrices.last().pose();
+		collector.submitCustomGeometry(matrices, RenderTypes.text(texture), (matrix4f, vertexConsumer) -> {
+			float pixel = 142f / 64f;
 
-		float pixel = 142f/64f;
+			float x1 = pixel * -21;
+			float y1 = pixel * -15;
+			float x2 = pixel * 21;
+			float y2 = pixel * 13;
 
-		float x1 = pixel * -21;
-		float y1 = pixel * -15;
-		float x2 = pixel * 21;
-		float y2 = pixel * 13;
+			Pair<Float, Float> scale = ScreenBlockEntityRenderer.getScale(x2 - x1, y2 - y1, image.getWidth(), image.getHeight());
 
-		Pair<Float, Float> scale = ScreenBlockEntityRenderer.getScale(x2-x1, y2-y1, image.getWidth(), image.getHeight());
+			Float scaled_width = scale.getFirst();
+			Float scaled_height = scale.getSecond();
 
-		Float scaled_width = scale.getFirst();
-		Float scaled_height = scale.getSecond();
+			x1 = -scaled_width / 2f;
+			x2 = scaled_width / 2f;
+			y1 = -scaled_height / 2f;
+			y2 = scaled_height / 2f;
 
-		x1 = -scaled_width / 2f;
-		x2 = scaled_width / 2f;
-		y1 = -scaled_height / 2f;
-		y2 = scaled_height / 2f;
-
-		vertexConsumer.addVertex(matrix4f, 64+x1, 64+y1, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 0f).setLight(light);
-		vertexConsumer.addVertex(matrix4f, 64+x1, 64+y2, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 1f).setLight(light);
-		vertexConsumer.addVertex(matrix4f, 64+x2, 64+y2, -0.01F).setColor(CommonColors.WHITE).setUv(1f, 1f).setLight(light);
-		vertexConsumer.addVertex(matrix4f, 64+x2, 64+y1, -0.01F).setColor(CommonColors.WHITE).setUv(1f, 0f).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 64 + x1, 64 + y1, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 0f).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 64 + x1, 64 + y2, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 1f).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 64 + x2, 64 + y2, -0.01F).setColor(CommonColors.WHITE).setUv(1f, 1f).setLight(light);
+			vertexConsumer.addVertex(matrix4f, 64 + x2, 64 + y1, -0.01F).setColor(CommonColors.WHITE).setUv(1f, 0f).setLight(light);
+		});
 
 		matrices.popPose();
 	}

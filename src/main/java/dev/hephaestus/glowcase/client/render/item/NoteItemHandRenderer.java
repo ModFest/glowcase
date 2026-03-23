@@ -1,25 +1,23 @@
 package dev.hephaestus.glowcase.client.render.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.NoteEditScreen;
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import org.joml.Matrix4f;
-
-import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 public class NoteItemHandRenderer extends ItemHandRenderer {
 	private static final Identifier NOTE_TEXTURE = Glowcase.id("textures/gui/note.png");
@@ -32,7 +30,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 	private static final int TXT_X_PADDING = 15 * 2;
 
 	@Override
-	public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, ItemStack stack) {
+	public void render(PoseStack matrices, SubmitNodeCollector collector, int light, ItemStack stack) {
 		matrices.pushPose();
 		matrices.mulPose(Axis.YP.rotationDegrees(180.0F));
 		matrices.mulPose(Axis.ZP.rotationDegrees(180.0F));
@@ -42,10 +40,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 
 		// Render background
 
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderTypes.text(NOTE_TEXTURE));
-		Matrix4f matrix4f = matrices.last().pose();
-
-		{
+		collector.submitCustomGeometry(matrices, RenderTypes.text(NOTE_TEXTURE), (matrix4f, vertexConsumer) -> {
 			float max_x = 1.0F / BG_SIZE * BG_WIDTH;
 			float max_y = 1.0F / BG_SIZE * BG_HEIGHT;
 
@@ -64,7 +59,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 			vertexConsumer.addVertex(matrix4f, x_off + end, end, 0.0F).setColor(CommonColors.WHITE).setUv(max_x, max_y).setLight(light);
 			vertexConsumer.addVertex(matrix4f, x_off + end, y1, 0.0F).setColor(CommonColors.WHITE).setUv(max_x, 0.0F).setLight(light);
 			vertexConsumer.addVertex(matrix4f, x_off + begin, y1, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 0.0F).setLight(light);
-		}
+		});
 
 		// Render Text
 
@@ -95,7 +90,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 				case RIGHT ->  BG_WIDTH - TXT_X_PADDING - textRenderer.width(text);
 			};
 
-			textRenderer.drawInBatch(Language.getInstance().getVisualOrder(text), x, textRenderer.lineHeight * i, NoteTextColorResource.TXT_COLOR, false, matrices.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, light);
+			collector.submitText(matrices, x, textRenderer.lineHeight * i, Language.getInstance().getVisualOrder(text), false, Font.DisplayMode.NORMAL, light, NoteTextColorResource.TXT_COLOR, 0, 0);
 		}
 
 		matrices.popPose();
