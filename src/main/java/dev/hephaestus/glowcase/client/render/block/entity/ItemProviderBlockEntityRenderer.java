@@ -138,6 +138,8 @@ public record ItemProviderBlockEntityRenderer(
 
 			poseStack.pushPose();
 			poseStack.translate(-context.font().width(name) / 2F, -4, 0);
+			// Shadow fix - consider a helper function for this?
+			poseStack.scale(1, 1, -1);
 			submitNodeCollector.submitText(poseStack, 0, 0, state.name.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
 
 			poseStack.popPose();
