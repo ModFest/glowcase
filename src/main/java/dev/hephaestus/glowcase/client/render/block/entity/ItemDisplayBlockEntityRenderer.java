@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
@@ -72,8 +72,9 @@ public record ItemDisplayBlockEntityRenderer(
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
 			poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
 
-			submitNodeCollector.submitBlockModel(poseStack, state.renderBlockState);
-			Minecraft.getInstance().getBlockRenderer().renderSingleBlock(blockItem.getBlock().defaultBlockState(), poseStack, vertexConsumers, light, overlay);
+			// FIXME
+			// submitNodeCollector.submitBlockModel(poseStack, state.renderBlockState);
+			// Minecraft.getInstance().getBlockRenderer().renderSingleBlock(blockItem.getBlock().defaultBlockState(), poseStack, vertexConsumers, light, overlay);
 		} else {
 			poseStack.translate(0D, 0.5D, 0D);
 
