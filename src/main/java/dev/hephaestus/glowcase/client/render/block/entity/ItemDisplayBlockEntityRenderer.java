@@ -6,6 +6,8 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -17,18 +19,18 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 public record ItemDisplayBlockEntityRenderer(
 	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemDisplayBlockEntity, ItemDisplayBlockEntityRenderer.ItemDisplayRenderState> {
+	private static final BlockDisplayContext BLOCK_DISPLAY_CONTEXT = BlockDisplayContext.create();
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_display_block.png");
 
 	public static class ItemDisplayRenderState extends BlockEntityRenderState {
 		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
-		public BlockState renderBlockState;
+		public BlockModelRenderState blockRenderState = new BlockModelRenderState();
 		public boolean renderAsBlock;
 		public boolean shouldRenderPlaceholder;
 		public float yaw;
@@ -54,7 +56,13 @@ public record ItemDisplayBlockEntityRenderer(
 		state.offset = blockEntity.getOffset();
 		state.scale = blockEntity.getScale();
 		if (state.renderAsBlock) {
-			state.renderBlockState = ((BlockItem) blockEntity.getStack().getItem()).getBlock().defaultBlockState();
+			context.blockModelResolver().update(
+				state.blockRenderState,
+				((BlockItem) blockEntity.getStack().getItem()).getBlock().defaultBlockState(),
+				BLOCK_DISPLAY_CONTEXT
+			);
+		} else {
+			state.blockRenderState.clear();
 		}
 	}
 
@@ -66,15 +74,12 @@ public record ItemDisplayBlockEntityRenderer(
 		poseStack.translate(state.offset.x(), state.offset.y(), state.offset.z());
 
 		if (state.renderAsBlock) {
-			//		FIXME 26.1
-			poseStack.translate(-0.5D, -0.5D, -0.5D);
+			poseStack.translate(-0.5D, 0, -0.5D);
 
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
 			poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
 
-			// FIXME
-			// submitNodeCollector.submitBlockModel(poseStack, state.renderBlockState);
-			// Minecraft.getInstance().getBlockRenderer().renderSingleBlock(blockItem.getBlock().defaultBlockState(), poseStack, vertexConsumers, light, overlay);
+			state.blockRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		} else {
 			poseStack.translate(0D, 0.5D, 0D);
 
