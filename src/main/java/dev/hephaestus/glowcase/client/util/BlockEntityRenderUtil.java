@@ -14,9 +14,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -59,10 +59,10 @@ public class BlockEntityRenderUtil {
 		poseStack.popPose();
 	}
 
-	public static void renderTrackingPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Entity camera, float tickDelta) {
+	public static void renderTrackingPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Vec3 camera) {
 		poseStack.pushPose();
 		poseStack.translate(0.5, 0.5, 0.5);
-		Vec2 tracking = getTracking(camera, state.blockPos, tickDelta);
+		Vec2 tracking = getTracking(camera, state.blockPos);
 		float pitch = tracking.x;
 		float yaw = tracking.y;
 		poseStack.mulPose(Axis.YP.rotation((float) (Math.PI + yaw)));
@@ -107,10 +107,10 @@ public class BlockEntityRenderUtil {
 		return Minecraft.getInstance().player != null && Minecraft.getInstance().player.isHolding(stack -> stack.is(Glowcase.ITEM_TAG)) && (!disappearWhenFaced || !(Minecraft.getInstance().hitResult instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)));
 	}
 
-	public static Vec2 getTracking(Entity camera, BlockPos pos, float delta) {
-		double d = pos.getX() - camera.getPosition(delta).x + 0.5;
-		double e = pos.getY() - camera.getEyeY() + 0.5;
-		double f = pos.getZ() - camera.getPosition(delta).z + 0.5;
+	public static Vec2 getTracking(Vec3 camera, BlockPos pos) {
+		double d = pos.getX() - camera.x + 0.5;
+		double e = pos.getY() - camera.y + 0.5;
+		double f = pos.getZ() - camera.z + 0.5;
 		double g = Mth.sqrt((float) (d * d + f * f));
 
 		float pitch = (float) ((-Mth.atan2(e, g)));

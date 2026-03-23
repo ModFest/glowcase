@@ -22,7 +22,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.LightCoordsUtil;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -76,8 +75,6 @@ public record ItemProviderBlockEntityRenderer(
 
 	@Override
 	public void submit(ItemProviderRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
-
 		poseStack.pushPose();
 		poseStack.translate(0.5D, 0D, 0.5D);
 
@@ -90,7 +87,7 @@ public record ItemProviderBlockEntityRenderer(
 		switch (state.facing) {
 			case DOWN, UP -> {
 				if (state.isBlockItem) {
-					Vec2 pitchAndYaw = BlockEntityRenderUtil.getTracking(cameraEntity, state.blockPos, /* FIXME tickDelta */ 0);
+					Vec2 pitchAndYaw = BlockEntityRenderUtil.getTracking(camera.pos, state.blockPos);
 					pitch = pitchAndYaw.x;
 					yaw = pitchAndYaw.y;
 					poseStack.mulPose(Axis.YP.rotation(yaw));
@@ -168,7 +165,7 @@ public record ItemProviderBlockEntityRenderer(
 			} else if (isBillboard) {
 				BlockEntityRenderUtil.renderBillboardPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera);
 			} else {
-				BlockEntityRenderUtil.renderTrackingPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, cameraEntity, /* FIXME tickDelta */ 0);
+				BlockEntityRenderUtil.renderTrackingPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera.pos);
 			}
 		}
 	}
