@@ -1,7 +1,20 @@
 package dev.hephaestus.glowcase.client;
 
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.render.block.entity.*;
+import dev.hephaestus.glowcase.client.render.block.entity.ConfigLinkBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.EntityDisplayBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.HyperlinkBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.ItemAcceptorBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.ItemDisplayBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.ItemProviderBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.OutlineBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.ParticleDisplayBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.PopupBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.RecipeBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.ScreenBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.SoundPlayerBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.SpriteBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.TextBlockEntityRenderer;
 import dev.hephaestus.glowcase.client.render.item.ItemHandRenderer;
 import dev.hephaestus.glowcase.client.render.item.NoteItemHandRenderer;
 import dev.hephaestus.glowcase.client.render.item.TabletItemHandRenderer;
@@ -12,11 +25,9 @@ import dev.hephaestus.glowcase.mixin.AbstractContainerScreenInvoker;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemTintSources;
@@ -62,7 +73,7 @@ public class GlowcaseClient implements ClientModInitializer {
 //		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
 //		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
 
-		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new NoteTextColorResource());
+		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(Glowcase.id("note_txt_color"), new NoteTextColorResource());
 
 		/*ModelPredicateProviderRegistryAccessor.callRegister(Identifier.of("glowcase:awakened"), (stack, world, entity, seed) -> {
 			if (!EMI_LOADED) {
