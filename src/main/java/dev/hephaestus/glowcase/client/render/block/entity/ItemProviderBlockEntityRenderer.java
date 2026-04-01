@@ -146,13 +146,9 @@ public record ItemProviderBlockEntityRenderer(
 
 			if (!state.itemRenderState.isEmpty()) {
 				poseStack.pushPose();
-				if (state.canGive) {
-					poseStack.translate(-context.font().width(state.countText) + 16, 32, 0);
-					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
-				} else {
-					poseStack.translate(-context.font().width(state.countText) + 16, 24, 0);
-					submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
-				}
+				poseStack.translate(-context.font().width(state.countText) + 16, state.canGive ? 32 : 24, 0);
+				poseStack.scale(1, 1, -1);
+				submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
 				poseStack.popPose();
 			}
 			poseStack.popPose();
