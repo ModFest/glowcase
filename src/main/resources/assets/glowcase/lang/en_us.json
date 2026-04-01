@@ -148,6 +148,8 @@
 	"gui.glowcase.screen.hint.901": "Only HTTP, HTTPS and 'glowcase' are allowed.",
 	"gui.glowcase.screen.hint.902": "Make sure you have an internet connection.",
 	"gui.glowcase.screen.hint.903": "Image format is not supported.",
+	"gui.glowcase.screen.hint.920": "Malformed URL.",
+	"gui.glowcase.screen.hint.921": "Malformed identifier.",
 	"gui.glowcase.screen.eink": "Use E-Ink technology",
 	"gui.glowcase.screen.backface": "Render backface",
 	"gui.glowcase.screen.sprite_edit.sprite": "Can be one of the following options:\n\n- The name of a built-in sprite, such as 'arrow'.\n- The ID of an item, such as 'minecraft:iron_sword'.\n- The namespaced path to a texture, such as 'minecraft:textures/item/iron_sword.png'.\n- A mod's icon, by using the mod ID in the special 'mod' namespace, such as 'mod:glowcase'.",
