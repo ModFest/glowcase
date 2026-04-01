@@ -10,7 +10,6 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 
 	@Override
 	protected void editDisplayBlock() {
-		super.editDisplayBlock();
 		C2SEditEntityDisplayBlock.of(displayBlock).send();
 	}
 }

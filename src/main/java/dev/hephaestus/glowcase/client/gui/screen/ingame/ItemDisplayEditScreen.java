@@ -27,7 +27,6 @@ public class ItemDisplayEditScreen extends DisplayBlockEditScreen {
 
 	@Override
 	protected void editDisplayBlock() {
-		super.editDisplayBlock();
 		C2SEditItemDisplayBlock.of(displayBlock).send();
 	}
 }

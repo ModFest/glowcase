@@ -206,5 +206,5 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 		graphics.text(minecraft.font, Component.translatable("gui.glowcase.yaw_value"), 20, 167, 0xFFFFFFFF);
 	}
 
-	protected void editDisplayBlock() {}
+	protected abstract void editDisplayBlock();
 }
