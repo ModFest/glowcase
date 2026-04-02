@@ -100,21 +100,21 @@ tasks.processResources {
 	val authors = rootProject.property("authors") as String
 	val contributors = rootProject.property("contributors") as String
 	val meta = mapOf(
-		"version" to version,
-		"modId" to rootProject.property("modId"),
-		"modName" to rootProject.property("modName"),
-		"modDescription" to rootProject.property("modDescription"),
-		"homepage" to "https://modrinth.com/mod/${slug}",
-		"issues" to "https://github.com/${user}/${slug}/issues",
-		"sources" to "https://github.com/${user}/${slug}",
-		"license" to rootProject.property("license"),
-		"authors" to authors.split(", ").joinToString("\",\n    \""),
-		"contributors" to contributors.split(", ").joinToString("\",\n    \""),
-		"members" to "$authors. Contributions by $contributors",
-		"mc" to compatibleVersions.split(", ")[0],
-		"fl" to libs.versions.fl.get(),
-		"fapi" to libs.versions.fapi.get(),
-		"placeholder" to libs.versions.placeholder.get(),
+		"version"			to version,
+		"modId"				to rootProject.property("modId"),
+		"modName"			to rootProject.property("modName"),
+		"modDescription"	to rootProject.property("modDescription"),
+		"homepage"			to "https://modrinth.com/mod/${slug}",
+		"issues"			to "https://github.com/${user}/${slug}/issues",
+		"sources"			to "https://github.com/${user}/${slug}",
+		"license"			to rootProject.property("license"),
+		"authors"			to authors.split(", ").joinToString("\",\n    \""),
+		"contributors"		to contributors.split(", ").joinToString("\",\n    \""),
+		"members"			to "$authors. Contributions by $contributors",
+		"mc"				to compatibleVersions.split(", ")[0],
+		"fl"				to libs.versions.fl.get(),
+		"fapi"				to libs.versions.fapi.get(),
+		"placeholder"		to libs.versions.placeholder.get(),
 //		"polydex"			to libs.versions.polydex.get()
 	)
 
