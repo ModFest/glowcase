@@ -1,20 +1,27 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-public class TextBlockEntityRenderer implements BlockEntityRenderer<TextBlockEntity, TextBlockEntityRenderer.TextRenderState> {
+@NullMarked
+public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlockEntity, TextBlockEntityRenderer.TextRenderState, TextBlockEntityRenderer.TextRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
 	private boolean wasOutOfRange = false;
 
@@ -29,27 +36,54 @@ public class TextBlockEntityRenderer implements BlockEntityRenderer<TextBlockEnt
 		return new TextRenderState();
 	}
 
+
+	@Override
+	public TextRenderState createBakedRenderState() {
+		return new TextRenderState();
+	}
+
 	@Override
 	public void extractRenderState(TextBlockEntity blockEntity, TextRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
-		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
+		BakedBlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 		state.zOffset = blockEntity.zOffset;
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 	}
 
 	@Override
-	public void submit(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state) {
+		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state);
+		// TODO: Change for the port to 26.1, if needed
+		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
+		state.zOffset = blockEntity.zOffset;
+		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
+	}
+
+	@Override
+	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 		if (state.shouldRenderPlaceholder) {
 			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
 		}
 	}
 
-//	FIXME 26.1
-	//	@Override
-//	public boolean shouldBake(TextBlockEntity entity) {
-//		return !entity.lines.isEmpty();
-//	}
-//
+	@Override
+	public void submitForBaking(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
+		// TODO: Port to 26.1
+		poseStack.pushPose();
+		poseStack.mulPose(Axis.YP.rotationDegrees(-(state.rotation16 * 360) / 16.0F));
+		float a = 1 / 9f;
+		poseStack.translate(-.5, 1.5, -.5);
+		poseStack.scale(a, -a, a);
+		submitNodeCollector.submitText(poseStack, 0, 0, Component.literal("waff :3").getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0, 0);
+		poseStack.popPose();
+	}
+
+	@Override
+	public boolean shouldBake(TextBlockEntity entity) {
+		return !entity.lines.isEmpty();
+	}
+
+	//	FIXME 26.1
 //	@Override
 //	public void renderUnbaked(TextBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
 //		Entity camera = Minecraft.getInstance().getCameraEntity();

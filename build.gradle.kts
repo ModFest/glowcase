@@ -1,5 +1,3 @@
-//file:noinspection GroovyAssignabilityCheck
-//file:noinspection GroovyAccessibility
 plugins {
 	id("maven-publish")
 	alias(libs.plugins.loom)
@@ -23,6 +21,13 @@ repositories {
 		name = "BlameJared Maven (CrT / Bookshelf)"
 		url = uri("https://maven.blamejared.com")
 	}
+
+	maven {
+		name = "CaffeineMC Maven (Snapshots)"
+		url = uri("https://maven.caffeinemc.net/snapshots")
+	}
+
+	mavenLocal()
 }
 
 dependencies {
@@ -45,13 +50,16 @@ dependencies {
 
 	compileOnly(libs.modmenu)
 	localRuntime(libs.modmenu)
+
+	compileOnly(libs.sodium)
+	localRuntime(libs.sodium)
 }
 
 loom {
 	accessWidenerPath.set(file("src/main/resources/glowcase.accesswidener"))
 
 	runs {
-		val clientMixinSwap = register("client_mixin") {
+		val clientMixinSwap = register("clientMixinSwap") {
 			client()
 			ideConfigGenerated(true)
 			name = "Minecraft Client - (Mixin Swap)"
@@ -92,21 +100,21 @@ tasks.processResources {
 	val authors = rootProject.property("authors") as String
 	val contributors = rootProject.property("contributors") as String
 	val meta = mapOf(
-		"version"			to version,
-		"modId"				to rootProject.property("modId"),
-		"modName"			to rootProject.property("modName"),
-		"modDescription"	to rootProject.property("modDescription"),
-		"homepage"			to "https://modrinth.com/mod/${slug}",
-		"issues"			to "https://github.com/${user}/${slug}/issues",
-		"sources"			to "https://github.com/${user}/${slug}",
-		"license"			to rootProject.property("license"),
-		"authors"			to authors.split(", ").joinToString("\",\n    \""),
-		"contributors"		to contributors.split(", ").joinToString("\",\n    \""),
-		"members"			to "$authors. Contributions by $contributors",
-		"mc"				to compatibleVersions.split(", ")[0],
-		"fl"				to libs.versions.fl.get(),
-		"fapi"				to libs.versions.fapi.get(),
-		"placeholder"		to libs.versions.placeholder.get(),
+		"version" to version,
+		"modId" to rootProject.property("modId"),
+		"modName" to rootProject.property("modName"),
+		"modDescription" to rootProject.property("modDescription"),
+		"homepage" to "https://modrinth.com/mod/${slug}",
+		"issues" to "https://github.com/${user}/${slug}/issues",
+		"sources" to "https://github.com/${user}/${slug}",
+		"license" to rootProject.property("license"),
+		"authors" to authors.split(", ").joinToString("\",\n    \""),
+		"contributors" to contributors.split(", ").joinToString("\",\n    \""),
+		"members" to "$authors. Contributions by $contributors",
+		"mc" to compatibleVersions.split(", ")[0],
+		"fl" to libs.versions.fl.get(),
+		"fapi" to libs.versions.fapi.get(),
+		"placeholder" to libs.versions.placeholder.get(),
 //		"polydex"			to libs.versions.polydex.get()
 	)
 

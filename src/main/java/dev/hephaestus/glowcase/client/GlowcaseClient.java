@@ -1,20 +1,8 @@
 package dev.hephaestus.glowcase.client;
 
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.render.block.entity.ConfigLinkBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.EntityDisplayBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.HyperlinkBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.ItemAcceptorBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.ItemDisplayBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.ItemProviderBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.OutlineBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.ParticleDisplayBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.PopupBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.RecipeBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.ScreenBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.SoundPlayerBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.SpriteBlockEntityRenderer;
-import dev.hephaestus.glowcase.client.render.block.entity.TextBlockEntityRenderer;
+import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
+import dev.hephaestus.glowcase.client.render.block.entity.*;
 import dev.hephaestus.glowcase.client.render.item.ItemHandRenderer;
 import dev.hephaestus.glowcase.client.render.item.NoteItemHandRenderer;
 import dev.hephaestus.glowcase.client.render.item.TabletItemHandRenderer;
@@ -40,8 +28,8 @@ import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseClient implements ClientModInitializer {
 	public static final Boolean EMI_LOADED = FabricLoader.getInstance().isModLoaded("emi");
-	public static final ScreenImageCache screenImageCache = new ScreenImageCache();
 	public static final Identifier PROVIDER_CROSSHAIR_TEXTURE = Glowcase.id("hud/provider_crosshair");
+	public static final ScreenImageCache screenImageCache = new ScreenImageCache();
 
 	private double accScroll = 0;
 
@@ -68,12 +56,14 @@ public class GlowcaseClient implements ClientModInitializer {
 		ItemHandRenderer.register(Glowcase.NOTE_ITEM.get().asItem(), new NoteItemHandRenderer());
 
 		ItemTintSources.ID_MAPPER.put(Glowcase.id("auto"), GlowcaseTintSource.CODEC);
+		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(Glowcase.id("note_txt_color"), new NoteTextColorResource());
+
+		// Initialize the renderer
+		new GlowcaseLevelRenderer();
 
 		//FIXME 26.1
 //		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
 //		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
-
-		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(Glowcase.id("note_txt_color"), new NoteTextColorResource());
 
 		/*ModelPredicateProviderRegistryAccessor.callRegister(Identifier.of("glowcase:awakened"), (stack, world, entity, seed) -> {
 			if (!EMI_LOADED) {

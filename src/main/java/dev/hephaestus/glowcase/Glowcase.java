@@ -30,6 +30,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
@@ -235,5 +236,11 @@ public class Glowcase implements ModInitializer {
 				EmiUtils.registerDevCommands();
 			}
 		}*/
+	}
+
+	static {
+		if (Boolean.getBoolean("glowcase.in_ide")) {
+			SharedConstants.IS_RUNNING_IN_IDE = true;
+		}
 	}
 }

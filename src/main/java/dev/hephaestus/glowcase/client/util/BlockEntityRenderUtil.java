@@ -34,12 +34,9 @@ public class BlockEntityRenderUtil {
 		poseStack.mulPose(rotation);
 		poseStack.translate(0, 0, zOffset);
 		poseStack.scale(scale, scale, scale);
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutoutCull(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
-			@Override
-			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
-				renderPlaceholderBackFace(pose, buffer, state.blockPos);
-				renderPlaceholderFace(pose, buffer, state.blockPos);
-			}
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutoutCull(texture), (pose, buffer) -> {
+			renderPlaceholderBackFace(pose, buffer, state.blockPos);
+			renderPlaceholderFace(pose, buffer, state.blockPos);
 		});
 		poseStack.popPose();
 	}
@@ -50,12 +47,7 @@ public class BlockEntityRenderUtil {
 		poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - camera.yRot));
 		poseStack.mulPose(Axis.XP.rotationDegrees(-camera.xRot));
 		poseStack.scale(scale, scale, scale);
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
-			@Override
-			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
-				renderPlaceholderFace(pose, buffer, entity.blockPos);
-			}
-		});
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), (pose, buffer) -> renderPlaceholderFace(pose, buffer, entity.blockPos));
 		poseStack.popPose();
 	}
 
@@ -68,12 +60,7 @@ public class BlockEntityRenderUtil {
 		poseStack.mulPose(Axis.YP.rotation((float) (Math.PI + yaw)));
 		poseStack.mulPose(Axis.XP.rotation(-pitch));
 		poseStack.scale(scale, scale, scale);
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), new SubmitNodeCollector.CustomGeometryRenderer() {
-			@Override
-			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
-				renderPlaceholderFace(pose, buffer, state.blockPos);
-			}
-		});
+		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), (pose, buffer) -> renderPlaceholderFace(pose, buffer, state.blockPos));
 		poseStack.popPose();
 	}
 

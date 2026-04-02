@@ -1,10 +1,10 @@
 [versions]
-loom = "1.15-SNAPSHOT"
+loom = "1.16.0-alpha.+" # Need 1.16+ for the renderdoc task to work on linux
 minotaur = "2.+"
 
 kaleidoConfig = "0.3.3+1.3.2"
 
-mc = "26.1-rc-2"
+mc = "26.1"
 fl = "0.18.4"
 fapi = "0.144.0+26.1"
 
@@ -12,6 +12,7 @@ placeholder = "3.0.0-beta.2+26.1"
 #polydex = "1.8.1+1.21.11"
 # emi = "1.1.19+1.21.1"
 modmenu = "18.0.0-alpha.6"
+sodium = "0.8.7-SNAPSHOT+mc26.1-local"
 
 [plugins]
 loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
@@ -28,3 +29,4 @@ kaleidoConfig = { group = "folk.sisby", name = "kaleido-config", version.ref = "
 
 # emi = { group = "dev.emi", name = "emi-fabric", version.ref = "emi" }
 modmenu = { group = "com.terraformersmc", name = "modmenu", version.ref = "modmenu" }
+sodium = { group = "net.caffeinemc", name = "sodium-fabric", version.ref = "sodium" }
