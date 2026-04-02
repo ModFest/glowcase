@@ -1,24 +1,29 @@
 package dev.hephaestus.glowcase.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.util.HTTPException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.imageio.ImageIO;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
-import java.awt.image.BufferedImage;
+import net.minecraft.util.PngInfo;
+import net.minecraft.util.Util;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Optional;
@@ -51,7 +56,7 @@ public class ScreenImageCache {
 
 			if (uri.getScheme() != null && uri.getScheme().toLowerCase(Locale.ROOT).equals(Glowcase.MODID)) {
 				// Local image
-				cache.put(address, new ScreenTexture(Glowcase.id(uri.getSchemeSpecificPart())));
+				cache.put(address, ScreenTexture.ofIdentifier(Identifier.tryBuild(Glowcase.MODID, uri.getSchemeSpecificPart())));
 			} else {
 				// Online image
 				URL url = toURL(uri);
@@ -62,6 +67,11 @@ public class ScreenImageCache {
 				Glowcase.LOGGER.warn("Screen at [{}] failed: {} ({}). It's url was: '{}'", blockPos.toShortString(), e.getMessage(), e.getCode(), address);
 
 			cache.put(address, new ScreenTexture(e.getCode()));
+		} catch (Exception e) {
+			// Catch-all branch, if something snuck past the checks and crashed anyways.
+			Glowcase.LOGGER.error("Screen at [{}] failed. Its URL was: '{}'", blockPos, address, e);
+
+			cache.put(address, ScreenTexture.MALFORMED_URL);
 		}
 	}
 
@@ -73,7 +83,7 @@ public class ScreenImageCache {
 		try {
 			uri = new URI(address);
 		} catch (Exception e) {
-			throw new HTTPException("Malformed URL", 400);
+			throw new HTTPException("Malformed URL", 920);
 		}
 
 		return uri;
@@ -82,18 +92,15 @@ public class ScreenImageCache {
 	/**
 	 * Converts the given uri to an url and ensures its safety.
 	 */
-	private URL toURL(URI uri) throws HTTPException {
+	private static URL toURL(URI uri) throws HTTPException {
 		validateURI(uri);
 		ensureRules(uri);
-
-		if (uri.getHost() == null)
-			throw new HTTPException("Malformed URL", 400);
 
 		URL url;
 		try {
 			url = uri.toURL();
 		} catch (MalformedURLException e) {
-			throw new HTTPException("Malformed URL", 400);
+			throw new HTTPException("Malformed URL", 920);
 		}
 
 		return url;
@@ -102,7 +109,7 @@ public class ScreenImageCache {
 	/**
 	 * Check if url is well formatted. IPs are not allowed (for now) because I can't be bothered.
 	 */
-	private void validateURI(URI uri) throws HTTPException {
+	private static void validateURI(URI uri) throws HTTPException {
 		// Validate Scheme
 		if (uri.getScheme() == null)
 			throw new HTTPException("Protocol must be specified (http or https)", 901);
@@ -110,6 +117,10 @@ public class ScreenImageCache {
 		String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
 		if (!(scheme.equals("http") || scheme.equals("https")))
 			throw new HTTPException("Invalid protocol; Only http or https are allowed", 901);
+
+		if (uri.getHost() == null) {
+			throw new HTTPException("Host is missing.", 920);
+		}
 
 		// For now, all IP addresses will be filtered for the sake of the whitelist and blacklist.
 		if (uri.getHost().chars().noneMatch(Character::isLetter))
@@ -119,7 +130,7 @@ public class ScreenImageCache {
 	/**
 	 * Ensures we are allowed to use this url.
 	 */
-	private void ensureRules(URI uri) throws HTTPException {
+	private static void ensureRules(URI uri) throws HTTPException {
 		String host = uri.getHost();
 
 		for (String rule : Glowcase.CONFIG.whitelist.value()) {
@@ -138,7 +149,7 @@ public class ScreenImageCache {
 	 *
 	 * <p>This method attempts to add support for wildcards.</p>
 	 */
-	private boolean matches(String host, String rule) {
+	private static boolean matches(String host, String rule) {
 		if (rule.contains("*")) {
 			if (rule.equals("*"))
 				return true;
@@ -169,6 +180,13 @@ public class ScreenImageCache {
 		private int width = 0;
 		private int height = 0;
 
+		private static final CompletableFuture<Integer> COMPLETED = CompletableFuture.completedFuture(200);
+
+		public static final ScreenTexture MALFORMED_URL = new ScreenTexture(920);
+		public static final ScreenTexture MALFORMED_IDENTIFIER = new ScreenTexture(921);
+		public static final ScreenTexture MISSING = new ScreenTexture(404);
+		public static final ScreenTexture UNSUPPORTED_IMAGE_FORMAT = new ScreenTexture(903);
+
 		public Pair<Integer, Identifier> getTexture() {
 			if (loader.isDone()) {
 				return new Pair<>(loader.join(), texture);
@@ -192,24 +210,11 @@ public class ScreenImageCache {
 			loader = CompletableFuture.completedFuture(code);
 		}
 
-		/**
-		 * Creates a reference to a local resource.
-		 */
-		public ScreenTexture(@NotNull Identifier texture) {
-			// Get width/height
-			Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
-			if (resource.isPresent())
-				try {
-					InputStream inputStream = resource.get().open();
-					BufferedImage image = ImageIO.read(inputStream);
-
-					width = image.getWidth();
-					height = image.getHeight();
-				} catch (IOException ignored) {
-				}
-
+		private ScreenTexture(@NotNull Identifier texture, int width, int height) {
+			this.loader = COMPLETED;
 			this.texture = texture;
-			this.loader = CompletableFuture.completedFuture(200);
+			this.width = width;
+			this.height = height;
 		}
 
 		/**
@@ -266,6 +271,32 @@ public class ScreenImageCache {
 				connection.disconnect();
 				return result;
 			}, Util.backgroundExecutor());
+		}
+
+		public static ScreenTexture ofIdentifier(@Nullable Identifier texture) {
+			if (texture == null) {
+				return MALFORMED_IDENTIFIER;
+			}
+
+			Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
+
+			if (resource.isEmpty()) {
+				return MISSING;
+			}
+
+			try (final InputStream input = resource.get().open()) {
+				byte[] bytes = input.readAllBytes();
+				PngInfo.validateHeader(ByteBuffer.wrap(bytes));
+			} catch (IOException e) {
+				return UNSUPPORTED_IMAGE_FORMAT;
+			}
+
+			GpuTexture raw = Minecraft.getInstance().getTextureManager().getTexture(texture).getTexture();
+
+			return new ScreenTexture(texture,
+				raw.getWidth(0),
+				raw.getHeight(0)
+			);
 		}
 	}
 }

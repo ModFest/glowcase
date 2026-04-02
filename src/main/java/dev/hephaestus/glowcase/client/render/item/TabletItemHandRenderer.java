@@ -98,15 +98,12 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 			float x2 = pixel * 21;
 			float y2 = pixel * 13;
 
-			Pair<Float, Float> scale = ScreenBlockEntityRenderer.getScale(x2 - x1, y2 - y1, image.getWidth(), image.getHeight());
+			ScreenBlockEntityRenderer.Plane scale = ScreenBlockEntityRenderer.getScale(x2 - x1, y2 - y1, image.getWidth(), image.getHeight());
 
-			Float scaled_width = scale.getFirst();
-			Float scaled_height = scale.getSecond();
-
-			x1 = -scaled_width / 2f;
-			x2 = scaled_width / 2f;
-			y1 = -scaled_height / 2f;
-			y2 = scaled_height / 2f;
+			x1 = scale.x1();
+			x2 = scale.x2();
+			y1 = scale.y1();
+			y2 = scale.y2();
 
 			vertexConsumer.addVertex(matrix4f, 64 + x1, 64 + y1, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 0f).setLight(light);
 			vertexConsumer.addVertex(matrix4f, 64 + x1, 64 + y2, -0.01F).setColor(CommonColors.WHITE).setUv(0f, 1f).setLight(light);
