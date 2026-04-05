@@ -82,14 +82,13 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 110, 0, 20, 20).build();
 
-
 		Map<TextBlockEntity.TextAlignment, Button> textAlignmentButtons = new HashMap<>();
-
-		Consumer<TextBlockEntity.TextAlignment> setAlignment = (alignment) -> {
+		Consumer<TextBlockEntity.TextAlignment> changeTextAlignment = (alignment) -> {
 			var previous = textBlockEntity.textAlignment;
 			var prevButton = textAlignmentButtons.get(previous);
 			if (prevButton != null) {
-				prevButton.active = true; // there are a few legacy values without a button
+				// there are a few deprecated values without a button
+				prevButton.active = true;
 			}
 
 			textBlockEntity.textAlignment = alignment;
@@ -97,21 +96,21 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		};
 
 		var textAlignLeft = IconButtonWidget.builder(Glowcase.id("text_alignment/left"), button -> {
-				setAlignment.accept(TextBlockEntity.TextAlignment.LEFT);
+				changeTextAlignment.accept(TextBlockEntity.TextAlignment.LEFT);
 				button.active = false;
 			})
 			.position(middle - 90 + innerPadding, 0)
 			.size(20, 20, 16, 16)
 			.build();
 		var textAlignCenter = IconButtonWidget.builder(Glowcase.id("text_alignment/center"), button -> {
-				setAlignment.accept(TextBlockEntity.TextAlignment.CENTER);
+				changeTextAlignment.accept(TextBlockEntity.TextAlignment.CENTER);
 				button.active = false;
 			})
 			.position(middle - 90 + innerPadding + 20, 0)
 			.size(20, 20, 16, 16)
 			.build();
 		var textAlignRight = IconButtonWidget.builder(Glowcase.id("text_alignment/right"), button -> {
-				setAlignment.accept(TextBlockEntity.TextAlignment.RIGHT);
+				changeTextAlignment.accept(TextBlockEntity.TextAlignment.RIGHT);
 				button.active = false;
 			})
 			.position(middle - 90 + innerPadding + 40, 0)
@@ -123,13 +122,55 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		textAlignmentButtons.put(TextBlockEntity.TextAlignment.RIGHT, textAlignRight);
 
 		var initialTextAlignmentButton = textAlignmentButtons.get(textBlockEntity.textAlignment);
-		if (initialTextAlignmentButton != null) { // there are a few legacy values without a button
+		if (initialTextAlignmentButton != null) {
+			// there are a few deprecated values without a button
 			initialTextAlignmentButton.active = false;
 		}
 
 		this.addRenderableWidget(textAlignCenter);
 		this.addRenderableWidget(textAlignLeft);
 		this.addRenderableWidget(textAlignRight);
+
+
+		Map<TextBlockEntity.HorizontalAlignment, Button> horizontalAlignmentButtons = new HashMap<>();
+		Consumer<TextBlockEntity.HorizontalAlignment> changeHorizontalAlignment = (alignment) -> {
+			var previous = textBlockEntity.horizontalAlignment;
+			horizontalAlignmentButtons.get(previous).active = true;
+
+			textBlockEntity.horizontalAlignment = alignment;
+			textBlockEntity.renderDirty = true;
+		};
+
+		var horizontalAlignLeft = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/left"), button -> {
+				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.LEFT);
+				button.active = false;
+			})
+			.position(middle - 90 + 2 * innerPadding + 60, 0)
+			.size(20, 20, 16, 16)
+			.build();
+		var horizontalAlignCenter = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/center"), button -> {
+				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.CENTER);
+				button.active = false;
+			})
+			.position(middle - 90 + 2 * innerPadding + 80, 0)
+			.size(20, 20, 16, 16)
+			.build();
+		var horizontalAlignRight = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/right"), button -> {
+				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.RIGHT);
+				button.active = false;
+			})
+			.position(middle - 90 + 2 * innerPadding + 100, 0)
+			.size(20, 20, 16, 16)
+			.build();
+		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.LEFT, horizontalAlignLeft);
+		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.CENTER, horizontalAlignCenter);
+		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.RIGHT, horizontalAlignRight);
+
+		horizontalAlignmentButtons.get(textBlockEntity.horizontalAlignment).active = false;
+
+		this.addRenderableWidget(horizontalAlignCenter);
+		this.addRenderableWidget(horizontalAlignLeft);
+		this.addRenderableWidget(horizontalAlignRight);
 
 		this.shadowToggle = Checkbox.builder(Component.translatable("gui.glowcase.shadow"), this.font)
 			.selected(this.textBlockEntity.shadow)

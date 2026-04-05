@@ -38,6 +38,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		public int rotation16;
 		public List<FormattedCharSequence> lines = List.of();
 		public TextBlockEntity.TextAlignment textAlignment;
+		public TextBlockEntity.HorizontalAlignment horizontalAlignment;
 		public TextBlockEntity.ZOffset zOffset;
 		public boolean shadow;
 		public float scale = 1;
@@ -64,6 +65,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
 		state.textAlignment = blockEntity.textAlignment;
+		state.horizontalAlignment = blockEntity.horizontalAlignment;
 		state.zOffset = blockEntity.zOffset;
 		state.shadow = blockEntity.shadow;
 		state.scale = blockEntity.scale;
@@ -117,6 +119,11 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 		poseStack.scale(0.1F * state.scale, 0.1F * state.scale, 0.1F * state.scale);
 		poseStack.translate(0, -(state.lines.size() * this.font.lineHeight) / 2D, 0D);
+
+		switch (state.horizontalAlignment) {
+			case LEFT -> poseStack.translate(-maxWidth / 2F, 0, 0);
+			case RIGHT -> poseStack.translate(maxWidth / 2F, 0, 0);
+		}
 
 		for (int i = 0; i < state.lines.size(); ++i) {
 			var line = state.lines.get(i);
