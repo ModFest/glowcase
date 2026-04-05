@@ -70,30 +70,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 		int middle = width / 2;
 
-
-		final float minScale = 0.125F;
-		final float maxScale = 16;
-		double initialScale = (textBlockEntity.scale - minScale) / (maxScale - minScale);
-
-		var scaleSlider = new AbstractSliderButton(
-			middle - 203,
-			0,
-			113,
-			20,
-			Component.translatable("gui.glowcase.scale_value", textBlockEntity.scale),
-			initialScale
-		) {
-			@Override
-			protected void updateMessage() {
-				this.setMessage(Component.translatable("gui.glowcase.scale_value", textBlockEntity.scale));
-			}
-
-			@Override
-			protected void applyValue() {
-				textBlockEntity.scale = (float) Math.round(Mth.lerp(this.value, minScale, maxScale) * 8F) / 8F;
-				textBlockEntity.renderDirty = true;
-			}
-		};
+		var scaleSlider = new TextScaleSliderWidget(textBlockEntity, middle - 203, 0, 113, 20);
 		this.addRenderableWidget(scaleSlider);
 
 		Map<TextBlockEntity.TextAlignment, Button> textAlignmentButtons = new HashMap<>();
@@ -185,6 +162,15 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.addRenderableWidget(horizontalAlignLeft);
 		this.addRenderableWidget(horizontalAlignRight);
 
+		var moreOptionsButton = IconButtonWidget.builder(Glowcase.id("three_dots"), button -> {
+				var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+				Minecraft.getInstance().setScreen(optionsScreen);
+			})
+			.position(middle - 90 + 3 * innerPadding + 120, 0)
+			.size(32, 20, 16, 16)
+			.build();
+		this.addRenderableWidget(moreOptionsButton);
+
 		this.shadowToggle = Checkbox.builder(Component.translatable("gui.glowcase.shadow"), this.font)
 			.selected(this.textBlockEntity.shadow)
 			.onValueChange((widget, checked) -> {
@@ -250,8 +236,6 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.viewDistanceHelpButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
 
 		this.addRenderableWidget(colorPickerWidget);
-//		this.addRenderableWidget(increaseSize);
-//		this.addRenderableWidget(decreaseSize);
 		this.addRenderableWidget(this.shadowToggle);
 		this.addRenderableWidget(this.zOffsetToggle);
 		this.addRenderableWidget(this.colorEntryWidget);
@@ -601,5 +585,29 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	@Override
 	TextFieldHelper getSelectionManager() {
 		return this.selectionManager;
+	}
+
+	public static class TextScaleSliderWidget extends AbstractSliderButton {
+		private static final float MIN_SCALE = 0.125F;
+		private static final float MAX_SCALE = 16;
+
+		private final TextBlockEntity entity;
+
+		public TextScaleSliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
+			var initialValue = (entity.scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE);
+			super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
+			this.entity = entity;
+		}
+
+		@Override
+		protected void updateMessage() {
+			this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
+		}
+
+		@Override
+		protected void applyValue() {
+			entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
+			entity.renderDirty = true;
+		}
 	}
 }
