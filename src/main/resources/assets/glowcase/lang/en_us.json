@@ -172,6 +172,7 @@
 	"gui.glowcase.config_link.missing.mod_screen": "No such mod screen: %s",
 	"gui.glowcase.config_link.missing.mod": "No such mod: %s",
 	"gui.glowcase.config_link.missing.link": "Not implemented: %s",
+	"gui.glowcase.text_options": "Text Options",
 	"gui.glowcase.render_distance_value": "Render Distance: %d",
 	"gui.glowcase.render_distance_value.infinite": "Render Distance: Infinite"
 }
