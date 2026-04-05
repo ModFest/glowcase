@@ -31,11 +31,18 @@ public class IconButtonWidget extends Button {
 
 	@Override
 	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		this.extractDefaultSprite(graphics);
+
 		Identifier drawnIcon = this.icon;
 		if(this.hoverIcon != null && this.isMouseOver(mouseX, mouseY)) {
 			drawnIcon = this.hoverIcon;
 		}
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, drawnIcon, this.getX(), this.getY(), this.iconWidth, this.iconHeight);
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED,
+			drawnIcon,
+			this.getX() + (this.width - this.iconWidth) / 2,
+			this.getY() + (this.height - this.iconHeight) / 2,
+			this.iconWidth,
+			this.iconHeight);
 	}
 
 	public void setPosition(int x, int y, int z, int size, int iconSize) {

@@ -1,8 +1,10 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Floats;
+import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
@@ -22,7 +24,10 @@ import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen {
@@ -37,7 +42,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	private Button changeAlignment;
+	//	private Button changeAlignment;
 	private EditBox colorEntryWidget;
 	private EditBox backgroundColorEntryWidget;
 	private Color colorEntryPreColorPicker; //used for color picker cancel button
@@ -77,18 +82,54 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			this.textBlockEntity.renderDirty = true;
 		}).bounds(middle - 110, 0, 20, 20).build();
 
-		this.changeAlignment = Button.builder(Component.translatableEscape("gui.glowcase.alignment", this.textBlockEntity.textAlignment), action -> {
-			switch (textBlockEntity.textAlignment) {
-				case LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
-				case CENTER -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_LEFT;
-				case CENTER_LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_RIGHT;
-				case CENTER_RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
-				case RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
-			}
-			this.textBlockEntity.renderDirty = true;
 
-			this.changeAlignment.setMessage(Component.translatableEscape("gui.glowcase.alignment", this.textBlockEntity.textAlignment));
-		}).bounds(middle - 90 + innerPadding, 0, 160, 20).build();
+		Map<TextBlockEntity.TextAlignment, Button> textAlignmentButtons = new HashMap<>();
+
+		Consumer<TextBlockEntity.TextAlignment> setAlignment = (alignment) -> {
+			var previous = textBlockEntity.textAlignment;
+			var prevButton = textAlignmentButtons.get(previous);
+			if (prevButton != null) {
+				prevButton.active = true; // there are a few legacy values without a button
+			}
+
+			textBlockEntity.textAlignment = alignment;
+			textBlockEntity.renderDirty = true;
+		};
+
+		var textAlignLeft = IconButtonWidget.builder(Glowcase.id("text_alignment/left"), button -> {
+				setAlignment.accept(TextBlockEntity.TextAlignment.LEFT);
+				button.active = false;
+			})
+			.position(middle - 90 + innerPadding, 0)
+			.size(20, 20, 16, 16)
+			.build();
+		var textAlignCenter = IconButtonWidget.builder(Glowcase.id("text_alignment/center"), button -> {
+				setAlignment.accept(TextBlockEntity.TextAlignment.CENTER);
+				button.active = false;
+			})
+			.position(middle - 90 + innerPadding + 20, 0)
+			.size(20, 20, 16, 16)
+			.build();
+		var textAlignRight = IconButtonWidget.builder(Glowcase.id("text_alignment/right"), button -> {
+				setAlignment.accept(TextBlockEntity.TextAlignment.RIGHT);
+				button.active = false;
+			})
+			.position(middle - 90 + innerPadding + 40, 0)
+			.size(20, 20, 16, 16)
+			.build();
+
+		textAlignmentButtons.put(TextBlockEntity.TextAlignment.LEFT, textAlignLeft);
+		textAlignmentButtons.put(TextBlockEntity.TextAlignment.CENTER, textAlignCenter);
+		textAlignmentButtons.put(TextBlockEntity.TextAlignment.RIGHT, textAlignRight);
+
+		var initialTextAlignmentButton = textAlignmentButtons.get(textBlockEntity.textAlignment);
+		if (initialTextAlignmentButton != null) { // there are a few legacy values without a button
+			initialTextAlignmentButton.active = false;
+		}
+
+		this.addRenderableWidget(textAlignCenter);
+		this.addRenderableWidget(textAlignLeft);
+		this.addRenderableWidget(textAlignRight);
 
 		this.shadowToggle = Checkbox.builder(Component.translatable("gui.glowcase.shadow"), this.font)
 			.selected(this.textBlockEntity.shadow)
@@ -157,7 +198,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.addRenderableWidget(colorPickerWidget);
 		this.addRenderableWidget(increaseSize);
 		this.addRenderableWidget(decreaseSize);
-		this.addRenderableWidget(this.changeAlignment);
+//		this.addRenderableWidget(this.changeAlignment);
 		this.addRenderableWidget(this.shadowToggle);
 		this.addRenderableWidget(this.zOffsetToggle);
 		this.addRenderableWidget(this.colorEntryWidget);
@@ -210,8 +251,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 			int lineWidth = this.font.width(text);
 			switch (this.textBlockEntity.textAlignment) {
-				case LEFT ->
-					graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
+				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
 				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
 					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
 				case RIGHT ->
