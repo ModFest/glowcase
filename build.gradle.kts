@@ -23,8 +23,8 @@ repositories {
 	}
 
 	maven {
-		name = "CaffeineMC Maven (Snapshots)"
-		url = uri("https://maven.caffeinemc.net/snapshots")
+		name = "CaffeineMC Maven (Releases)"
+		url = uri("https://maven.caffeinemc.net/releases")
 	}
 
 	mavenLocal()
@@ -82,8 +82,8 @@ loom {
 					println("[Warning]: Unable to locate file path for Mixin Jar, HotSwap Run will not work!")
 				}
 			} catch (e: Exception) {
-				println("[Error]: MixinHotswap Run had a issue!")
-				e.printStackTrace()
+				println("[Error]: Failed to setup MixinHotswap! Enable logging to view why.")
+				// e.printStackTrace()
 			}
 		}
 	}

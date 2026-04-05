@@ -55,7 +55,9 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 
 	public static void tick(Level world, BlockPos blockPos, BlockState state, EntityDisplayBlockEntity blockEntity) {
 		if (blockEntity.displayEntity == null && blockEntity.entityType != null) {
-			blockEntity.setDisplayEntity(blockEntity.entityType.create(world, EntitySpawnReason.EVENT));
+			Entity displayEntity = blockEntity.entityType.create(world, EntitySpawnReason.EVENT);
+			displayEntity.snapTo(blockPos.getX(),blockPos.getY(),blockPos.getZ());
+			blockEntity.setDisplayEntity(displayEntity);
 		}
 //		if (blockEntity.getDisplayEntity() != null && blockEntity.getDisplayEntity().getType().is(TICK)) {
 			if (blockEntity.getDisplayEntity() != null && blockEntity.getDisplayEntity().getType().builtInRegistryHolder().is(TICK)) {
