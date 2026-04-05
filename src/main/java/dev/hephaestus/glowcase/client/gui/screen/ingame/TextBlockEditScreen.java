@@ -10,10 +10,9 @@ import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.input.CharacterEvent;
@@ -42,7 +41,6 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	//	private Button changeAlignment;
 	private EditBox colorEntryWidget;
 	private EditBox backgroundColorEntryWidget;
 	private Color colorEntryPreColorPicker; //used for color picker cancel button
@@ -72,15 +70,31 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 		int middle = width / 2;
 
-		Button decreaseSize = Button.builder(Component.literal("-"), action -> {
-			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (minecraft.hasShiftDown() ? 1F : 0.125F));
-			this.textBlockEntity.renderDirty = true;
-		}).bounds(middle - 130, 0, 20, 20).build();
 
-		Button increaseSize = Button.builder(Component.literal("+"), action -> {
-			this.textBlockEntity.scale += minecraft.hasShiftDown() ? 1F : 0.125F;
-			this.textBlockEntity.renderDirty = true;
-		}).bounds(middle - 110, 0, 20, 20).build();
+		final float minScale = 0.125F;
+		final float maxScale = 16;
+		double initialScale = (textBlockEntity.scale - minScale) / (maxScale - minScale);
+
+		var scaleSlider = new AbstractSliderButton(
+			middle - 203,
+			0,
+			113,
+			20,
+			Component.translatable("gui.glowcase.scale_value", textBlockEntity.scale),
+			initialScale
+		) {
+			@Override
+			protected void updateMessage() {
+				this.setMessage(Component.translatable("gui.glowcase.scale_value", textBlockEntity.scale));
+			}
+
+			@Override
+			protected void applyValue() {
+				textBlockEntity.scale = (float) Math.round(Mth.lerp(this.value, minScale, maxScale) * 8F) / 8F;
+				textBlockEntity.renderDirty = true;
+			}
+		};
+		this.addRenderableWidget(scaleSlider);
 
 		Map<TextBlockEntity.TextAlignment, Button> textAlignmentButtons = new HashMap<>();
 		Consumer<TextBlockEntity.TextAlignment> changeTextAlignment = (alignment) -> {
@@ -130,7 +144,6 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.addRenderableWidget(textAlignCenter);
 		this.addRenderableWidget(textAlignLeft);
 		this.addRenderableWidget(textAlignRight);
-
 
 		Map<TextBlockEntity.HorizontalAlignment, Button> horizontalAlignmentButtons = new HashMap<>();
 		Consumer<TextBlockEntity.HorizontalAlignment> changeHorizontalAlignment = (alignment) -> {
@@ -237,9 +250,8 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.viewDistanceHelpButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
 
 		this.addRenderableWidget(colorPickerWidget);
-		this.addRenderableWidget(increaseSize);
-		this.addRenderableWidget(decreaseSize);
-//		this.addRenderableWidget(this.changeAlignment);
+//		this.addRenderableWidget(increaseSize);
+//		this.addRenderableWidget(decreaseSize);
 		this.addRenderableWidget(this.shadowToggle);
 		this.addRenderableWidget(this.zOffsetToggle);
 		this.addRenderableWidget(this.colorEntryWidget);
@@ -336,7 +348,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		}
 
 		graphics.pose().popMatrix();
-		graphics.text(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
+//		graphics.text(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
 		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
