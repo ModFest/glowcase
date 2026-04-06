@@ -1,13 +1,11 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -47,8 +45,92 @@ public class TextBlockOptionsScreen extends Screen {
 		this.layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, _ -> this.onClose()).width(200).build());
 
 		this.options = this.layout.addToContents(new TextOptionList(this.minecraft, this.width, this.layout.getContentHeight(), this.layout.getHeaderHeight()));
-		this.options.add(new TextBlockEditScreen.TextScaleSliderWidget(this.entity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT));
-		this.options.add(new TextRenderDistanceSliderWidget(this.entity, -1, -1));
+		this.options.add(
+			new TextBlockEditScreen.TextScaleSliderWidget(this.entity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT),
+			new TextRenderDistanceSliderWidget(this.entity, -1, -1)
+		);
+		this.options.add(
+			CycleButton.builder(
+					alignment -> Component.literal(alignment.toString()),
+					entity.horizontalAlignment
+				)
+				.withValues(TextBlockEntity.HorizontalAlignment.values())
+				.create(
+					Component.translatable("gui.glowcase.x_offset_label"),
+					(_, alignment) -> {
+						entity.horizontalAlignment = alignment;
+						entity.renderDirty = true;
+					}
+				),
+			CycleButton.builder(
+					offset -> Component.literal(offset.toString()),
+					entity.zOffset
+				)
+				.withValues(TextBlockEntity.ZOffset.values())
+				.create(
+					Component.translatable("gui.glowcase.z_offset_label"),
+					(_, offset) -> {
+						entity.zOffset = offset;
+						entity.renderDirty = true;
+					}
+				)
+		);
+		this.options.add(
+			CycleButton.builder(
+					alignment -> Component.literal(alignment.toString()),
+					entity.textAlignment
+				)
+				.withValues(
+					// not `.values()` to not have CENTER_LEFT or CENTER_RIGHT, unless they get removed
+					TextBlockEntity.TextAlignment.CENTER,
+					TextBlockEntity.TextAlignment.LEFT,
+					TextBlockEntity.TextAlignment.RIGHT
+				)
+				.create(
+					Component.translatable("gui.glowcase.text_alignment"),
+					(_, alignment) -> {
+						entity.textAlignment = alignment;
+						entity.renderDirty = true;
+					}
+				),
+			CycleButton.onOffBuilder(entity.shadow).create(
+				Component.translatable("gui.glowcase.text_shadow"),
+				(_, shadow) -> {
+					entity.shadow = shadow;
+					entity.renderDirty = true;
+				}
+			)
+		);
+
+		this.options.addHeader(Component.translatable("gui.glowcase.color"));
+		var colorEditBox = new EditBox(
+			this.font,
+			Button.DEFAULT_WIDTH,
+			Button.DEFAULT_HEIGHT,
+			Component.translatable("gui.glowcase.color")
+		);
+		colorEditBox.setValue(ColorUtil.toAlphaHex(this.entity.color));
+		colorEditBox.setResponder(string -> ColorUtil.parse(string, entity.color)
+			.ifSuccess(newColor -> {
+				entity.color = newColor;
+				entity.renderDirty = true;
+			}));
+		this.options.add(colorEditBox);
+
+		this.options.addHeader(Component.translatable("gui.glowcase.background_color"));
+		var backgroundEditBox = new EditBox(
+			this.font,
+			Button.DEFAULT_WIDTH,
+			Button.DEFAULT_HEIGHT,
+			Component.translatable("gui.glowcase.background_color")
+		);
+		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.entity.backgroundColor));
+		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, entity.backgroundColor)
+			.ifSuccess(newColor -> {
+				entity.backgroundColor = newColor;
+				entity.renderDirty = true;
+			}));
+		this.options.add(backgroundEditBox);
 
 		this.layout.visitWidgets(this::addRenderableWidget);
 		this.layout.arrangeElements();
@@ -59,8 +141,18 @@ public class TextBlockOptionsScreen extends Screen {
 			super(minecraft, width, height, y, Button.DEFAULT_HEIGHT + 5);
 		}
 
+		public void addHeader(Component text) {
+			int lineHeight = this.minecraft.font.lineHeight;
+			int paddingTop = this.children().isEmpty() ? 0 : lineHeight * 2;
+			this.addEntry(new HeaderEntry(new StringWidget(text, this.minecraft.font), paddingTop), paddingTop + lineHeight + 4);
+		}
+
 		public void add(AbstractWidget widget) {
 			this.addEntry(new WidgetEntry(widget));
+		}
+
+		public void add(AbstractWidget leftWidget, AbstractWidget rightWidget) {
+			this.addEntry(new TwoWidgetsEntry(leftWidget, rightWidget));
 		}
 
 		@Override
@@ -70,6 +162,32 @@ public class TextBlockOptionsScreen extends Screen {
 
 		public static abstract class Entry extends ContainerObjectSelectionList.Entry<Entry> {
 
+		}
+
+		public static class HeaderEntry extends Entry {
+			protected final StringWidget widget;
+			protected final int paddingTop;
+
+			public HeaderEntry(StringWidget widget, int paddingTop) {
+				this.widget = widget;
+				this.paddingTop = paddingTop;
+			}
+
+			@Override
+			public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+				this.widget.setPosition(this.getContentX(), this.getContentY() + this.paddingTop);
+				this.widget.extractRenderState(graphics, mouseX, mouseY, a);
+			}
+
+			@Override
+			public List<? extends NarratableEntry> narratables() {
+				return List.of(this.widget);
+			}
+
+			@Override
+			public List<? extends GuiEventListener> children() {
+				return List.of(this.widget);
+			}
 		}
 
 		public static class WidgetEntry extends Entry {
@@ -93,6 +211,34 @@ public class TextBlockOptionsScreen extends Screen {
 			@Override
 			public List<? extends GuiEventListener> children() {
 				return List.of(this.widget);
+			}
+		}
+
+		public static class TwoWidgetsEntry extends Entry {
+			protected final AbstractWidget leftWidget;
+			protected final AbstractWidget rightWidget;
+
+			public TwoWidgetsEntry(AbstractWidget leftWidget, AbstractWidget rightWidget) {
+				this.leftWidget = leftWidget;
+				this.rightWidget = rightWidget;
+			}
+
+			@Override
+			public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+				this.leftWidget.setPosition(this.getContentX(), this.getContentY());
+				this.leftWidget.extractRenderState(graphics, mouseX, mouseY, a);
+				this.rightWidget.setPosition(this.getContentX() + 160, this.getContentY());
+				this.rightWidget.extractRenderState(graphics, mouseX, mouseY, a);
+			}
+
+			@Override
+			public List<? extends NarratableEntry> narratables() {
+				return List.of(this.leftWidget, this.rightWidget);
+			}
+
+			@Override
+			public List<? extends GuiEventListener> children() {
+				return List.of(this.leftWidget, this.rightWidget);
 			}
 		}
 	}
