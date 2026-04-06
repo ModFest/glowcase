@@ -1,18 +1,16 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import com.google.common.primitives.Floats;
-import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.input.CharacterEvent;
@@ -23,10 +21,7 @@ import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen {
@@ -34,21 +29,14 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	private final TextBlockEntity textBlockEntity;
 
 	private List<EditBox> textWidgets;
-
 	private List<EditBox> colorListeners;
 
 	private TextFieldHelper selectionManager;
+	private EditBox colorEntryWidget;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	private EditBox colorEntryWidget;
-	private EditBox backgroundColorEntryWidget;
 	private Color colorEntryPreColorPicker; //used for color picker cancel button
-	private Button zOffsetToggle;
-	private Checkbox shadowToggle;
-
-	private EditBox viewDistanceField;
-	private Button viewDistanceHelpButton;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -73,117 +61,21 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		var scaleSlider = new TextScaleSliderWidget(textBlockEntity, middle - 203, 0, 113, 20);
 		this.addRenderableWidget(scaleSlider);
 
-		Map<TextBlockEntity.TextAlignment, Button> textAlignmentButtons = new HashMap<>();
-		Consumer<TextBlockEntity.TextAlignment> changeTextAlignment = (alignment) -> {
-			var previous = textBlockEntity.textAlignment;
-			var prevButton = textAlignmentButtons.get(previous);
-			if (prevButton != null) {
-				// there are a few deprecated values without a button
-				prevButton.active = true;
-			}
-
-			textBlockEntity.textAlignment = alignment;
-			textBlockEntity.renderDirty = true;
-		};
-
-		var textAlignLeft = IconButtonWidget.builder(Glowcase.id("text_alignment/left"), button -> {
-				changeTextAlignment.accept(TextBlockEntity.TextAlignment.LEFT);
-				button.active = false;
-			})
-			.position(middle - 90 + innerPadding, 0)
-			.size(20, 20, 16, 16)
-			.build();
-		var textAlignCenter = IconButtonWidget.builder(Glowcase.id("text_alignment/center"), button -> {
-				changeTextAlignment.accept(TextBlockEntity.TextAlignment.CENTER);
-				button.active = false;
-			})
-			.position(middle - 90 + innerPadding + 20, 0)
-			.size(20, 20, 16, 16)
-			.build();
-		var textAlignRight = IconButtonWidget.builder(Glowcase.id("text_alignment/right"), button -> {
-				changeTextAlignment.accept(TextBlockEntity.TextAlignment.RIGHT);
-				button.active = false;
-			})
-			.position(middle - 90 + innerPadding + 40, 0)
-			.size(20, 20, 16, 16)
-			.build();
-
-		textAlignmentButtons.put(TextBlockEntity.TextAlignment.LEFT, textAlignLeft);
-		textAlignmentButtons.put(TextBlockEntity.TextAlignment.CENTER, textAlignCenter);
-		textAlignmentButtons.put(TextBlockEntity.TextAlignment.RIGHT, textAlignRight);
-
-		var initialTextAlignmentButton = textAlignmentButtons.get(textBlockEntity.textAlignment);
-		if (initialTextAlignmentButton != null) {
-			// there are a few deprecated values without a button
-			initialTextAlignmentButton.active = false;
-		}
-
-		this.addRenderableWidget(textAlignCenter);
-		this.addRenderableWidget(textAlignLeft);
-		this.addRenderableWidget(textAlignRight);
-
-		Map<TextBlockEntity.HorizontalAlignment, Button> horizontalAlignmentButtons = new HashMap<>();
-		Consumer<TextBlockEntity.HorizontalAlignment> changeHorizontalAlignment = (alignment) -> {
-			var previous = textBlockEntity.horizontalAlignment;
-			horizontalAlignmentButtons.get(previous).active = true;
-
-			textBlockEntity.horizontalAlignment = alignment;
-			textBlockEntity.renderDirty = true;
-		};
-
-		var horizontalAlignLeft = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/left"), button -> {
-				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.LEFT);
-				button.active = false;
-			})
-			.position(middle - 90 + 2 * innerPadding + 60, 0)
-			.size(20, 20, 16, 16)
-			.build();
-		var horizontalAlignCenter = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/center"), button -> {
-				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.CENTER);
-				button.active = false;
-			})
-			.position(middle - 90 + 2 * innerPadding + 80, 0)
-			.size(20, 20, 16, 16)
-			.build();
-		var horizontalAlignRight = IconButtonWidget.builder(Glowcase.id("horizontal_alignment/right"), button -> {
-				changeHorizontalAlignment.accept(TextBlockEntity.HorizontalAlignment.RIGHT);
-				button.active = false;
-			})
-			.position(middle - 90 + 2 * innerPadding + 100, 0)
-			.size(20, 20, 16, 16)
-			.build();
-		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.LEFT, horizontalAlignLeft);
-		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.CENTER, horizontalAlignCenter);
-		horizontalAlignmentButtons.put(TextBlockEntity.HorizontalAlignment.RIGHT, horizontalAlignRight);
-
-		horizontalAlignmentButtons.get(textBlockEntity.horizontalAlignment).active = false;
-
-		this.addRenderableWidget(horizontalAlignCenter);
-		this.addRenderableWidget(horizontalAlignLeft);
-		this.addRenderableWidget(horizontalAlignRight);
-
-		var moreOptionsButton = IconButtonWidget.builder(Glowcase.id("three_dots"), button -> {
-				var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-				Minecraft.getInstance().setScreen(optionsScreen);
-			})
-			.position(middle - 90 + 3 * innerPadding + 120, 0)
-			.size(32, 20, 16, 16)
+		var moreOptionsButton = Button.builder(
+				Component.translatable("gui.glowcase.more"),
+				button -> {
+					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+					Minecraft.getInstance().setScreen(optionsScreen);
+				})
+			.bounds(middle + 124, 0, 80, 20)
 			.build();
 		this.addRenderableWidget(moreOptionsButton);
 
-		this.shadowToggle = Checkbox.builder(Component.translatable("gui.glowcase.shadow"), this.font)
-			.selected(this.textBlockEntity.shadow)
-			.onValueChange((widget, checked) -> {
-				this.textBlockEntity.shadow = checked;
-				this.textBlockEntity.renderDirty = true;
-			})
-			.pos(middle - 90 + innerPadding, 20 + innerPadding).build();
-
-		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 70 + innerPadding * 2, 0, 64, 20, Component.empty());
+		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, 0, 64, 20, Component.empty());
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
 		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
 		this.colorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(this.colorEntryWidget.getValue(), this.textBlockEntity.color).ifSuccess(newColor -> {
+			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
 				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.COLOR_MASK);
 
 				this.textBlockEntity.color = color;
@@ -195,67 +87,21 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			});
 		});
 
-		this.backgroundColorEntryWidget = new EditBox(this.minecraft.font, middle + 136 + innerPadding * 2, 0, 64, 20, Component.empty());
-		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color")));
-		this.backgroundColorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.backgroundColor));
-		this.backgroundColorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(string, this.textBlockEntity.backgroundColor).ifSuccess(newColor -> {
-				this.textBlockEntity.backgroundColor = newColor;
-				if (this.colorEntryWidget.isFocused()) {
-					this.colorPickerWidget.setColor(new Color(newColor));
-				}
-				this.textBlockEntity.renderDirty = true;
-			});
-		});
-
-		this.zOffsetToggle = Button.builder(Component.literal(this.textBlockEntity.zOffset.name()), action -> {
-			switch (textBlockEntity.zOffset) {
-				case FRONT -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
-			}
-			this.textBlockEntity.renderDirty = true;
-
-			this.zOffsetToggle.setMessage(Component.literal(this.textBlockEntity.zOffset.name()));
-		}).bounds(middle + 2, 20 + innerPadding, 72, 20).build();
-
 		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
 		this.colorPickerWidget.toggle(false); //start deactivated
 
-		this.viewDistanceField = new EditBox(this.minecraft.font, middle - 203, 20 + innerPadding, 83 + innerPadding, 20, Component.empty());
-		this.viewDistanceField.setValue(String.valueOf(this.textBlockEntity.viewDistance));
-		this.viewDistanceField.setResponder(s -> {
-			if (Floats.tryParse(s) instanceof Float parsed) {
-				this.textBlockEntity.viewDistance = parsed;
-			}
-		});
-		this.viewDistanceField.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
-		this.viewDistanceHelpButton = Button.builder(Component.literal("?"), action -> {
-			})
-			.bounds(middle - 115 + innerPadding + 5, 20 + innerPadding, 20, 20).build();
-		this.viewDistanceHelpButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
-
 		this.addRenderableWidget(colorPickerWidget);
-		this.addRenderableWidget(this.shadowToggle);
-		this.addRenderableWidget(this.zOffsetToggle);
 		this.addRenderableWidget(this.colorEntryWidget);
-		this.addRenderableWidget(this.backgroundColorEntryWidget);
-
-		this.addRenderableWidget(this.viewDistanceField);
-		this.addRenderableWidget(this.viewDistanceHelpButton);
 
 		this.textWidgets = List.of(
-			this.colorEntryWidget,
-			this.backgroundColorEntryWidget,
-			this.viewDistanceField
+			this.colorEntryWidget
 		);
 
 		this.colorListeners = List.of(
-			this.colorEntryWidget,
-			this.backgroundColorEntryWidget
+			this.colorEntryWidget
 		);
 
-		addFormattingButtons(middle + 70, 20, innerPadding, 20, 2);
+		addFormattingButtons(middle - 90 + 6, 0, 0, 20, 2);
 	}
 
 	@Override
@@ -282,7 +128,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, 40 + 2 * this.width / 100F);
+		graphics.pose().translate(0, 20 + 2 * this.width / 100F);
 		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
 			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
 
@@ -332,7 +178,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		}
 
 		graphics.pose().popMatrix();
-//		graphics.text(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
+
 		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 

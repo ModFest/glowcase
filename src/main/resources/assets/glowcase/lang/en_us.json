@@ -176,5 +176,6 @@
 	"gui.glowcase.render_distance_value": "Render Distance: %d",
 	"gui.glowcase.render_distance_value.infinite": "Render Distance: Infinite",
 	"gui.glowcase.text_alignment": "Text Alignment",
-	"gui.glowcase.text_shadow": "Text Shadow"
+	"gui.glowcase.text_shadow": "Text Shadow",
+	"gui.glowcase.more": "More..."
 }
