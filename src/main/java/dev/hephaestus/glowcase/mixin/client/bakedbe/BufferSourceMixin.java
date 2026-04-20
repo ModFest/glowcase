@@ -1,9 +1,11 @@
-package dev.hephaestus.glowcase.mixin.client;
+package dev.hephaestus.glowcase.mixin.client.bakedbe;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.VertexSorting;
+import dev.hephaestus.glowcase.client.render.bakedbe.chunk.SectionCompileQueue;
 import dev.hephaestus.glowcase.mixinsupport.BakingBufferSource;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -12,10 +14,11 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.*;
 
-@Mixin(MultiBufferSource.BufferSource.class)
+@Mixin(value = MultiBufferSource.BufferSource.class, priority = 9999)
 public class BufferSourceMixin implements BakingBufferSource {
     @Shadow @Nullable protected RenderType lastSharedType;
     @Shadow @Final protected SequencedMap<RenderType, ByteBufferBuilder> fixedBuffers;
@@ -23,11 +26,11 @@ public class BufferSourceMixin implements BakingBufferSource {
 
     @Shadow @Final protected ByteBufferBuilder sharedBuffer;
 
-    public Map<RenderType, MeshData> glowcase$bakeAllBatches() {
+    public Map<RenderType, MeshData> glowcase$bakeAllBatches(VertexSorting vertexSorting) {
         Map<RenderType, MeshData> meshData = new HashMap<>();
         this.startedBuilders.forEach((renderType, bufferBuilder) -> {
             if (bufferBuilder != null) {
-                MeshData mesh = this.glowcase$bakeBatch(renderType, bufferBuilder);
+                MeshData mesh = this.glowcase$bakeBatch(renderType, bufferBuilder, vertexSorting);
                 if (mesh != null) meshData.put(renderType, mesh);
             }
         });
@@ -38,10 +41,10 @@ public class BufferSourceMixin implements BakingBufferSource {
     }
     
     @Override
-    public Map<RenderType, MeshData> glowcase$bakeBatch() {
+    public Map<RenderType, MeshData> glowcase$bakeBatch(VertexSorting vertexSorting) {
         Map<RenderType, MeshData> meshData = new HashMap<>();
         for (RenderType renderType : this.fixedBuffers.keySet()) {
-            MeshData mesh = this.glowcase$bakeBatch(renderType);
+            MeshData mesh = this.glowcase$bakeBatch(renderType, vertexSorting);
             if (mesh != null) {
                 meshData.put(renderType, mesh);
             }
@@ -51,22 +54,22 @@ public class BufferSourceMixin implements BakingBufferSource {
     }
 
     @Unique
-    public MeshData glowcase$bakeBatch(RenderType renderType) {
+    public MeshData glowcase$bakeBatch(RenderType renderType, VertexSorting vertexSorting) {
         BufferBuilder bufferBuilder = this.startedBuilders.remove(renderType);
         if (bufferBuilder != null) {
-            return this.glowcase$bakeBatch(renderType, bufferBuilder);
+            return this.glowcase$bakeBatch(renderType, bufferBuilder, vertexSorting);
         }
 
         return null;
     }
 
     @Unique
-    public MeshData glowcase$bakeBatch(RenderType renderType, BufferBuilder bufferBuilder) {
+    public MeshData glowcase$bakeBatch(RenderType renderType, BufferBuilder bufferBuilder, VertexSorting vertexSorting) {
         MeshData meshData = bufferBuilder.build();
         if (meshData != null) {
             if (renderType.sortOnUpload()) {
                 ByteBufferBuilder byteBufferBuilder = this.fixedBuffers.getOrDefault(renderType, this.sharedBuffer);
-                meshData.sortQuads(byteBufferBuilder, RenderSystem.getProjectionType().vertexSorting());
+                meshData.sortQuads(byteBufferBuilder, vertexSorting);
             }
         }
 

@@ -39,6 +39,9 @@
 		],
 		"client": [
 			"dev.hephaestus.glowcase.client.GlowcaseClient"
+		],
+		"mm:early_risers": [
+			"dev.hephaestus.glowcase.asm.GlowcaseAsm"
 		]
 	}
 }

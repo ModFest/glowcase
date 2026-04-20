@@ -16,6 +16,7 @@ repositories {
 	maven("https://maven.nucleoid.xyz/")
 	maven("https://repo.sleeping.town/")
 	maven("https://maven.terraformersmc.com/")
+	maven("https://jitpack.io")
 
 	maven {
 		name = "BlameJared Maven (CrT / Bookshelf)"
@@ -45,6 +46,9 @@ dependencies {
 	implementation(libs.kaleidoConfig)
 	include(libs.kaleidoConfig)
 
+	implementation(libs.asm)
+	include(libs.asm)
+
 	/*compileOnly(libs.emi)
 	localRuntime(libs.emi)*/
 
@@ -52,7 +56,7 @@ dependencies {
 	localRuntime(libs.modmenu)
 
 	compileOnly(libs.sodium)
-	localRuntime(libs.sodium)
+	// localRuntime(libs.sodium)
 }
 
 loom {

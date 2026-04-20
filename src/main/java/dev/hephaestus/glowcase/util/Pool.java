@@ -1,8 +1,11 @@
-package dev.hephaestus.glowcase.client.util;
+package dev.hephaestus.glowcase.util;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.util.Util;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +23,7 @@ import java.util.function.Supplier;
 // If needed, this can get a closing strategy, but it would have to overcome some things for that, like what to do with acquired resources.
 @NullMarked
 public class Pool<T> {
+	private static final boolean DEBUG_LOGGING = Boolean.getBoolean("glowcase.debug.pools");
 	public static final Logger LOGGER = LoggerFactory.getLogger(Pool.class);
 	private static final Cleaner CLEANER = Cleaner.create();
 	private final Supplier<T> objectSupplier;
@@ -64,50 +68,62 @@ public class Pool<T> {
 	}
 
 	public void check() {
+		ProfilerFiller profiler = Profiler.get();
+		profiler.push("pool_check");
+
 		for (Lifetime lifetime : pending.values()) {
 			lifetime.check();
 		}
+
+		profiler.pop();
 	}
 
 	private class Lifetime {
-		private static final long LIFETIME = 3000;
+		private static final long MINUTE = 60 * 1000;
+		private static final long LIFETIME = 3 * 1000;
 		private final long polledAt = Util.getMillis();
-		private final StackTraceElement[] stacktrace;
+		private final Exception exception;
 		private final String resourceClassName;
 		private final int resourceId;
 		private long nextWarning = polledAt + LIFETIME;
 
 		// Never hold a reference to the resource, let GC take it if it's not returned and lost
 		private Lifetime(T resource) {
-			this.stacktrace = new Exception().getStackTrace();
-			this.resourceClassName = resource.getClass().getCanonicalName();
+			this.resourceClassName = DEBUG_LOGGING ? resource.getClass().getCanonicalName() : resource.getClass().getSimpleName();
 			this.resourceId = System.identityHashCode(resource);
+			// There is no need to keep the exception if debug logging isn't enabled
+			this.exception = new Exception("Resource acquisition stacktrace");
 
 			CLEANER.register(resource, () -> {
-				Exception exception = new Exception();
-				exception.setStackTrace(stacktrace);
-				LOGGER.warn("Pool resource was collected by GC and may have not been closed properly, this can lead to unrecoverable resource leak!");
-				LOGGER.error("""
-						[RESOURCE LEAK] POOL RESOURCE LOST TO GC
-						  Resource class: {},
-						  Polled at: {},
-						  Id: {},
-						  Caller: {}""",
-					resourceClassName,
-					polledAt,
-					resourceId,
-					stacktrace[4], // The class is quite abstract but this is hardcoded to account for the wrapper methods
-					exception
-				);
+				if (DEBUG_LOGGING) {
+					LOGGER.error("""
+							[RESOURCE LEAK] POOL RESOURCE LOST TO GC
+							  Resource class: {},
+							  Polled at: {},
+							  Id: {}""",
+						resourceClassName,
+						polledAt,
+						resourceId,
+						exception
+					);
+				} else {
+					LOGGER.warn("Pool resource collected by GC, this can lead to unrecoverable resource leak! [{}] (Ignore if caused by game crash)", resourceClassName);
+				}
+
 				semaphore.release(); // Release to the semaphore to prevent thread starvation
 				pending.remove(resourceId);
 			});
 		}
 
 		void check() {
+			if (nextWarning == -1) return;
+
 			long now = Util.getMillis();
-			if (nextWarning <= now) {
-				LOGGER.warn("Resource {} allocated for too long! (over {} seconds)", resourceId, (now - polledAt) / 1000f);
+			if (now >= polledAt + MINUTE) {
+				LOGGER.warn("Resource [class={},id={}] allocated for over a minute! Giving up on alerts.", resourceClassName, resourceId, exception);
+				nextWarning = -1;
+			} else if (nextWarning <= now) {
+				LOGGER.warn("Resource [class={},id={}] allocated for too long! (over {} seconds)", resourceClassName, resourceId, (now - polledAt) / 1000f);
 				nextWarning = now + LIFETIME;
 			}
 		}

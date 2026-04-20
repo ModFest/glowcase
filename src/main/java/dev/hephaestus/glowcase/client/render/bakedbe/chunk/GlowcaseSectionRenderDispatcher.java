@@ -10,7 +10,7 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.TlsfAllocator;
 import com.mojang.blaze3d.vertex.UberGpuBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.hephaestus.glowcase.mixin.client.RenderTypeAccessor;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DefaultedMap;
 import dev.hephaestus.glowcase.util.DefaultedMapBase;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
@@ -78,6 +78,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	}
 
 	public boolean allocateMeshBuffers(long sectionPos, RenderType renderType, MeshData meshData) {
+		return allocateBuffers(sectionPos, renderType, meshData.vertexBuffer(), meshData.indexBuffer());
+	}
+
+	public boolean allocateBuffers(long sectionPos, RenderType renderType, @Nullable ByteBuffer vertexBuffer, @Nullable ByteBuffer indexBuffer) {
 		ProfilerFiller profiler = Profiler.get();
 		String renderTypeName = ((RenderTypeAccessor) renderType).getName();
 		profiler.push(renderTypeName);
@@ -86,19 +90,13 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		boolean success = true;
 
 		try {
-			SectionUberBuffers sectionBuffers = layerBuffers.getWithoutDefault(renderType);
-			if (sectionBuffers == null) {
-				throw new IllegalStateException("Missing buffers for " + renderTypeName + "! Failed to create first?");
+			SectionUberBuffers sectionBuffers = layerBuffers.getValue(renderType);
+
+			if (vertexBuffer != null) {
+				success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, null, vertexBuffer);
 			}
 
-			ByteBuffer vertexBuffer = meshData.vertexBuffer();
-			ByteBuffer indexBuffer = meshData.indexBuffer();
-
-			// UberGpuBuffer.UploadCallback<SectionMesh> callback = mesh -> this.vertexBufferUploadCallback(mesh, layer);
-			success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, null, vertexBuffer);
-
 			if (indexBuffer != null) {
-				// UberGpuBuffer.UploadCallback<SectionMesh> callback = mesh -> this.indexBufferUploadCallback(mesh, layer, false);
 				success &= sectionBuffers.indexBuffer.addAllocation(sectionPos, null, indexBuffer);
 			}
 
@@ -115,6 +113,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 	public void assertRenderTypeBuffer(RenderType renderType) {
 		layerBuffers.assertPresent(renderType);
+	}
+
+	public boolean hasAllRenderTypes(Set<RenderType> renderTypes) {
+		return renderTypes().containsAll(renderTypes);
 	}
 
 	public Set<RenderType> renderTypes() {
@@ -155,7 +157,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		lock();
 
 		try {
-			this.compileQueue.clear();
+			this.compileQueue.close();
 			for (SectionUberBuffers buffers : this.layerBuffers.values()) {
 				buffers.vertexBuffer.close();
 				if (buffers.indexBuffer != null) {

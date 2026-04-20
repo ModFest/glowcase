@@ -3,6 +3,7 @@ accessWidener v2 official
 accessible class net/minecraft/client/gui/Font$PreparedTextBuilder
 accessible class net/minecraft/client/gui/render/GuiRenderer$Draw
 
+extendable method net/minecraft/client/renderer/MultiBufferSource$BufferSource endBatch (Lnet/minecraft/client/renderer/rendertype/RenderType;Lcom/mojang/blaze3d/vertex/BufferBuilder;)V
 accessible method net/minecraft/client/gui/components/EditBox onValueChange (Ljava/lang/String;)V
 
 accessible field net/minecraft/client/data/models/BlockModelGenerators ROTATION_FACING Lnet/minecraft/client/data/models/blockstates/PropertyDispatch;

@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.mixin.client.sodium;
+package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
@@ -15,6 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class RenderSectionManagerMixin {
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;successfully(Ljava/lang/Object;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;"), method = "submitSectionTask")
 	private void clearEmptySection(CallbackInfo ci, @Local(argsOnly = true, name = "section") RenderSection section) {
-		GlowcaseLevelRenderer.getInstance().queueCompilation(section.getPosition().asLong(), null);
+		GlowcaseLevelRenderer.getInstance().queueCompilation(section.getPosition().asLong(), null, null);
 	}
 }

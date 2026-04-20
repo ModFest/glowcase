@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.mixin.client;
+package dev.hephaestus.glowcase.mixin.client.bakedbe;
 
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;

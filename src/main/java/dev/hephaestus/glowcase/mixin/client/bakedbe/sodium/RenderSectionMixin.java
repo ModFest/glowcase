@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.mixin.client.sodium;
+package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;

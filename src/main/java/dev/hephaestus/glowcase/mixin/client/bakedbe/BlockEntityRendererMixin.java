@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.mixin.client;
+package dev.hephaestus.glowcase.mixin.client.bakedbe;
 
 import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
