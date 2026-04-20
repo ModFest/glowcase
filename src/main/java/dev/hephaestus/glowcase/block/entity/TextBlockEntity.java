@@ -6,17 +6,20 @@ import dev.hephaestus.glowcase.client.util.ColorUtil;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TextBlockEntity extends GlowcaseBlockEntity {
 	public static final NodeParser PARSER = TagParser.DEFAULT;
@@ -25,6 +28,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 	public List<Component> lines = new ArrayList<>();
 	public TextAlignment textAlignment = TextAlignment.CENTER;
+	public HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
 	public ZOffset zOffset = ZOffset.CENTER;
 	public boolean shadow = true;
 	public float scale = 1F;
@@ -47,6 +51,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		view.putInt("background_color", this.backgroundColor);
 
 		view.store("text_alignment", TextAlignment.CODEC, this.textAlignment);
+		view.store("horizontal_alignment", HorizontalAlignment.CODEC, this.horizontalAlignment);
 		view.store("z_offset", ZOffset.CODEC, this.zOffset);
 		view.putBoolean("shadow", this.shadow);
 		view.putFloat("viewDistance", this.viewDistance);
@@ -69,6 +74,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
 		this.textAlignment = view.read("text_alignment", TextAlignment.CODEC).orElse(TextAlignment.CENTER);
+		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
 		this.viewDistance = view.getFloatOr("viewDistance", -1);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
@@ -111,7 +117,13 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public enum TextAlignment implements StringRepresentable {
-		LEFT, CENTER, CENTER_LEFT, CENTER_RIGHT, RIGHT;
+		LEFT,
+		CENTER,
+		@Deprecated
+		CENTER_LEFT,
+		@Deprecated
+		CENTER_RIGHT,
+		RIGHT;
 
 		public static final Codec<TextAlignment> CODEC = StringRepresentable.fromEnum(TextAlignment::values);
 
@@ -125,6 +137,18 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		FRONT, CENTER, BACK;
 
 		public static final Codec<ZOffset> CODEC = StringRepresentable.fromEnum(ZOffset::values);
+
+		@Override
+		public String getSerializedName() {
+			return name().toLowerCase();
+		}
+	}
+
+	public enum HorizontalAlignment implements StringRepresentable {
+		LEFT, CENTER, RIGHT;
+
+		public static final Codec<HorizontalAlignment> CODEC = StringRepresentable.fromEnum(HorizontalAlignment::values);
+		public static final StreamCodec<ByteBuf, HorizontalAlignment> STREAM_CODEC = ByteBufCodecs.BYTE.map(index -> TextBlockEntity.HorizontalAlignment.values()[index], textAlignment -> (byte) textAlignment.ordinal());
 
 		@Override
 		public String getSerializedName() {

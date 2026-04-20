@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
@@ -8,8 +7,8 @@ import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -30,22 +29,14 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	private final TextBlockEntity textBlockEntity;
 
 	private List<EditBox> textWidgets;
-
 	private List<EditBox> colorListeners;
 
 	private TextFieldHelper selectionManager;
+	private EditBox colorEntryWidget;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	private Button changeAlignment;
-	private EditBox colorEntryWidget;
-	private EditBox backgroundColorEntryWidget;
 	private Color colorEntryPreColorPicker; //used for color picker cancel button
-	private Button zOffsetToggle;
-	private Checkbox shadowToggle;
-
-	private EditBox viewDistanceField;
-	private Button viewDistanceHelpButton;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -67,42 +58,24 @@ public class TextBlockEditScreen extends TextEditorScreen {
 
 		int middle = width / 2;
 
-		Button decreaseSize = Button.builder(Component.literal("-"), action -> {
-			this.textBlockEntity.scale = Math.max(0, this.textBlockEntity.scale - (minecraft.hasShiftDown() ? 1F : 0.125F));
-			this.textBlockEntity.renderDirty = true;
-		}).bounds(middle - 130, 0, 20, 20).build();
+		var scaleSlider = new TextScaleSliderWidget(textBlockEntity, middle - 203, 0, 113, 20);
+		this.addRenderableWidget(scaleSlider);
 
-		Button increaseSize = Button.builder(Component.literal("+"), action -> {
-			this.textBlockEntity.scale += minecraft.hasShiftDown() ? 1F : 0.125F;
-			this.textBlockEntity.renderDirty = true;
-		}).bounds(middle - 110, 0, 20, 20).build();
+		var moreOptionsButton = Button.builder(
+				Component.translatable("gui.glowcase.more"),
+				button -> {
+					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+					Minecraft.getInstance().setScreen(optionsScreen);
+				})
+			.bounds(middle + 124, 0, 80, 20)
+			.build();
+		this.addRenderableWidget(moreOptionsButton);
 
-		this.changeAlignment = Button.builder(Component.translatableEscape("gui.glowcase.alignment", this.textBlockEntity.textAlignment), action -> {
-			switch (textBlockEntity.textAlignment) {
-				case LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
-				case CENTER -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_LEFT;
-				case CENTER_LEFT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER_RIGHT;
-				case CENTER_RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
-				case RIGHT -> textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
-			}
-			this.textBlockEntity.renderDirty = true;
-
-			this.changeAlignment.setMessage(Component.translatableEscape("gui.glowcase.alignment", this.textBlockEntity.textAlignment));
-		}).bounds(middle - 90 + innerPadding, 0, 160, 20).build();
-
-		this.shadowToggle = Checkbox.builder(Component.translatable("gui.glowcase.shadow"), this.font)
-			.selected(this.textBlockEntity.shadow)
-			.onValueChange((widget, checked) -> {
-				this.textBlockEntity.shadow = checked;
-				this.textBlockEntity.renderDirty = true;
-			})
-			.pos(middle - 90 + innerPadding, 20 + innerPadding).build();
-
-		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 70 + innerPadding * 2, 0, 64, 20, Component.empty());
+		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, 0, 64, 20, Component.empty());
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
 		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
 		this.colorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(this.colorEntryWidget.getValue(), this.textBlockEntity.color).ifSuccess(newColor -> {
+			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
 				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.COLOR_MASK);
 
 				this.textBlockEntity.color = color;
@@ -114,70 +87,21 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			});
 		});
 
-		this.backgroundColorEntryWidget = new EditBox(this.minecraft.font, middle + 136 + innerPadding * 2, 0, 64, 20, Component.empty());
-		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color")));
-		this.backgroundColorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.backgroundColor));
-		this.backgroundColorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(string, this.textBlockEntity.backgroundColor).ifSuccess(newColor -> {
-				this.textBlockEntity.backgroundColor = newColor;
-				if (this.colorEntryWidget.isFocused()) {
-					this.colorPickerWidget.setColor(new Color(newColor));
-				}
-				this.textBlockEntity.renderDirty = true;
-			});
-		});
-
-		this.zOffsetToggle = Button.builder(Component.literal(this.textBlockEntity.zOffset.name()), action -> {
-			switch (textBlockEntity.zOffset) {
-				case FRONT -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> textBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
-			}
-			this.textBlockEntity.renderDirty = true;
-
-			this.zOffsetToggle.setMessage(Component.literal(this.textBlockEntity.zOffset.name()));
-		}).bounds(middle + 2, 20 + innerPadding, 72, 20).build();
-
 		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
 		this.colorPickerWidget.toggle(false); //start deactivated
 
-		this.viewDistanceField = new EditBox(this.minecraft.font, middle - 203, 20 + innerPadding, 83 + innerPadding, 20, Component.empty());
-		this.viewDistanceField.setValue(String.valueOf(this.textBlockEntity.viewDistance));
-		this.viewDistanceField.setResponder(s -> {
-			if (Floats.tryParse(s) instanceof Float parsed) {
-				this.textBlockEntity.viewDistance = parsed;
-			}
-		});
-		this.viewDistanceField.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
-		this.viewDistanceHelpButton = Button.builder(Component.literal("?"), action -> {
-			})
-			.bounds(middle - 115 + innerPadding + 5, 20 + innerPadding, 20, 20).build();
-		this.viewDistanceHelpButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.screen.text_edit.view_distance")));
-
 		this.addRenderableWidget(colorPickerWidget);
-		this.addRenderableWidget(increaseSize);
-		this.addRenderableWidget(decreaseSize);
-		this.addRenderableWidget(this.changeAlignment);
-		this.addRenderableWidget(this.shadowToggle);
-		this.addRenderableWidget(this.zOffsetToggle);
 		this.addRenderableWidget(this.colorEntryWidget);
-		this.addRenderableWidget(this.backgroundColorEntryWidget);
-
-		this.addRenderableWidget(this.viewDistanceField);
-		this.addRenderableWidget(this.viewDistanceHelpButton);
 
 		this.textWidgets = List.of(
-			this.colorEntryWidget,
-			this.backgroundColorEntryWidget,
-			this.viewDistanceField
+			this.colorEntryWidget
 		);
 
 		this.colorListeners = List.of(
-			this.colorEntryWidget,
-			this.backgroundColorEntryWidget
+			this.colorEntryWidget
 		);
 
-		addFormattingButtons(middle + 70, 20, innerPadding, 20, 2);
+		addFormattingButtons(middle - 90 + 6, 0, 0, 20, 2);
 	}
 
 	@Override
@@ -204,14 +128,13 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, 40 + 2 * this.width / 100F);
+		graphics.pose().translate(0, 20 + 2 * this.width / 100F);
 		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
 			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
 
 			int lineWidth = this.font.width(text);
 			switch (this.textBlockEntity.textAlignment) {
-				case LEFT ->
-					graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
+				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
 				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
 					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
 				case RIGHT ->
@@ -255,7 +178,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		}
 
 		graphics.pose().popMatrix();
-		graphics.text(minecraft.font, Component.translatable("gui.glowcase.scale_value", this.textBlockEntity.scale), width / 2 - 203, 7, 0xFFFFFFFF);
+
 		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
@@ -508,5 +431,29 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	@Override
 	TextFieldHelper getSelectionManager() {
 		return this.selectionManager;
+	}
+
+	public static class TextScaleSliderWidget extends AbstractSliderButton {
+		private static final float MIN_SCALE = 0.125F;
+		private static final float MAX_SCALE = 16;
+
+		private final TextBlockEntity entity;
+
+		public TextScaleSliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
+			var initialValue = (entity.scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE);
+			super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
+			this.entity = entity;
+		}
+
+		@Override
+		protected void updateMessage() {
+			this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
+		}
+
+		@Override
+		protected void applyValue() {
+			entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
+			entity.renderDirty = true;
+		}
 	}
 }
