@@ -1,8 +1,11 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
+import net.minecraft.core.Position;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
@@ -28,10 +31,12 @@ public class RenderSectionPos extends Vec3i {
 	private static final int Z_OFFSET = Y_BITS; // 20
 	private static final int X_OFFSET = Z_OFFSET + Z_BITS; // 42
 
-
 	private static final int RELATIVE_Y_SHIFT = 0;
 	private static final int RELATIVE_Z_SHIFT = SECTION_BITS; // 4
 	private static final int RELATIVE_X_SHIFT = RELATIVE_Z_SHIFT + SECTION_BITS; // 8
+
+	private final Vec3i origin = new Vec3i(x() << SECTION_BITS, y() << SECTION_BITS, z() << SECTION_BITS);
+	private final AABB boundingBox = new AABB(Vec3.atLowerCornerOf(origin), Vec3.atCenterOf(origin.offset(SECTION_SIZE, SECTION_SIZE, SECTION_SIZE)));;
 
 	public RenderSectionPos(int x, int y, int z) {
 		super(x, y, z);
@@ -39,7 +44,6 @@ public class RenderSectionPos extends Vec3i {
 
 	public RenderSectionPos(long sectionNode) {
 		this(xFromNode(sectionNode), yFromNode(sectionNode), zFromNode(sectionNode));
-		if (sectionNode != asLong()) throw new RuntimeException("Math isn't mathing!");
 	}
 
 	public RenderSectionPos(BlockPos pos) {
@@ -53,12 +57,24 @@ public class RenderSectionPos extends Vec3i {
 		return node | (z() & Z_MASK) << Z_OFFSET;
 	}
 
-	public BlockPos origin() {
-		return new BlockPos(x() << SECTION_BITS, y() << SECTION_BITS, z() << SECTION_BITS);
+	public Vec3i origin() {
+		return origin;
 	}
 
-	public BlockPos maxBlockPos() {
+	public Vec3i center() {
+		return origin().offset(SECTION_HALF_SIZE, SECTION_HALF_SIZE, SECTION_HALF_SIZE);
+	}
+
+	public Vec3 absoluteCenter() {
+		return Vec3.atCenterOf(center());
+	}
+
+	public Vec3i maxBlockPos() {
 		return origin().offset(SECTION_MAX_INDEX, SECTION_MAX_INDEX, SECTION_MAX_INDEX);
+	}
+
+	public AABB boundingBox() {
+		return boundingBox;
 	}
 
 	public String toSimpleString() {
@@ -93,5 +109,12 @@ public class RenderSectionPos extends Vec3i {
 
 	public static int zFromNode(final long sectionNode) {
 		return (int)(sectionNode >> Z_OFFSET & Z_MASK);
+	}
+
+	public static double distanceSqr(final long sectionNode, Position pos) {
+		double dx = (xFromNode(sectionNode) << SECTION_BITS) + 8.5 - pos.x();
+		double dy = (yFromNode(sectionNode) << SECTION_BITS) + 8.5 - pos.y();
+		double dz = (zFromNode(sectionNode) << SECTION_BITS) + 8.5 - pos.z();
+		return dx * dx + dy * dy + dz * dz;
 	}
 }

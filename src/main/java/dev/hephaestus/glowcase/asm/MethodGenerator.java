@@ -10,6 +10,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -55,16 +56,6 @@ public class MethodGenerator extends GeneratorAdapter {
 		throw new NoSuchElementException("No method with access " + access + ", name " + name + " and descriptor " + descriptor + " found");
 	}
 
-	public static MethodGenerator ofFirst(final ClassNode classNode, final int access, final String name) {
-		for (MethodNode method : classNode.methods) {
-			if (method.name.equals(name) && method.access == access) {
-				return new MethodGenerator(classNode, method);
-			}
-		}
-
-		throw new NoSuchElementException("No method with access " + access + ", name " + name + " found");
-	}
-
 	public static MethodGenerator replace(final ClassNode classNode, final int access, final String name, final String descriptor) {
 		ListIterator<MethodNode> iterator = classNode.methods.listIterator();
 		while (iterator.hasNext()) {
@@ -78,22 +69,19 @@ public class MethodGenerator extends GeneratorAdapter {
 		throw new NoSuchElementException("No method with access " + access + ", name " + name + " and descriptor " + descriptor + " found");
 	}
 
-	public static MethodGenerator replaceFirst(final ClassNode classNode, final int access, final String name) {
-		ListIterator<MethodNode> iterator = classNode.methods.listIterator();
-		while (iterator.hasNext()) {
-			MethodNode method = iterator.next();
+	public static MethodNode getFirstMethod(final ClassNode classNode, final int access, final String name) {
+		for (MethodNode method : classNode.methods) {
 			if (method.name.equals(name) && method.access == access) {
-				iterator.remove();
-				return create(classNode, method.access, method.name, method.desc, method.signature, method.exceptions.toArray(new String[0]));
+				return method;
 			}
 		}
 
 		throw new NoSuchElementException("No method with access " + access + " and name " + name + " found");
 	}
 
-	public static MethodNode getFirstMethod(final ClassNode classNode, final int access, final String name) {
+	public static MethodNode getMethod(final ClassNode classNode, final int access, final String name, final String descriptor) {
 		for (MethodNode method : classNode.methods) {
-			if (method.name.equals(name) && method.access == access) {
+			if (method.desc.equals(descriptor) && method.name.equals(name) && method.access == access) {
 				return method;
 			}
 		}
@@ -157,7 +145,11 @@ public class MethodGenerator extends GeneratorAdapter {
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, name, descriptor, false);
 	}
 
-	public Label startLabel() {
+	public void pushNull() {
+		mv.visitInsn(Opcodes.ACONST_NULL);
+	}
+
+	public Label getStartLabel() {
 		assertMethodNode();
 		if (start != null) return start.getLabel();
 
@@ -169,24 +161,25 @@ public class MethodGenerator extends GeneratorAdapter {
 	}
 
 	public void visitStart() {
-		visitLabel(startLabel());
+		visitLabel(getStartLabel());
 	}
 
-	public void visitAfterFirst(int opcode) {
-		var instructions = methodNode.instructions;
-		var labelNode = new LabelNode(newLabel());
-
-		for (AbstractInsnNode node : instructions) {
+	public AbstractInsnNode findFirstInst(int opcode) {
+		assertMethodNode();
+		for (AbstractInsnNode node : methodNode.instructions) {
 			if (node.getOpcode() == opcode) {
-				instructions.insert(node, labelNode);
+				return node;
 			}
 		}
 
-		instructions.insert(labelNode);
-		visitLabel(labelNode.getLabel());
+		throw new NoSuchElementException("Could not find an instruction with opcode " + opcode);
 	}
 
-	private void assertMethodNode() {
+	public MethodNode methodNode() {
+		return methodNode;
+	}
+
+	public void assertMethodNode() {
 		if (methodNode == null) throw new IllegalStateException("Method visitor is not a MethodNode");
 	}
 }

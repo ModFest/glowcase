@@ -1,22 +1,29 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedRendererUtil;
+import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.chunk.SectionCompileQueue;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
 import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
+import dev.hephaestus.glowcase.mixinsupport.sodium.TranslucentDataExtension;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildOutput;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
+import net.caffeinemc.mods.sodium.client.render.chunk.translucent_sorting.data.TranslucentData;
 import net.caffeinemc.mods.sodium.client.util.task.CancellationToken;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -26,22 +33,19 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.SectionCompiler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3dc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SuppressWarnings({"FieldMayBeFinal", "AmbiguousMixinReference"})
-@Pseudo
+@SuppressWarnings("FieldMayBeFinal")
+@Environment(EnvType.CLIENT)
 @Mixin(ChunkBuilderMeshingTask.class)
 public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<ChunkBuildOutput> {
 	@Unique private @Final BakingBlockEntityRenderDispatcher bakingBlockEntityRenderer;
@@ -54,32 +58,25 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		this.bakingBlockEntityRenderer = (BakingBlockEntityRenderDispatcher) Minecraft.getInstance().getBlockEntityRenderDispatcher();
 	}
 
-	@Inject(at = @At("HEAD"), method = "execute")
+	@Inject(at = @At("HEAD"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private void createValues(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("poseStack") LocalRef<PoseStack> poseStackRef,
 		@Share("vertexSorting") LocalRef<VertexSorting> vertexSortingRef
 	) {
 		poseStackRef.set(new PoseStack());
-		SectionPos sectionPos = this.render.getPosition();
-		vertexSortingRef.set(
-			VertexSorting.byDistance(
-				cameraPos.x() - sectionPos.minBlockX(),
-				cameraPos.y() - sectionPos.minBlockY(),
-				cameraPos.z() - sectionPos.minBlockZ()
-			)
-		);
+		vertexSortingRef.set(GlowcaseSectionRenderDispatcher.createVertexSorting(cameraPos));
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;addBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;Z)V"), method = "execute")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;addBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;Z)V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private <E extends BlockEntity, B extends BlockEntityRenderState> void submitBakedRenderers(
 		ChunkBuildContext buildContext,
 		CancellationToken cancellationToken,
 		CallbackInfoReturnable<ChunkBuildOutput> cir,
-		@Local(name = "entity") E blockEntity,
+		@Local(name = "entity") E entity,
 		@Local(name = "blockPos") BlockPos.MutableBlockPos blockPos,
 		@Local(name = "blockState") BlockState blockState,
-		@Local(name = "renderer") BlockEntityRenderer<E, ?> baseRenderer,
+		@Local(name = "renderer") BlockEntityRenderer<E, ?> renderer,
 		@Local(name = "profiler") ProfilerFiller profiler,
 		@Share("poseStack") LocalRef<PoseStack> poseStackRef,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
@@ -87,23 +84,23 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		profiler.push("glowcase:baked_be/submit");
 		B renderState = null;
 		try {
-			BakingRendererExtension rendererExtension = (BakingRendererExtension) baseRenderer;
+			BakingRendererExtension rendererExtension = (BakingRendererExtension) renderer;
 			if (rendererExtension != null && rendererExtension.glowcase$isBakingRenderer()) {
-				BakedBlockEntityRenderer<E, ?, B> renderer = (BakedBlockEntityRenderer<E, ?, B>) baseRenderer;
-				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(blockEntity);
+				BakedBlockEntityRenderer<E, ?, B> bakedRenderer = (BakedBlockEntityRenderer<E, ?, B>) renderer;
+				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(entity);
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
 					if (nodeStorage == null) {
 						nodeStorageRef.set(nodeStorage = SectionCompileQueue.getNodeStorage());
 					}
 
-					BakedRendererUtil.submitForBaking(renderer, blockPos, renderState, poseStackRef.get(), nodeStorage);
+					BakedRendererUtil.submitForBaking(bakedRenderer, blockPos, renderState, poseStackRef.get(), nodeStorage);
 				}
 			}
 		} catch (Exception e) {
 			CrashReport report = CrashReport.forThrowable(e, "Submitting baked Block Entity in world");
 			CrashReportCategory category = report.addCategory("Block Entity details");
-			category.setDetail("BlockEntity", blockEntity.getClass().getCanonicalName());
+			category.setDetail("BlockEntity", entity.getClass().getCanonicalName());
 			if (renderState != null) {
 				renderState.fillCrashReportCategory(category);
 			} else {
@@ -117,7 +114,19 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		profiler.pop();
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/Reference2ReferenceOpenHashMap;<init>()V"), method = "execute")
+	@Definition(id = "getTranslucentData", method = "Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/TranslucentGeometryCollector;getTranslucentData(Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/TranslucentData;Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/CombinedCameraPos;)Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/TranslucentData;")
+	@Expression("? = ?.getTranslucentData(?, ?)")
+	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	private void invalidateOldTranslucentData(
+		CallbackInfoReturnable<ChunkBuildOutput> cir,
+		@Local(name = "translucentData") TranslucentData translucentData,
+		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
+	) {
+		((TranslucentDataExtension) translucentData).glowcase$trickSodiumForResorting(nodeStorageRef.get() != null);
+		((TranslucentDataExtension) translucentData).glowcase$initialCameraPos(getAbsoluteCameraPos());
+	}
+
+	@Inject(at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/Reference2ReferenceOpenHashMap;<init>()V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private void queueCompilation(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef,
@@ -126,7 +135,8 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		GlowcaseLevelRenderer.getInstance().queueCompilation(this.render.getPosition().asLong(), nodeStorageRef.get(), vertexSortingRef.get());
 	}
 
-	@Inject(at = @At(value = "RETURN"), slice = @Slice(to = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/Reference2ReferenceOpenHashMap;<init>()V")), method = "execute")
+	@Expression("return null")
+	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private void releaseNodeStorage(CallbackInfoReturnable<SectionCompiler.Results> cir, @Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef) {
 		if (nodeStorageRef.get() == null) return;
 

@@ -1,29 +1,24 @@
 package dev.hephaestus.glowcase.asm;
 
-import dev.hephaestus.glowcase.client.asm.GlowcaseClientMixinPlugin;
-import net.fabricmc.api.EnvType;
+import dev.hephaestus.glowcase.mixinsupport.RequireMod;
 import net.fabricmc.loader.api.FabricLoader;
-import org.jspecify.annotations.Nullable;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.service.IClassProvider;
+import org.spongepowered.asm.service.MixinService;
+import org.spongepowered.asm.util.Annotations;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 public class GlowcaseMixinPlugin implements IMixinConfigPlugin {
-	private static final boolean IS_CLIENT = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-	private final @Nullable SidedMixinConfigPlugin clientMixinPlugin;
-
-	public GlowcaseMixinPlugin() {
-		this.clientMixinPlugin = IS_CLIENT ? new GlowcaseClientMixinPlugin() : null;
-	}
+	private Map<String, RequireMod> annotatedPackages = new HashMap<>();
 
 	@Override
-	public void onLoad(String mixinPackage) {
-		if (clientMixinPlugin != null) clientMixinPlugin.onLoad(mixinPackage);
-	}
+	public void onLoad(String mixinPackage) {}
 
 	@Override
 	public String getRefMapperConfig() {
@@ -32,52 +27,52 @@ public class GlowcaseMixinPlugin implements IMixinConfigPlugin {
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		boolean shouldApply = true;
-		if (clientMixinPlugin != null) {
-			shouldApply &= clientMixinPlugin.shouldApplyMixin(targetClassName, mixinClassName);
-		}
+		try {
+			IClassProvider classProvider = MixinService.getService().getClassProvider();
+			RequireMod annotation = packageAnnotation(classProvider, mixinClassName);
+			if (annotation != null) {
+				return FabricLoader.getInstance().isModLoaded(annotation.value()) == annotation.present();
+			}
 
-		return shouldApply;
+			List<AnnotationNode> annotationNodes = MixinService.getService()
+				.getBytecodeProvider()
+				.getClassNode(mixinClassName)
+				.visibleAnnotations;
+
+			AnnotationNode node = Annotations.get(annotationNodes, Type.getDescriptor(RequireMod.class));
+			if (node == null) return true;
+
+			String modId = Annotations.getValue(node, "value");
+			boolean present = Annotations.getValue(node, "present", Boolean.TRUE);
+
+			return FabricLoader.getInstance().isModLoaded(modId) == present;
+		} catch (ClassNotFoundException | IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private RequireMod packageAnnotation(IClassProvider classProvider, String mixinClassName) {
+		String packageName = mixinClassName.substring(0, mixinClassName.lastIndexOf('.'));
+		return annotatedPackages.computeIfAbsent(packageName, _ -> {
+			try {
+				return classProvider.findClass(packageName + ".package-info").getDeclaredAnnotation(RequireMod.class);
+			} catch (ClassNotFoundException _) {
+				return null;
+			}
+		});
 	}
 
 	@Override
-	public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-		if (clientMixinPlugin != null) {
-			clientMixinPlugin.acceptTargets(myTargets, otherTargets);
-		}
-	}
+	public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
 
 	@Override
 	public List<String> getMixins() {
-		List<String> mixins = null;
-		if (clientMixinPlugin != null) {
-			var sideMixins = clientMixinPlugin.getMixins();
-			if (sideMixins != null) {
-				if (mixins == null) mixins = new ArrayList<>();
-				mixins.addAll(sideMixins);
-			}
-		}
-		return mixins;
+		return null;
 	}
 
 	@Override
-	public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-		if (clientMixinPlugin != null) {
-			clientMixinPlugin.preApply(targetClassName, targetClass, mixinClassName, mixinInfo);
-		}
-	}
+	public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {}
 
 	@Override
-	public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-		if (clientMixinPlugin != null) {
-			clientMixinPlugin.postApply(targetClassName, targetClass, mixinClassName, mixinInfo);
-		}
-	}
-
-	public interface SidedMixinConfigPlugin extends IMixinConfigPlugin {
-		@Override
-		default String getRefMapperConfig() {
-			return null;
-		}
-	}
+	public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {}
 }

@@ -2,6 +2,10 @@ package dev.hephaestus.glowcase.client.render.bakedbe.buffers;
 
 import com.mojang.blaze3d.vertex.*;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
+import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh.Sorter;
+import net.caffeinemc.mods.sodium.client.util.sorting.VertexSorters;
+import net.caffeinemc.mods.sodium.client.util.sorting.VertexSortingExtended;
+import net.caffeinemc.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting.MeshDataAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -70,20 +74,27 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 		MeshData meshData = bufferBuilder.build();
 		if (meshData == null) return null;
 
-		MeshData.SortState sortState = null;
+		Sorter sortState = null;
 
 		if (sort) {
 			ByteBufferBuilder buffer = this.startedBuffers.get(renderType);
 			assert buffer != null;
-			sortState = HAS_SODIUM ? useSodiumQuadSort(meshData, buffer, vertexSorting) : meshData.sortQuads(buffer, vertexSorting);
+			sortState = HAS_SODIUM ? useSodiumQuadSort(meshData, buffer, vertexSorting) : (Sorter) (Object) meshData.sortQuads(buffer, vertexSorting);
 		}
 
 		return new CompiledMesh(meshData, sortState);
 	}
 
-	@SuppressWarnings("unused")
-	private MeshData.SortState useSodiumQuadSort(final MeshData meshData, final ByteBufferBuilder indexBufferTarget, final VertexSorting sorting) {
-		// A placeholder empty method, leave ASM to fill it in. Using ASM allows us to call the method sodium injects.
-		throw new IllegalStateException("This should be replaced by ASM");
+	// Having sodium classes here is fine, as it's only called when sodium is present
+	private @Nullable Sorter useSodiumQuadSort(final MeshData meshData, final ByteBufferBuilder indexBufferTarget, final VertexSorting sorting) {
+		if (sorting instanceof VertexSortingExtended sortingExtended) {
+			CompiledMesh.SodiumSortState sortState = CompiledMesh.SodiumSortState.create(meshData);
+			if (sortState != null) {
+				((MeshDataAccessor) meshData).sodium$setIndexBuffer(sortState.buildSortedIndexBuffer(indexBufferTarget, sortingExtended));
+			}
+			return sortState;
+		}
+
+		return (Sorter) (Object) meshData.sortQuads(indexBufferTarget, sorting);
 	}
 }

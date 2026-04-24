@@ -26,14 +26,20 @@ public class Pool<T> {
 	private static final boolean DEBUG_LOGGING = Boolean.getBoolean("glowcase.debug.pools");
 	public static final Logger LOGGER = LoggerFactory.getLogger(Pool.class);
 	private static final Cleaner CLEANER = Cleaner.create();
+	private final boolean isGCBad;
 	private final Supplier<T> objectSupplier;
 	private final Stack<T> pool = new Stack<>();
 	private final Map<Integer, Lifetime> pending = new Object2ObjectArrayMap<>();
 	private final Semaphore semaphore;
 
 	public Pool(Supplier<T> objectSupplier, int max) {
+		this(objectSupplier, max, false);
+	}
+
+	public Pool(Supplier<T> objectSupplier, int max, boolean isGCBad) {
 		this.objectSupplier = objectSupplier;
 		this.semaphore = new Semaphore(max);
+		this.isGCBad = isGCBad || DEBUG_LOGGING;
 	}
 
 	/// Provides a resource from the pool if available, or creates a new one if needed.
@@ -46,9 +52,10 @@ public class Pool<T> {
 			int seconds = 0;
 			while (!semaphore.tryAcquire(3, TimeUnit.SECONDS)) {
 				LOGGER.warn("Waiting for pool slot took over {} seconds, possible resource leak!", seconds += 3);
+
 			}
 		} catch (InterruptedException e) {
-			LOGGER.error("Aborting pool wait, thread interrupted!", e);
+			throw new IllegalStateException("Thread interrupted", e);
 		}
 
 		T resource = pool.empty() ? objectSupplier.get() : pool.pop();
@@ -82,27 +89,30 @@ public class Pool<T> {
 		private static final long MINUTE = 60 * 1000;
 		private static final long LIFETIME = 3 * 1000;
 		private final long polledAt = Util.getMillis();
-		private final Exception exception;
+		private final @Nullable Exception exception;
 		private final String resourceClassName;
 		private final int resourceId;
 		private long nextWarning = polledAt + LIFETIME;
 
 		// Never hold a reference to the resource, let GC take it if it's not returned and lost
 		private Lifetime(T resource) {
-			this.resourceClassName = DEBUG_LOGGING ? resource.getClass().getCanonicalName() : resource.getClass().getSimpleName();
+			this.resourceClassName = isGCBad ? resource.getClass().getCanonicalName() : resource.getClass().getSimpleName();
 			this.resourceId = System.identityHashCode(resource);
-			// There is no need to keep the exception if debug logging isn't enabled
-			this.exception = new Exception("Resource acquisition stacktrace");
+			// We only need to keep the exception if GC reclaim is bad
+			this.exception = isGCBad ? new Exception("Resource acquisition stacktrace") : null;
 
 			CLEANER.register(resource, () -> {
-				if (DEBUG_LOGGING) {
+				if (isGCBad) {
+					// Oh no, this getting GC'd is not good, at all
 					LOGGER.error("""
-							[RESOURCE LEAK] POOL RESOURCE LOST TO GC
+							[RESOURCE LEAK] POOL RESOURCE LOST TO GC  |  (Ignore if caused by game crash)
 							  Resource class: {},
 							  Polled at: {},
+							  Lifetime: {},
 							  Id: {}""",
 						resourceClassName,
 						polledAt,
+						polledAt - Util.getMillis(),
 						resourceId,
 						exception
 					);

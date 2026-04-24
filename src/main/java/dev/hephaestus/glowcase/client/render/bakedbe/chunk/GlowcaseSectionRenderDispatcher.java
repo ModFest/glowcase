@@ -6,17 +6,18 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.TlsfAllocator;
-import com.mojang.blaze3d.vertex.UberGpuBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DefaultedMap;
 import dev.hephaestus.glowcase.util.DefaultedMapBase;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3dc;
+import org.joml.Vector3fc;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -38,6 +39,23 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		GraphicsWorkarounds workarounds = GraphicsWorkarounds.get(gpuDevice);
 		this.layerBuffers = DefaultedMap.openHashMap(renderType -> createUberBuffers(renderType, gpuDevice, workarounds));
+	}
+
+	public static VertexSorting createVertexSorting(final SectionPos sectionPos, final Vec3 cameraPos) {
+		return VertexSorting.byDistance(
+			(float)(cameraPos.x - sectionPos.minBlockX()), (float)(cameraPos.y - sectionPos.minBlockY()), (float)(cameraPos.z - sectionPos.minBlockZ())
+		);
+	}
+
+	public static VertexSorting createVertexSorting(final SectionPos sectionPos, final Vector3dc cameraPos) {
+		return VertexSorting.byDistance(
+			(float)(cameraPos.x() - sectionPos.minBlockX()), (float)(cameraPos.y() - sectionPos.minBlockY()), (float)(cameraPos.z() - sectionPos.minBlockZ())
+		);
+	}
+
+	public static VertexSorting createVertexSorting(final Vector3fc relativePos) {
+		// There is a method that takes Vector3fc but for some reason sodium doesn't handle it like it does for the 3 param one
+		return VertexSorting.byDistance(relativePos.x(), relativePos.y(), relativePos.z());
 	}
 
 	public void uploadGlobalGeomBuffersToGPU() {

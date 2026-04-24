@@ -17,8 +17,6 @@ import java.io.Closeable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-// On chunk rendering, the mesh is compiled and allocated on the chunk task, but to build the mesh for renderers like text, it has to be done in the main thread
-// as some things are only uploaded to the texture on demand. This builds a queue to compile the mesh on the main thread and allocates on a dedicated thread.
 @NullMarked
 public class SectionCompileQueue implements Closeable {
 	public static final Logger LOGGER = LoggerFactory.getLogger(SectionCompileQueue.class);
@@ -42,8 +40,6 @@ public class SectionCompileQueue implements Closeable {
 	}
 
 	public void compile(long sectionPos, SubmitNodeStorage nodeStorage, VertexSorting vertexSorting) {
-		// We're on the render thread already, there is no need to use the queue.
-		// If we are already in the render thread, this is a priority render, so allocate it immediately.
 		ProfilerFiller profiler = Profiler.get();
 		profiler.push("glowcase:baked_be/compile");
 		compileNow(sectionPos, nodeStorage, vertexSorting);
@@ -76,17 +72,17 @@ public class SectionCompileQueue implements Closeable {
 	}
 
 	public void remove(long sectionPos) {
-		allocationQueue.remove(sectionPos);
-		SubmitNodeStorage nodeStorage = compileQueue.remove(sectionPos);
+		var allocateTask = allocationQueue.remove(sectionPos);
+		if (allocateTask != null) allocateTask.cancel();
+
+		var nodeStorage = compileQueue.remove(sectionPos);
 		if (nodeStorage != null) {
 			returnNodeStorage(nodeStorage);
 		}
 	}
 
 	public void allocatePending() {
-		allocationQueue.consume((_, item) -> {
-			item.doTask();
-		});
+		allocationQueue.consume((_, item) -> item.execute());
 	}
 
 	@Override

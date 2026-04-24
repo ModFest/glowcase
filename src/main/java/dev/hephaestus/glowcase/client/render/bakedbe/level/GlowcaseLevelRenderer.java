@@ -17,7 +17,6 @@ import dev.hephaestus.glowcase.util.DefaultedMapBase;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -32,7 +31,6 @@ import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.Zone;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -46,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -126,10 +123,10 @@ public class GlowcaseLevelRenderer implements Closeable {
 				final var sectionInfo = sectionEntry.sectionInfo();
 				int uboIndex = -1;
 
-				for (GlowcaseRenderSectionInfo.Entry sectionInfoEntry : sectionInfo) {
-					RenderType renderType = sectionInfoEntry.renderType();
-					SectionMesh.SectionDraw draw = sectionInfoEntry.draw();
-					boolean translucent = sectionInfoEntry.translucent();
+				for (GlowcaseRenderSectionInfo.DrawEntry drawEntry : sectionInfo) {
+					RenderType renderType = drawEntry.renderType();
+					SectionMesh.SectionDraw draw = drawEntry.draw();
+					boolean translucent = drawEntry.translucent();
 					SectionRenderDispatcher.RenderSectionBufferSlice slice = this.sectionRenderDispatcher.getRenderSectionSlice(sectionNode, renderType);
 					if (slice == null || draw == null || (draw.hasCustomIndexBuffer() && slice.indexBuffer() == null)) continue;
 					if (uboIndex == -1) {
@@ -238,12 +235,8 @@ public class GlowcaseLevelRenderer implements Closeable {
 		}
 	}
 
-	private void addSection(long section) {
-		visibleSections.put(section, new GlowcaseRenderSectionInfo());
-	}
-
 	public void releaseSection(long section) {
-		if (!visibleSections.containsKey(section)) return;
+		if (!visibleSections.isVisible(section)) return;
 
 		if (sectionRenderDispatcher != null) {
 			sectionRenderDispatcher.releaseSection(section);
@@ -262,7 +255,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 		sectionRenderDispatcher.compileQueue.allocatePending();
 	}
 
-	@Contract("_, !null, null -> fail")
+	@Contract("_, !null, null -> fail; _, _, _ -> _")
 	public void queueCompilation(long sectionPos, @Nullable SubmitNodeStorage nodeStorage, @Nullable VertexSorting vertexSorting) {
 		if (sectionRenderDispatcher == null) return;
 
@@ -273,7 +266,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 
 		assert vertexSorting != null;
 
-		if (!visibleSections.containsKey(sectionPos)) addSection(sectionPos);
+		visibleSections.addIfAbsent(sectionPos);
 
 		try {
 			sectionRenderDispatcher.compileQueue.compile(sectionPos, nodeStorage, vertexSorting);

@@ -82,8 +82,10 @@ public class LevelRendererMixin implements LevelRendererExtension {
 	}
 
 	@Inject(at = @At("RETURN"), method = "compileSections")
-	private void compilePendingSections(final Camera camera, CallbackInfo ci) {
+	private void compilePendingSections(final Camera camera, CallbackInfo ci, @Local(name = "profiler") ProfilerFiller profiler) {
+		profiler.push("glowcase:allocate_pending");
 		levelRenderer.compilePendingSections();
+		profiler.pop();
 	}
 
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SectionOcclusionGraph;addSectionsInFrustum(Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/List;Ljava/util/List;)V", shift = At.Shift.AFTER), method = "applyFrustum")
@@ -95,7 +97,10 @@ public class LevelRendererMixin implements LevelRendererExtension {
 		for (SectionRenderDispatcher.RenderSection visibleSection : this.visibleSections) {
 			sortedSections.add(visibleSection.getSectionNode());
 		}
-		levelRenderer.visibleSections().finishSorting(sortedSections);
+
+		if (levelRenderer.visibleSections().shouldResort(sortedSections)) {
+			levelRenderer.visibleSections().finishSorting(sortedSections);
+		}
 
 		profiler.pop();
 	}

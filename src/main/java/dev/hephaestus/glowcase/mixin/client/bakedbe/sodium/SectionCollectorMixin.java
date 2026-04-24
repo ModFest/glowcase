@@ -8,6 +8,8 @@ import net.caffeinemc.mods.sodium.client.render.chunk.lists.RenderListProvider;
 import net.caffeinemc.mods.sodium.client.render.chunk.lists.SectionCollector;
 import net.caffeinemc.mods.sodium.client.render.chunk.lists.SortedRenderLists;
 import net.caffeinemc.mods.sodium.client.render.viewport.Viewport;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SuppressWarnings("JavadocDeclaration")
+@Environment(EnvType.CLIENT)
 @Mixin(SectionCollector.class)
 public abstract class SectionCollectorMixin implements RenderListProvider {
 	// We can't tell how big this will be, so we'll just use the last size
