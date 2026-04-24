@@ -13,6 +13,7 @@ import dev.hephaestus.glowcase.mixin.AbstractContainerScreenInvoker;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
@@ -37,7 +38,7 @@ public class GlowcaseClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		Glowcase.proxy = new GlowcaseClientProxy();
 
-		BlockEntityRenderers.register(Glowcase.TEXT_BLOCK_ENTITY.get(), (ctx) -> new TextBlockEntityRenderer(ctx));
+		BlockEntityRenderers.register(Glowcase.TEXT_BLOCK_ENTITY.get(), TextBlockEntityRenderer::new);
 		BlockEntityRenderers.register(Glowcase.HYPERLINK_BLOCK_ENTITY.get(), HyperlinkBlockEntityRenderer::new);
 		BlockEntityRenderers.register(Glowcase.CONFIG_LINK_BLOCK_ENTITY.get(), ConfigLinkBlockEntityRenderer::new);
 		BlockEntityRenderers.register(Glowcase.ITEM_DISPLAY_BLOCK_ENTITY.get(), ItemDisplayBlockEntityRenderer::new);
@@ -57,13 +58,6 @@ public class GlowcaseClient implements ClientModInitializer {
 
 		ItemTintSources.ID_MAPPER.put(Glowcase.id("auto"), GlowcaseTintSource.CODEC);
 		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(Glowcase.id("note_txt_color"), new NoteTextColorResource());
-
-		// Initialize the renderer
-		new GlowcaseLevelRenderer();
-
-		//FIXME 26.1
-//		LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(BakedBlockEntityRenderer.Manager::render);
-//		InvalidateRenderStateCallback.EVENT.register(BakedBlockEntityRenderer.Manager::reset);
 
 		/*ModelPredicateProviderRegistryAccessor.callRegister(Identifier.of("glowcase:awakened"), (stack, world, entity, seed) -> {
 			if (!EMI_LOADED) {

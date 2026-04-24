@@ -5,136 +5,151 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.hephaestus.glowcase.mixin.client.RenderTypeAccessor;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DefaultedMapBase;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.minecraft.ReportedException;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 
+@NullMarked
 public record GlowcaseSectionsToRender(
 	RenderTypeGroups renderTypeGroups,
 	DefaultedMapBase<RenderType, Map<Integer, List<RenderPass.Draw<GpuBufferSlice[]>>>> drawGroupsPerType,
 	int maxIndicesRequired,
 	GpuBufferSlice[] sectionTransforms
 ) {
-	public GlowcaseSectionsToRender(DefaultedMapBase<RenderType, Map<Integer, List<RenderPass.Draw<GpuBufferSlice[]>>>> drawGroupsPerType, int maxIndicesRequired, GpuBufferSlice[] sectionTransforms) {
-	    this(new RenderTypeGroups(drawGroupsPerType.keySet()), drawGroupsPerType, maxIndicesRequired, sectionTransforms);
-	}
 
 	public void renderGroup(final boolean sorted) {
 		ProfilerFiller profiler = Profiler.get();
+		final String name = sorted ? "translucent" : "solid";
+		profiler.push("render_" + name);
 		Map<RenderSystem.AutoStorageIndexBuffer, GpuBuffer> indexBuffers = new Object2ObjectArrayMap<>();
+		List<RenderType> renderTypes = sorted ? renderTypeGroups.sorted : renderTypeGroups.unsorted;
+		if (renderTypes.isEmpty()) return;
 
-		String[] lastTextures = new String[0];
-		RenderTarget currentTarget = null;
-		RenderPass renderPass = null;
-		AtomicInteger i = new AtomicInteger();
+		List<RenderTask> renderTasks = new ArrayList<>(renderTypes.size());
 
-		final String name = sorted ? "sorted" : "unsorted";
-		for (var renderType : sorted ? renderTypeGroups.sorted : renderTypeGroups.unsorted) {
-			final String renderName = ((RenderTypeAccessor) renderType).getName();
-			profiler.push(renderName);
+		profiler.push("setup_textures");
+		for (int i = 0, len = renderTypes.size(); i < len; i++) {
+			RenderType renderType = renderTypes.get(i);
 
-			Map<String, RenderSetup.TextureAndSampler> textures;
-			//region Change render pass if needed
-			try {
-				profiler.push("texture");
-				textures = ((RenderTypeAccessor) renderType).getState().getTextures();
-			} catch (ReportedException e) {
-				profiler.popPush("texture_fallback");
-				// There is no render pass, the error is something else
-				if (renderPass == null) throw e;
+			var layerTextures = ((RenderTypeAccessor) renderType).getState().getTextures();
+			List<String> textureNames = List.copyOf(layerTextures.keySet());
 
-				// The method failed as it had to upload the textures,
-				// so close the pass and let it upload
-				renderPass.close();
-				renderPass = null;
-				textures = ((RenderTypeAccessor) renderType).getState().getTextures();
-			} finally {
-				profiler.pop();
+			RenderTask lastRenderTask = i == 0 ? null : renderTasks.get(i - 1);
+
+			List<String> toRemove;
+			if (lastRenderTask == null) {
+				toRemove = List.of();
+			} else  {
+				toRemove = new ArrayList<>(lastRenderTask.textureNames);
+				toRemove.removeAll(textureNames);
 			}
 
-			RenderTarget renderTarget = renderType.outputTarget().getRenderTarget();
-			if (currentTarget != renderTarget || renderPass == null) {
-				profiler.push("new_render_pass");
-				if (renderPass != null) renderPass.close();
+			List<Texture> textures = new ArrayList<>();
+			layerTextures.forEach((textureName, textureAndSampler) -> {
+				textures.add(new Texture(textureName, textureAndSampler.textureView(), textureAndSampler.sampler()));
+			});
 
-				currentTarget = renderTarget;
-				//noinspection DataFlowIssue
-				renderPass = RenderSystem.getDevice()
-					.createCommandEncoder()
-					.createRenderPass(
-						() -> "Section layers for " + name + " types (" + i.getAndIncrement() + ")",
-						renderTarget.getColorTextureView(),
-						OptionalInt.empty(),
-						renderTarget.getDepthTextureView(),
-						OptionalDouble.empty()
-					);
-
-				RenderSystem.bindDefaultUniforms(renderPass);
-				profiler.pop();
-			}
-			//endregion
-			renderPass.pushDebugGroup(() -> renderName);
-
-			//region Clear last textures
-			profiler.push("tex_reset");
-			for (String lastTexture : lastTextures) {
-				renderPass.bindTexture(lastTexture, null, null);
+			if (lastRenderTask != null) {
+				textures.removeAll(lastRenderTask.textures);
 			}
 
-			lastTextures = new String[textures.size()];
-			textures.keySet().toArray(lastTextures);
-			//endregion
-
-			profiler.popPush("auto_indices");
-			RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.mode());
-			GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> {
-					profiler.push("new_auto_indices");
-					GpuBuffer buffer = this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired);
-					profiler.pop();
-					return buffer;
-				}
-			);
-			VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
-
-			profiler.popPush("tex_bind");
-			for (Map.Entry<String, RenderSetup.TextureAndSampler> entry : textures.entrySet()) {
-				renderPass.bindTexture(entry.getKey(), entry.getValue().textureView(), entry.getValue().sampler());
-			}
-			profiler.pop();
-
-			renderPass.setPipeline(renderType.pipeline());
-
-			var drawGroup = drawGroupsPerType.getValue(renderType);
-			profiler.push("draw");
-			for (var draws : drawGroup.values()) {
-				if (draws.isEmpty()) continue;
-
-				if (renderType.sortOnUpload()) {
-					draws = draws.reversed();
-				}
-
-				renderPass.drawMultipleIndexed(draws, defaultIndexBuffer, indexType, List.of("DynamicTransforms"), sectionTransforms);
-			}
-
-			profiler.pop(); profiler.pop();
-			renderPass.popDebugGroup();
+			renderTasks.add(new RenderTask(renderType, toRemove, textureNames, textures));
 		}
 
-		if (renderPass != null) renderPass.close();
+		profiler.popPush("render");
+		RenderTarget renderTarget = outputTarget(sorted);
+		assert renderTarget.getColorTextureView() != null;
+
+		try (
+			RenderPass renderPass = RenderSystem.getDevice()
+				.createCommandEncoder()
+				.createRenderPass(
+					() -> "Section layers for " + name + " types",
+					renderTarget.getColorTextureView(),
+					OptionalInt.empty(),
+					renderTarget.getDepthTextureView(),
+					OptionalDouble.empty()
+				)
+		) {
+			RenderSystem.bindDefaultUniforms(renderPass);
+
+			for (RenderTask renderTask : renderTasks) {
+				RenderType renderType = renderTask.renderType;
+				final String renderName = ((RenderTypeAccessor) renderType).getName();
+
+				profiler.push(renderName);
+				renderPass.pushDebugGroup(() -> renderName);
+
+				profiler.push("tex_remove");
+				for (String textureName : renderTask.texturesToRemove) {
+					renderPass.bindTexture(textureName, null, null);
+				}
+
+				profiler.popPush("auto_indices");
+				RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.mode());
+				GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> {
+						profiler.push("new_auto_indices");
+						GpuBuffer buffer = this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired);
+						profiler.pop();
+						return buffer;
+					}
+				);
+				VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
+
+				profiler.popPush("tex_bind");
+				for (Texture texture : renderTask.textures) {
+					renderPass.bindTexture(texture.name, texture.textureView, texture.sampler);
+				}
+				profiler.pop();
+
+				renderPass.setPipeline(renderType.pipeline());
+
+				var drawGroup = drawGroupsPerType.getValue(renderType);
+				profiler.push("draw");
+				for (var draws : drawGroup.values()) {
+					if (draws.isEmpty()) continue;
+
+					if (sorted) {
+						draws = draws.reversed();
+					}
+
+					renderPass.drawMultipleIndexed(draws, defaultIndexBuffer, indexType, List.of("DynamicTransforms"), sectionTransforms);
+				}
+
+				renderPass.popDebugGroup();
+				profiler.pop();
+			}
+		}
+
+		profiler.pop();
 	}
+
+	public RenderTarget outputTarget(boolean translucent) {
+		Minecraft minecraft = Minecraft.getInstance();
+
+		RenderTarget renderTarget;
+		if (translucent) {
+			renderTarget = minecraft.levelRenderer.getTranslucentTarget();
+		} else {
+			renderTarget = minecraft.getMainRenderTarget();
+		}
+
+		return renderTarget != null ? renderTarget : minecraft.getMainRenderTarget();
+	}
+
+	private record RenderTask(RenderType renderType, List<String> texturesToRemove, List<String> textureNames, List<Texture> textures) {
+
+	}
+
+	private record Texture(String name, GpuTextureView textureView, GpuSampler sampler) {}
 }

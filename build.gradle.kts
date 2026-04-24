@@ -16,6 +16,7 @@ repositories {
 	maven("https://maven.nucleoid.xyz/")
 	maven("https://repo.sleeping.town/")
 	maven("https://maven.terraformersmc.com/")
+	maven("https://jitpack.io")
 
 	maven {
 		name = "BlameJared Maven (CrT / Bookshelf)"
@@ -23,8 +24,8 @@ repositories {
 	}
 
 	maven {
-		name = "CaffeineMC Maven (Snapshots)"
-		url = uri("https://maven.caffeinemc.net/snapshots")
+		name = "CaffeineMC Maven (Releases)"
+		url = uri("https://maven.caffeinemc.net/releases")
 	}
 
 	mavenLocal()
@@ -45,6 +46,9 @@ dependencies {
 	implementation(libs.kaleidoConfig)
 	include(libs.kaleidoConfig)
 
+	implementation(libs.asm)
+	include(libs.asm)
+
 	/*compileOnly(libs.emi)
 	localRuntime(libs.emi)*/
 
@@ -52,7 +56,7 @@ dependencies {
 	localRuntime(libs.modmenu)
 
 	compileOnly(libs.sodium)
-	localRuntime(libs.sodium)
+	// localRuntime(libs.sodium)
 }
 
 loom {
@@ -82,8 +86,8 @@ loom {
 					println("[Warning]: Unable to locate file path for Mixin Jar, HotSwap Run will not work!")
 				}
 			} catch (e: Exception) {
-				println("[Error]: MixinHotswap Run had a issue!")
-				e.printStackTrace()
+				println("[Error]: Failed to setup MixinHotswap! Enable logging to view why.")
+				// e.printStackTrace()
 			}
 		}
 	}

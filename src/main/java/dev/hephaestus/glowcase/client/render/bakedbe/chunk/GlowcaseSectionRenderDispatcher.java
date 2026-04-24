@@ -6,17 +6,18 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.TlsfAllocator;
-import com.mojang.blaze3d.vertex.UberGpuBuffer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.hephaestus.glowcase.mixin.client.RenderTypeAccessor;
+import com.mojang.blaze3d.vertex.*;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DefaultedMap;
 import dev.hephaestus.glowcase.util.DefaultedMapBase;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3dc;
+import org.joml.Vector3fc;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -38,6 +39,23 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		GraphicsWorkarounds workarounds = GraphicsWorkarounds.get(gpuDevice);
 		this.layerBuffers = DefaultedMap.openHashMap(renderType -> createUberBuffers(renderType, gpuDevice, workarounds));
+	}
+
+	public static VertexSorting createVertexSorting(final SectionPos sectionPos, final Vec3 cameraPos) {
+		return VertexSorting.byDistance(
+			(float)(cameraPos.x - sectionPos.minBlockX()), (float)(cameraPos.y - sectionPos.minBlockY()), (float)(cameraPos.z - sectionPos.minBlockZ())
+		);
+	}
+
+	public static VertexSorting createVertexSorting(final SectionPos sectionPos, final Vector3dc cameraPos) {
+		return VertexSorting.byDistance(
+			(float)(cameraPos.x() - sectionPos.minBlockX()), (float)(cameraPos.y() - sectionPos.minBlockY()), (float)(cameraPos.z() - sectionPos.minBlockZ())
+		);
+	}
+
+	public static VertexSorting createVertexSorting(final Vector3fc relativePos) {
+		// There is a method that takes Vector3fc but for some reason sodium doesn't handle it like it does for the 3 param one
+		return VertexSorting.byDistance(relativePos.x(), relativePos.y(), relativePos.z());
 	}
 
 	public void uploadGlobalGeomBuffersToGPU() {
@@ -78,6 +96,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	}
 
 	public boolean allocateMeshBuffers(long sectionPos, RenderType renderType, MeshData meshData) {
+		return allocateBuffers(sectionPos, renderType, meshData.vertexBuffer(), meshData.indexBuffer());
+	}
+
+	public boolean allocateBuffers(long sectionPos, RenderType renderType, @Nullable ByteBuffer vertexBuffer, @Nullable ByteBuffer indexBuffer) {
 		ProfilerFiller profiler = Profiler.get();
 		String renderTypeName = ((RenderTypeAccessor) renderType).getName();
 		profiler.push(renderTypeName);
@@ -86,19 +108,13 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		boolean success = true;
 
 		try {
-			SectionUberBuffers sectionBuffers = layerBuffers.getWithoutDefault(renderType);
-			if (sectionBuffers == null) {
-				throw new IllegalStateException("Missing buffers for " + renderTypeName + "! Failed to create first?");
+			SectionUberBuffers sectionBuffers = layerBuffers.getValue(renderType);
+
+			if (vertexBuffer != null) {
+				success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, null, vertexBuffer);
 			}
 
-			ByteBuffer vertexBuffer = meshData.vertexBuffer();
-			ByteBuffer indexBuffer = meshData.indexBuffer();
-
-			// UberGpuBuffer.UploadCallback<SectionMesh> callback = mesh -> this.vertexBufferUploadCallback(mesh, layer);
-			success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, null, vertexBuffer);
-
 			if (indexBuffer != null) {
-				// UberGpuBuffer.UploadCallback<SectionMesh> callback = mesh -> this.indexBufferUploadCallback(mesh, layer, false);
 				success &= sectionBuffers.indexBuffer.addAllocation(sectionPos, null, indexBuffer);
 			}
 
@@ -115,6 +131,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 	public void assertRenderTypeBuffer(RenderType renderType) {
 		layerBuffers.assertPresent(renderType);
+	}
+
+	public boolean hasAllRenderTypes(Set<RenderType> renderTypes) {
+		return renderTypes().containsAll(renderTypes);
 	}
 
 	public Set<RenderType> renderTypes() {
@@ -155,7 +175,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		lock();
 
 		try {
-			this.compileQueue.clear();
+			this.compileQueue.close();
 			for (SectionUberBuffers buffers : this.layerBuffers.values()) {
 				buffers.vertexBuffer.close();
 				if (buffers.indexBuffer != null) {

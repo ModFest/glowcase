@@ -1,44 +1,30 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.chunk.concurrent;
 
-import com.mojang.blaze3d.vertex.MeshData;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.chunk.RenderSectionPos;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.Zone;
 
-import java.util.Map;
-
-public class AllocateTask extends SectionTask {
+public class AllocateTask implements SectionTask {
 	private final RenderSectionPos sectionPos;
-	private final Map<RenderType, MeshData> meshes;
+	private final BakedMeshes meshes;
 
-	public AllocateTask(final long sectionNode, Map<RenderType, MeshData> meshes) {
-		// Ensure that the buffers for the render types exist
-		GlowcaseLevelRenderer.getInstance().createUberBuffers(meshes.keySet());
-
+	public AllocateTask(final long sectionNode, BakedMeshes meshes) {
 		this.sectionPos = new RenderSectionPos(sectionNode);
 		this.meshes = meshes;
 	}
 
 	@Override
-	public void doTask() {
-		if (isCancelled()) return;
-
+	public void execute() {
 		try (Zone _ = Profiler.get().zone("Allocate section to uber buffer")) {
 			GlowcaseLevelRenderer.getInstance().allocateSectionMeshes(sectionPos.asLong(), meshes);
 		}
 	}
 
 	@Override
-	public BlockPos getOrigin() {
-		return sectionPos.origin();
-	}
-
-	@Override
-	public long getSectionNode() {
-		return sectionPos.asLong();
+	public void cancel() {
+		meshes.close();
 	}
 }
