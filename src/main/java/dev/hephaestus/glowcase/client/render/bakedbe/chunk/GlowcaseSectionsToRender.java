@@ -65,8 +65,8 @@ public record GlowcaseSectionsToRender(
 
 			renderTasks.add(new RenderTask(renderType, toRemove, textureNames, textures));
 		}
+		profiler.pop();
 
-		profiler.popPush("render");
 		RenderTarget renderTarget = outputTarget(sorted);
 		assert renderTarget.getColorTextureView() != null;
 
@@ -125,6 +125,7 @@ public record GlowcaseSectionsToRender(
 
 					renderPass.drawMultipleIndexed(draws, defaultIndexBuffer, indexType, List.of("DynamicTransforms"), sectionTransforms);
 				}
+				profiler.pop();
 
 				renderPass.popDebugGroup();
 				profiler.pop();
