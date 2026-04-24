@@ -9,6 +9,10 @@ public abstract class GlowcaseScreen extends Screen {
 		super(Component.empty());
 	}
 
+	protected GlowcaseScreen(Component title) {
+		super(title);
+	}
+
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float deltaTicks) {
 		this.extractTransparentBackground(graphics);
