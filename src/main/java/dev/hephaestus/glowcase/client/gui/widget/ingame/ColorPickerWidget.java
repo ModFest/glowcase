@@ -105,17 +105,17 @@ public class ColorPickerWidget extends AbstractButton {
 	public void confirmColor() {
 		if (this.onAccept != null) {
 			this.onAccept.accept(this);
-		} else {
-			this.toggle(false);
 		}
+
+		this.toggle(false);
 	}
 
 	public void cancel() {
 		if (this.onCancel != null) {
 			this.onCancel.accept(this);
-		} else {
-			this.toggle(false);
 		}
+
+		this.toggle(false);
 	}
 
 	public void toggle(boolean active) {

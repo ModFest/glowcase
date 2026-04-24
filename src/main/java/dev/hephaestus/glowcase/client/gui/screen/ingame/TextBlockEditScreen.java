@@ -2,10 +2,14 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
+import dev.hephaestus.glowcase.util.InputFilters;
+import dev.hephaestus.glowcase.util.ParseUtil;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -22,6 +26,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen {
@@ -50,28 +55,18 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			() -> this.textBlockEntity.getRawLine(this.currentRow),
 			(string) -> {
 				textBlockEntity.setRawLine(this.currentRow, string);
-				this.textBlockEntity.renderDirty = true;
+				this.textBlockEntity.renderDirty(true);
 			},
 			TextFieldHelper.createClipboardGetter(this.minecraft),
 			TextFieldHelper.createClipboardSetter(this.minecraft),
-			(string) -> true);
+			(_) -> true);
 
 		int middle = width / 2;
 
-		var scaleSlider = new TextScaleSliderWidget(textBlockEntity, middle - 203, 0, 113, 20);
-		this.addRenderableWidget(scaleSlider);
+		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203, innerPadding, 113, 20);
+		addFormattingButtons(middle - 90 + 6, innerPadding, 0, 20, 2);
 
-		var moreOptionsButton = Button.builder(
-				Component.translatable("gui.glowcase.more"),
-				button -> {
-					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-					Minecraft.getInstance().setScreen(optionsScreen);
-				})
-			.bounds(middle + 124, 0, 80, 20)
-			.build();
-		this.addRenderableWidget(moreOptionsButton);
-
-		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, 0, 64, 20, Component.empty());
+		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20, Component.empty());
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
 		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
 		this.colorEntryWidget.setResponder(string -> {
@@ -83,15 +78,21 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				if (this.colorEntryWidget.isFocused()) {
 					this.colorPickerWidget.setColor(new Color(color));
 				}
-				this.textBlockEntity.renderDirty = true;
+				this.textBlockEntity.renderDirty(true);
 			});
 		});
 
 		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
 		this.colorPickerWidget.toggle(false); //start deactivated
 
-		this.addRenderableWidget(colorPickerWidget);
-		this.addRenderableWidget(this.colorEntryWidget);
+		var moreOptionsButton = Button.builder(
+				Component.translatable("gui.glowcase.more"),
+				button -> {
+					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+					Minecraft.getInstance().setScreen(optionsScreen);
+				})
+			.bounds(middle + 124, innerPadding, 80, 20)
+			.build();
 
 		this.textWidgets = List.of(
 			this.colorEntryWidget
@@ -101,7 +102,10 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			this.colorEntryWidget
 		);
 
-		addFormattingButtons(middle - 90 + 6, 0, 0, 20, 2);
+		this.addRenderableWidget(colorPickerWidget);
+		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(scaleSlider);
+		this.addRenderableWidget(moreOptionsButton);
 	}
 
 	@Override
@@ -225,7 +229,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				this.textBlockEntity.setRawLine(this.currentRow,
 					this.textBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
 					));
-				this.textBlockEntity.renderDirty = true;
+				this.textBlockEntity.renderDirty(true);
 				++this.currentRow;
 				this.selectionManager.setCursorToStart();
 				return true;
@@ -286,7 +290,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 							this.textBlockEntity.setRawLine(i,
 								this.textBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.textBlockEntity.getRawLine(i).length())
 								));
-							this.textBlockEntity.renderDirty = true;
+							this.textBlockEntity.renderDirty(true);
 							++this.currentRow;
 							this.selectionManager.setCursorToEnd();
 							this.selectionManager.moveByChars(-selectionOffset);
@@ -308,7 +312,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		);
 
 		this.textBlockEntity.lines.remove(this.currentRow + 1);
-		this.textBlockEntity.renderDirty = true;
+		this.textBlockEntity.renderDirty(true);
 	}
 
 	private void colorListenerClicked(EditBox textWidget) {
@@ -433,27 +437,63 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		return this.selectionManager;
 	}
 
-	public static class TextScaleSliderWidget extends AbstractSliderButton {
-		private static final float MIN_SCALE = 0.125F;
-		private static final float MAX_SCALE = 16;
+	public static class TextScale {
+		public static final float MIN_SCALE = 0.125F;
+		public static final float MAX_SCALE = 16;
+		public static final float SCALE_DELTA = MAX_SCALE - MIN_SCALE;
 
-		private final TextBlockEntity entity;
+		public static class SliderWidget extends AbstractSliderButton {
+			private final TextBlockEntity entity;
+			private Consumer<Float> scaleResponder;
 
-		public TextScaleSliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
-			var initialValue = (entity.scale - MIN_SCALE) / (MAX_SCALE - MIN_SCALE);
-			super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
-			this.entity = entity;
+			public SliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
+				var initialValue = (entity.scale - MIN_SCALE) / SCALE_DELTA;
+				super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
+				this.entity = entity;
+			}
+
+			@Override
+			protected void updateMessage() {
+				this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
+			}
+
+			@Override
+			protected void applyValue() {
+				entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
+				if (scaleResponder != null) scaleResponder.accept(entity.scale);
+
+				entity.renderDirty(true);
+			}
+
+			public void setScaleResponder(Consumer<Float> responder) {
+				this.scaleResponder = responder;
+			}
+
+			public void updateValue(double newValue) {
+				this.value = Mth.clamp(newValue, 0.0, 1.0);
+				updateMessage();
+			}
 		}
 
-		@Override
-		protected void updateMessage() {
-			this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
-		}
+		public static class InputWidget extends GlowcaseEditBox {
+			private Consumer<Float> scaleResponder;
 
-		@Override
-		protected void applyValue() {
-			entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
-			entity.renderDirty = true;
+			public InputWidget(TextBlockEntity entity, Font font, int x, int y, int width, int height) {
+				super(font, x, y, width, height, Component.empty());
+				this.setValue(String.valueOf(entity.scale));
+				this.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.scale")));
+				this.setFilter(InputFilters::realNumber);
+				this.setResponder(input -> {
+					entity.scale = (float) Math.clamp(ParseUtil.parseOrDefault(input, 1d), MIN_SCALE, MAX_SCALE);
+					if (scaleResponder != null) scaleResponder.accept(entity.scale);
+
+					entity.renderDirty(true);
+				});
+			}
+
+			public void setScaleResponder(Consumer<Float> scaleResponder) {
+				this.scaleResponder = scaleResponder;
+			}
 		}
 	}
 }

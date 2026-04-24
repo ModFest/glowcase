@@ -14,11 +14,13 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public record C2SEditTextBlock(BlockPos pos,
-							   TextBlockEntity.TextAlignment alignment,
-							   TextBlockEntity.HorizontalAlignment horizontalAlignment,
-							   TextBlockEntity.ZOffset offset,
-							   TextBlockValues values) implements C2SEditBlockEntity {
+public record C2SEditTextBlock(
+	BlockPos pos,
+	TextBlockEntity.TextAlignment alignment,
+	TextBlockEntity.HorizontalAlignment horizontalAlignment,
+	TextBlockEntity.ZOffset offset,
+	TextBlockValues values
+) implements C2SEditBlockEntity {
 	public static final Type<C2SEditTextBlock> ID = new Type<>(Glowcase.id("channel.text_block"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditTextBlock> PACKET_CODEC = StreamCodec.composite(
 		BlockPos.STREAM_CODEC, C2SEditTextBlock::pos,
@@ -30,7 +32,13 @@ public record C2SEditTextBlock(BlockPos pos,
 	);
 
 	public static C2SEditTextBlock of(TextBlockEntity be) {
-		return new C2SEditTextBlock(be.getBlockPos(), be.textAlignment, be.horizontalAlignment, be.zOffset, new TextBlockValues(be.shadow, be.scale, be.backgroundColor, be.color, be.lines, be.viewDistance));
+		return new C2SEditTextBlock(
+			be.getBlockPos(),
+			be.textAlignment,
+			be.horizontalAlignment,
+			be.zOffset,
+			new TextBlockValues(be.shadow, be.scale, be.backgroundColor, be.color, be.lines)
+		);
 	}
 
 	@Override
@@ -50,21 +58,18 @@ public record C2SEditTextBlock(BlockPos pos,
 		be.backgroundColor = this.values().backgroundColor();
 		be.color = this.values().color();
 		be.zOffset = this.offset();
-		be.viewDistance = this.values().viewDistance();
 
 		be.setChanged();
 	}
 
 	// separated for tuple call
-	public record TextBlockValues(boolean shadow, float scale, int backgroundColor, int color, List<Component> lines,
-								  float viewDistance) {
+	public record TextBlockValues(boolean shadow, float scale, int backgroundColor, int color, List<Component> lines) {
 		public static final StreamCodec<RegistryFriendlyByteBuf, TextBlockValues> PACKET_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL, TextBlockValues::shadow,
 			ByteBufCodecs.FLOAT, TextBlockValues::scale,
 			ByteBufCodecs.INT, TextBlockValues::backgroundColor,
 			ByteBufCodecs.INT, TextBlockValues::color,
 			ByteBufCodecs.collection(ArrayList::new, ComponentSerialization.STREAM_CODEC), TextBlockValues::lines,
-			ByteBufCodecs.FLOAT, TextBlockValues::viewDistance,
 			TextBlockValues::new
 		);
 	}

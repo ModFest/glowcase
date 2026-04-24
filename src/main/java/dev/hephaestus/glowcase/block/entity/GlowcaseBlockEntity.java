@@ -33,13 +33,4 @@ public class GlowcaseBlockEntity extends BlockEntity {
 	public Packet<ClientGamePacketListener> getUpdatePacket() {
 		return ClientboundBlockEntityDataPacket.create(this);
 	}
-
-//	@SuppressWarnings({"MethodCallSideOnly", "VariableUseSideOnly"})
-//	@Override
-//	public void setRemoved() {
-//		if (level != null && level.isClientSide()) {
-//			BakedBlockEntityRenderer.Manager.markForRebuild(getBlockPos());
-//		}
-//		super.setRemoved();
-//	}
 }

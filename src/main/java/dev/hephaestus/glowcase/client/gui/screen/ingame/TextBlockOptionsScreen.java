@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.screen.ingame.TextBlockEditScreen.TextScale;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import net.minecraft.client.Minecraft;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -31,13 +33,6 @@ public class TextBlockOptionsScreen extends Screen {
 	}
 
 	@Override
-	public void onClose() {
-		super.onClose();
-		C2SEditTextBlock.of(this.entity).send();
-		Minecraft.getInstance().setScreen(this.returnScreen);
-	}
-
-	@Override
 	public void init() {
 		super.init();
 
@@ -45,10 +40,8 @@ public class TextBlockOptionsScreen extends Screen {
 		this.layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, _ -> this.onClose()).width(200).build());
 
 		this.options = this.layout.addToContents(new TextOptionList(this.minecraft, this.width, this.layout.getContentHeight(), this.layout.getHeaderHeight()));
-		this.options.add(
-			new TextBlockEditScreen.TextScaleSliderWidget(this.entity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT),
-			new TextRenderDistanceSliderWidget(this.entity, -1, -1)
-		);
+		addScaleWidgetRow(this.options);
+
 		this.options.add(
 			CycleButton.builder(
 					alignment -> Component.literal(alignment.toString()),
@@ -59,7 +52,7 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.x_offset_label"),
 					(_, alignment) -> {
 						entity.horizontalAlignment = alignment;
-						entity.renderDirty = true;
+						entity.renderDirty(true);
 					}
 				),
 			CycleButton.builder(
@@ -71,10 +64,11 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.z_offset_label"),
 					(_, offset) -> {
 						entity.zOffset = offset;
-						entity.renderDirty = true;
+						entity.renderDirty(true);
 					}
 				)
 		);
+
 		this.options.add(
 			CycleButton.builder(
 					alignment -> Component.literal(alignment.toString()),
@@ -90,19 +84,19 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.text_alignment"),
 					(_, alignment) -> {
 						entity.textAlignment = alignment;
-						entity.renderDirty = true;
+						entity.renderDirty(true);
 					}
 				),
 			CycleButton.onOffBuilder(entity.shadow).create(
 				Component.translatable("gui.glowcase.text_shadow"),
 				(_, shadow) -> {
 					entity.shadow = shadow;
-					entity.renderDirty = true;
+					entity.renderDirty(true);
 				}
 			)
 		);
 
-		this.options.addHeader(Component.translatable("gui.glowcase.color"));
+		this.options.addHeaders(Component.translatable("gui.glowcase.color"), Component.translatable("gui.glowcase.background_color"));
 		var colorEditBox = new EditBox(
 			this.font,
 			Button.DEFAULT_WIDTH,
@@ -113,11 +107,9 @@ public class TextBlockOptionsScreen extends Screen {
 		colorEditBox.setResponder(string -> ColorUtil.parse(string, entity.color)
 			.ifSuccess(newColor -> {
 				entity.color = newColor;
-				entity.renderDirty = true;
+				entity.renderDirty(true);
 			}));
-		this.options.add(colorEditBox);
 
-		this.options.addHeader(Component.translatable("gui.glowcase.background_color"));
 		var backgroundEditBox = new EditBox(
 			this.font,
 			Button.DEFAULT_WIDTH,
@@ -128,14 +120,33 @@ public class TextBlockOptionsScreen extends Screen {
 		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, entity.backgroundColor)
 			.ifSuccess(newColor -> {
 				entity.backgroundColor = newColor;
-				entity.renderDirty = true;
+				entity.renderDirty(true);
 			}));
-		this.options.add(backgroundEditBox);
+
+		this.options.add(colorEditBox, backgroundEditBox);
 
 		this.layout.visitWidgets(this::addRenderableWidget);
 		this.layout.arrangeElements();
 	}
 
+	private void addScaleWidgetRow(TextOptionList options) {
+		var slider = new TextScale.SliderWidget(this.entity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT);
+		var input = new TextScale.InputWidget(this.entity, this.font, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT);
+
+		slider.setScaleResponder(scale -> input.setValue(String.valueOf(scale)));
+		input.setScaleResponder(scale -> slider.updateValue((scale - TextScale.MIN_SCALE) / TextScale.SCALE_DELTA));
+
+		options.add(slider, input);
+	}
+
+	@Override
+	public void onClose() {
+		super.onClose();
+		C2SEditTextBlock.of(this.entity).send();
+		Minecraft.getInstance().setScreen(this.returnScreen);
+	}
+
+	@NullMarked
 	public static class TextOptionList extends ContainerObjectSelectionList<TextOptionList.Entry> {
 		public TextOptionList(Minecraft minecraft, int width, int height, int y) {
 			super(minecraft, width, height, y, Button.DEFAULT_HEIGHT + 5);
@@ -145,6 +156,17 @@ public class TextBlockOptionsScreen extends Screen {
 			int lineHeight = this.minecraft.font.lineHeight;
 			int paddingTop = this.children().isEmpty() ? 0 : lineHeight * 2;
 			this.addEntry(new HeaderEntry(new StringWidget(text, this.minecraft.font), paddingTop), paddingTop + lineHeight + 4);
+		}
+
+		public void addHeaders(Component leftHeader, Component rightHeader) {
+			int lineHeight = this.minecraft.font.lineHeight;
+			int paddingTop = this.children().isEmpty() ? 0 : lineHeight;
+			this.addEntry(
+				new DualHeaderEntry(
+					new StringWidget(leftHeader, this.minecraft.font),
+					new StringWidget(rightHeader, this.minecraft.font), paddingTop),
+				paddingTop + lineHeight + 4
+			);
 		}
 
 		public void add(AbstractWidget widget) {
@@ -160,9 +182,7 @@ public class TextBlockOptionsScreen extends Screen {
 			return 310;
 		}
 
-		public static abstract class Entry extends ContainerObjectSelectionList.Entry<Entry> {
-
-		}
+		public static abstract class Entry extends ContainerObjectSelectionList.Entry<Entry> {}
 
 		public static class HeaderEntry extends Entry {
 			protected final StringWidget widget;
@@ -187,6 +207,36 @@ public class TextBlockOptionsScreen extends Screen {
 			@Override
 			public List<? extends GuiEventListener> children() {
 				return List.of(this.widget);
+			}
+		}
+
+		public static class DualHeaderEntry extends Entry {
+			protected final StringWidget leftWidget;
+			protected final StringWidget rightWidget;
+			protected final int paddingTop;
+
+			public DualHeaderEntry(StringWidget leftWidget, StringWidget rightWidget, int paddingTop) {
+				this.leftWidget = leftWidget;
+				this.rightWidget = rightWidget;
+				this.paddingTop = paddingTop;
+			}
+
+			@Override
+			public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+				this.leftWidget.setPosition(this.getContentX(), this.getContentY() + this.paddingTop);
+				this.leftWidget.extractRenderState(graphics, mouseX, mouseY, a);
+				this.rightWidget.setPosition(this.getContentX() + 160, this.getContentY() + this.paddingTop);
+				this.rightWidget.extractRenderState(graphics, mouseX, mouseY, a);
+			}
+
+			@Override
+			public List<? extends NarratableEntry> narratables() {
+				return List.of(this.leftWidget, this.rightWidget);
+			}
+
+			@Override
+			public List<? extends GuiEventListener> children() {
+				return List.of(this.leftWidget, this.rightWidget);
 			}
 		}
 
@@ -240,42 +290,6 @@ public class TextBlockOptionsScreen extends Screen {
 			public List<? extends GuiEventListener> children() {
 				return List.of(this.leftWidget, this.rightWidget);
 			}
-		}
-	}
-
-	private static class TextRenderDistanceSliderWidget extends AbstractSliderButton {
-		private static final float INFINITE_VALUE = -1;
-		private static final float MIN_VALUE = 1;
-		private static final float MAX_VALUE = 256;
-
-		private final TextBlockEntity entity;
-
-		public TextRenderDistanceSliderWidget(TextBlockEntity entity, int x, int y) {
-			double initialValue = entity.viewDistance == INFINITE_VALUE ? 1 : (entity.viewDistance - MIN_VALUE) / (MAX_VALUE - MIN_VALUE);
-			super(x, y, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT, createMessage(entity), initialValue);
-
-			this.entity = entity;
-		}
-
-		private static MutableComponent createMessage(TextBlockEntity entity) {
-			return entity.viewDistance == INFINITE_VALUE
-				? Component.translatable("gui.glowcase.render_distance_value.infinite")
-				: Component.translatable("gui.glowcase.render_distance_value", entity.viewDistance);
-		}
-
-		@Override
-		protected void updateMessage() {
-			this.setMessage(createMessage(this.entity));
-		}
-
-		@Override
-		protected void applyValue() {
-			if (this.value == 1) {
-				this.entity.viewDistance = INFINITE_VALUE;
-			} else {
-				this.entity.viewDistance = (float) Math.round(Mth.lerp(this.value, MIN_VALUE, MAX_VALUE));
-			}
-			this.entity.renderDirty = true;
 		}
 	}
 }

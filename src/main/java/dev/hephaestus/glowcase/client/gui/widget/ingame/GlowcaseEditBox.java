@@ -6,20 +6,22 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public class GlowcaseEditBox extends EditBox {
-	private Filter filter = null;
+	private @Nullable Filter filter = null;
 
 	public GlowcaseEditBox(Font textRenderer, int width, int height, Component text) {
 		super(textRenderer, width, height, text);
 	}
 
-	public GlowcaseEditBox(Font textRenderer, int x, int y, int width, int height, Component text) {
-		super(textRenderer, x, y, width, height, text);
+	public GlowcaseEditBox(Font textRenderer, int x, int y, int width, int height, Component narration) {
+		super(textRenderer, x, y, width, height, narration);
 	}
 
-	public GlowcaseEditBox(Font textRenderer, int x, int y, int width, int height, @Nullable EditBox copyFrom, Component text) {
-		super(textRenderer, x, y, width, height, copyFrom, text);
+	public GlowcaseEditBox(Font textRenderer, int x, int y, int width, int height, @Nullable EditBox copyFrom, Component narration) {
+		super(textRenderer, x, y, width, height, copyFrom, narration);
 	}
 
 	@Override
@@ -36,7 +38,7 @@ public class GlowcaseEditBox extends EditBox {
 		super.setHint(placeholder.copy().withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 	}
 
-	public Filter getFilter() {
+	public @Nullable Filter getFilter() {
 		return filter;
 	}
 

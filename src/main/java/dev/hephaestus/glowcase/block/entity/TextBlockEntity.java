@@ -7,6 +7,7 @@ import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -34,8 +36,6 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	public float scale = 1F;
 	public int color = ColorUtil.WHITE;
 	public int backgroundColor = 0;
-	public boolean renderDirty = true;
-	public float viewDistance = -1.0F;
 
 	public TextBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.TEXT_BLOCK_ENTITY.get(), pos, state);
@@ -54,7 +54,6 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		view.store("horizontal_alignment", HorizontalAlignment.CODEC, this.horizontalAlignment);
 		view.store("z_offset", ZOffset.CODEC, this.zOffset);
 		view.putBoolean("shadow", this.shadow);
-		view.putFloat("viewDistance", this.viewDistance);
 
 		view.store("lines", ComponentSerialization.CODEC.listOf(), lines);
 	}
@@ -76,9 +75,8 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.textAlignment = view.read("text_alignment", TextAlignment.CODEC).orElse(TextAlignment.CENTER);
 		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
-		this.viewDistance = view.getFloatOr("viewDistance", -1);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
-		this.renderDirty = true;
+		this.renderDirty(false);
 	}
 
 	public String getRawLine(int i) {
@@ -114,6 +112,11 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		} else {
 			this.lines.set(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
 		}
+	}
+
+	public void renderDirty(boolean immediate) {
+		if (!this.hasLevel() || !this.getLevel().isClientSide()) return;
+		this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), immediate ? Block.UPDATE_IMMEDIATE : 0);
 	}
 
 	public enum TextAlignment implements StringRepresentable {

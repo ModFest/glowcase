@@ -24,8 +24,7 @@ import java.util.List;
 
 @NullMarked
 public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlockEntity, TextBlockEntityRenderer.TextRenderState, TextBlockEntityRenderer.TextRenderState> {
-	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
-	private boolean wasOutOfRange = false;
+	public static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
 
 	private final Font font;
 
@@ -33,6 +32,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		this.font = ctx.font();
 	}
 
+	@SuppressWarnings("NotNullFieldNotInitialized")
 	public static class TextRenderState extends BlockEntityRenderState {
 		public boolean shouldRenderPlaceholder;
 		public int rotation16;
@@ -62,6 +62,14 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
+		state.zOffset = blockEntity.zOffset;
+	}
+
+	@Override
+	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state) {
+		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state);
+		state.zOffset = blockEntity.zOffset;
+		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 
 		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
 		state.textAlignment = blockEntity.textAlignment;
@@ -74,21 +82,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	}
 
 	@Override
-	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state) {
-		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state);
-		// TODO: Change for the port to 26.1, if needed
-		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
-		state.zOffset = blockEntity.zOffset;
-		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
-
-		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
-		state.scale = blockEntity.scale;
-	}
-
-	@Override
 	public boolean shouldBake(TextBlockEntity entity) {
-//		return !entity.lines.isEmpty();
-		return false;
+		return !entity.lines.isEmpty();
 	}
 
 	@Override
@@ -96,9 +91,10 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		if (state.shouldRenderPlaceholder) {
 			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
 		}
+	}
 
-		// TODO: move this to a baked rendering method
-		//   currently it errors "Rendersystem called from wrong thread" on `this.font.width(text)`
+	@Override
+	public void submitForBaking(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
 		int maxWidth = 0;
 		for (var line : state.lines) {
 			maxWidth = Math.max(maxWidth, this.font.width(line));
@@ -110,8 +106,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		poseStack.scale(1, -1, 1);
 
 		switch (state.zOffset) {
-			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
-			case BACK -> poseStack.translate(0D, 0D, -0.4D);
+			case FRONT -> poseStack.translate(0D, 0D, -0.4D);
+			case BACK -> poseStack.translate(0D, 0D, 0.4D);
 		}
 
 		float rotation = -(state.rotation16 * 360) / 16.0F;
@@ -143,28 +139,18 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 			submitNodeCollector.submitText(poseStack,
 				x,
-				i * this.font.lineHeight,
+				// FIXME: Temp fix for the overlapping background
+				i * (this.font.lineHeight + 1),
 				line, state.shadow,
 				Font.DisplayMode.NORMAL,
 				LightCoordsUtil.FULL_BRIGHT,
 				state.color,
 				state.backgroundColor,
-				0);
+				0
+			);
 		}
 
 		poseStack.popPose();
-	}
-
-	@Override
-	public void submitForBaking(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
-		// TODO: Port to 26.1
-//		poseStack.pushPose();
-//		poseStack.mulPose(Axis.YP.rotationDegrees(-(state.rotation16 * 360) / 16.0F));
-//		float a = 1 / 9f;
-//		poseStack.translate(-.5, 1.5, -.5);
-//		poseStack.scale(a, -a, a);
-//		submitNodeCollector.submitText(poseStack, 0, 0, Component.literal("waff :3").getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0, 0);
-//		poseStack.popPose();
 	}
 
 	//	FIXME 26.1
