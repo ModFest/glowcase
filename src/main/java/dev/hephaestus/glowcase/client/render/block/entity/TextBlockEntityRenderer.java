@@ -7,18 +7,13 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockModelRenderState;
-import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -27,20 +22,13 @@ import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlockEntity, TextBlockEntityRenderer.TextRenderState, TextBlockEntityRenderer.TextRenderState> {
-	private static final BlockDisplayContext BLOCK_DISPLAY_CONTEXT = BlockDisplayContext.create();
-	public static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
-	private final BlockEntityRendererProvider.Context context;
+	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
 	private boolean wasOutOfRange = false;
-
-	public TextBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
-		this.context = context;
-	}
 
 	public static class TextRenderState extends BlockEntityRenderState {
 		public boolean shouldRenderPlaceholder;
 		public TextBlockEntity.ZOffset zOffset;
 		public int rotation16;
-		public BlockModelRenderState blockRenderState = new BlockModelRenderState();
 	}
 
 	@Override
@@ -69,18 +57,13 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 		state.zOffset = blockEntity.zOffset;
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
-		context.blockModelResolver().update(
-			state.blockRenderState,
-			Blocks.RED_STAINED_GLASS.defaultBlockState(),
-			BLOCK_DISPLAY_CONTEXT
-		);
 	}
 
 	@Override
 	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		/*if (state.shouldRenderPlaceholder) {
+		if (state.shouldRenderPlaceholder) {
 			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
-		}*/
+		}
 	}
 
 	@Override
@@ -91,7 +74,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		float a = 1 / 9f;
 		poseStack.translate(-.5, 1.5, -.5);
 		poseStack.scale(a, -a, a);
-		submitNodeCollector.submitText(poseStack, 0, 0, Component.literal("waff :3").getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0x88000000, 0);
+		submitNodeCollector.submitText(poseStack, 0, 0, Component.literal("waff :3").getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, 0xFFFFFFFF, 0, 0);
 		poseStack.popPose();
 	}
 
