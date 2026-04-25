@@ -33,7 +33,7 @@ public final class VisibleSections implements Iterable<VisibleSections.Entry> {
 	private final ConcurrentLinkedDeque<Runnable> pending = new ConcurrentLinkedDeque<>();
 
 	// The main section map
-	private final Long2ObjectLinkedOpenHashMap<GlowcaseRenderSectionInfo> visibleSections = new Long2ObjectLinkedOpenHashMap<>();
+	private final Long2ObjectOpenHashMap<GlowcaseRenderSectionInfo> visibleSections = new Long2ObjectOpenHashMap<>();
 	private RenderSectionPos cameraSection = new RenderSectionPos(0);
 	private Vec3 cameraSectionCenter = cameraSection.absoluteCenter();
 
