@@ -109,9 +109,9 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 				category.setDetail("Block state", blockState::toString);
 			}
 			throw new ReportedException(report);
+		} finally {
+			profiler.pop();
 		}
-
-		profiler.pop();
 	}
 
 	@Definition(id = "getTranslucentData", method = "Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/TranslucentGeometryCollector;getTranslucentData(Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/TranslucentData;Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/CombinedCameraPos;)Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/TranslucentData;")
