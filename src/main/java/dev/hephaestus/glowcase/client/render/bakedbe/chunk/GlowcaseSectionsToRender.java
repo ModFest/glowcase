@@ -26,7 +26,6 @@ public record GlowcaseSectionsToRender(
 	int maxIndicesRequired,
 	GpuBufferSlice[] sectionTransforms
 ) {
-
 	public void renderGroup(final boolean sorted) {
 		ProfilerFiller profiler = Profiler.get();
 		final String name = sorted ? "translucent" : "solid";
