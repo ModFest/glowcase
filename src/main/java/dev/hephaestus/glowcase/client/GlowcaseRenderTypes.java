@@ -33,7 +33,7 @@ public final class GlowcaseRenderTypes {
 		RenderSetup state = RenderSetup.builder(SCREEN_PROGRAM.apply(culling))
 			.withTexture("Sampler0", texture)
 			.useLightmap()
-			.bufferSize(786432)
+			.bufferSize(RenderType.SMALL_BUFFER_SIZE)
 			.sortOnUpload()
 			.createRenderSetup();
 		return RenderType.create("glowcase_screen", state);
