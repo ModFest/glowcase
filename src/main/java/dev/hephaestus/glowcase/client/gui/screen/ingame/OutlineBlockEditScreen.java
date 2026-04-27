@@ -7,26 +7,29 @@ import dev.hephaestus.glowcase.packet.C2SEditOutlineBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.TextUtils;
 
-import java.util.function.Predicate;
-
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class OutlineBlockEditScreen extends GlowcaseScreen {
 	private final OutlineBlockEntity outlineBlockEntity;
 
-	private StringWidget offsetWidget;
-	private StringWidget scaleWidget;
+	private StringWidget offsetTextWidget;
+	private StringWidget scaleTextWidget;
+	private StringWidget colorTextWidget;
+	private StringWidget widthTextWidget;
+
 	private GlowcaseEditBox xOffsetWidget;
 	private GlowcaseEditBox yOffsetWidget;
 	private GlowcaseEditBox zOffsetWidget;
 	private GlowcaseEditBox xScaleWidget;
 	private GlowcaseEditBox yScaleWidget;
 	private GlowcaseEditBox zScaleWidget;
-	private GlowcaseEditBox colorEntryWidget;
+	private GlowcaseEditBox colorWidget;
+	private GlowcaseEditBox widthWidget;
 
 	public OutlineBlockEditScreen(OutlineBlockEntity outlineBlockEntity) {
 		this.outlineBlockEntity = outlineBlockEntity;
@@ -36,16 +39,29 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 	public void init() {
 		super.init();
 
-		this.offsetWidget = new StringWidget(width / 2 - 110, height / 2 - 25, 40, 20, Component.translatable("gui.glowcase.offset"), this.font);
-		this.scaleWidget = new StringWidget(width / 2 - 110, height / 2 + 5, 40, 20, Component.translatable("gui.glowcase.scale"), this.font);
+		final int lineOffset = 30;
+		final int lines = 4;
+		final int initialY = height / 2 - (lineOffset * lines) / 2;
 
-		this.xOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 65, height / 2 - 25, 40, 20, Component.empty());
-		this.yOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 20, height / 2 - 25, 40, 20, Component.empty());
-		this.zOffsetWidget = new GlowcaseEditBox(this.font, width / 2 + 25, height / 2 - 25, 40, 20, Component.empty());
+		AtomicInteger widgetY = new AtomicInteger(initialY);
 
-		this.xScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 65, height / 2 + 5, 40, 20, Component.empty());
-		this.yScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 20, height / 2 + 5, 40, 20, Component.empty());
-		this.zScaleWidget = new GlowcaseEditBox(this.font, width / 2 + 25, height / 2 + 5, 40, 20, Component.empty());
+		this.offsetTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.offset"), this.font);
+		this.scaleTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.scale"), this.font);
+		this.colorTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.color"), this.font);
+		this.widthTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.width"), this.font);
+
+		// Reposition
+		widgetY.set(initialY);
+
+		this.xOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 65, widgetY.get(), 40, 20, Component.empty());
+		this.yOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 20, widgetY.get(), 40, 20, Component.empty());
+		this.zOffsetWidget = new GlowcaseEditBox(this.font, width / 2 + 25, widgetY.get(), 40, 20, Component.empty());
+		widgetY.getAndAdd(lineOffset);
+
+		this.xScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 65, widgetY.get(), 40, 20, Component.empty());
+		this.yScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 20, widgetY.get(), 40, 20, Component.empty());
+		this.zScaleWidget = new GlowcaseEditBox(this.font, width / 2 + 25, widgetY.get(), 40, 20, Component.empty());
+		widgetY.getAndAdd(lineOffset);
 
 		this.xOffsetWidget.setValue(String.valueOf(this.outlineBlockEntity.offset.getX()));
 		this.yOffsetWidget.setValue(String.valueOf(this.outlineBlockEntity.offset.getY()));
@@ -106,21 +122,29 @@ public class OutlineBlockEditScreen extends GlowcaseScreen {
 		this.yScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.y"));
 		this.zScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.z"));
 
-		this.colorEntryWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 25, height / 2 + 35, 50, 20, Component.empty());
-		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.outlineBlockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> this.outlineBlockEntity.color = color.getValue() | 0xFF000000);
+		this.colorWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
+		this.colorWidget.setValue("#" + String.format("%1$06X", this.outlineBlockEntity.color & 0x00FFFFFF));
+		this.colorWidget.setResponder(string -> {
+			TextColor.parseColor(this.colorWidget.getValue()).ifSuccess(color -> this.outlineBlockEntity.color = color.getValue() | 0xFF000000);
 		});
 
-		this.addRenderableWidget(this.offsetWidget);
-		this.addRenderableWidget(this.scaleWidget);
+		this.widthWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
+		this.widthWidget.setValue(String.valueOf(this.outlineBlockEntity.width));
+		this.widthWidget.setFilter(InputFilters::naturalNumber);
+		this.widthWidget.setResponder(string -> this.outlineBlockEntity.width = Math.clamp(Integer.parseInt(string), 1, 5));
+
+		this.addRenderableWidget(this.offsetTextWidget);
+		this.addRenderableWidget(this.scaleTextWidget);
+		this.addRenderableWidget(this.colorTextWidget);
+		this.addRenderableWidget(this.widthTextWidget);
 		this.addRenderableWidget(this.xOffsetWidget);
 		this.addRenderableWidget(this.yOffsetWidget);
 		this.addRenderableWidget(this.zOffsetWidget);
 		this.addRenderableWidget(this.xScaleWidget);
 		this.addRenderableWidget(this.yScaleWidget);
 		this.addRenderableWidget(this.zScaleWidget);
-		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(this.colorWidget);
+		this.addRenderableWidget(this.widthWidget);
 	}
 
 	@Override

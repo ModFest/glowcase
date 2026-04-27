@@ -11,7 +11,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public record C2SEditOutlineBlock(BlockPos pos, Vec3i offset, Vec3i scale, int color) implements C2SEditBlockEntity {
+public record C2SEditOutlineBlock(BlockPos pos, Vec3i offset, Vec3i scale, int color, int width) implements C2SEditBlockEntity {
 	public static final StreamCodec<RegistryFriendlyByteBuf, Vec3i> VEC3I = StreamCodec.composite(
 		ByteBufCodecs.INT, Vec3i::getX,
 		ByteBufCodecs.INT, Vec3i::getY,
@@ -25,11 +25,12 @@ public record C2SEditOutlineBlock(BlockPos pos, Vec3i offset, Vec3i scale, int c
 		VEC3I, C2SEditOutlineBlock::offset,
 		VEC3I, C2SEditOutlineBlock::scale,
 		ByteBufCodecs.INT, C2SEditOutlineBlock::color,
+		ByteBufCodecs.INT, C2SEditOutlineBlock::width,
 		C2SEditOutlineBlock::new
 	);
 
 	public static C2SEditOutlineBlock of(OutlineBlockEntity be) {
-		return new C2SEditOutlineBlock(be.getBlockPos(), be.offset, be.scale, be.color);
+		return new C2SEditOutlineBlock(be.getBlockPos(), be.offset, be.scale, be.color, be.width);
 	}
 
 	@Override
@@ -44,6 +45,7 @@ public record C2SEditOutlineBlock(BlockPos pos, Vec3i offset, Vec3i scale, int c
 		be.offset = this.offset();
 		be.scale = this.scale();
 		be.color = this.color();
+		be.width = this.width();
 
 		be.setChanged();
 	}

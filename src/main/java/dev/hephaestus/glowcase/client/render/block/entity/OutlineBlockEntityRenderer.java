@@ -31,6 +31,7 @@ public record OutlineBlockEntityRenderer(
 		public Vec3i offset;
 		public Vec3i scale;
 		public int color;
+		public int width;
 	}
 
 	@Override
@@ -45,6 +46,7 @@ public record OutlineBlockEntityRenderer(
 		state.offset = blockEntity.offset;
 		state.scale = blockEntity.scale;
 		state.color = blockEntity.color;
+		state.width = blockEntity.width;
 	}
 
 	@Override
@@ -60,6 +62,6 @@ public record OutlineBlockEntityRenderer(
 		double height = state.scale.getY();
 		double depth = state.scale.getZ();
 
-		Gizmos.cuboid(new AABB(x, y, z, x + width, y + height, z + depth).move(state.blockPos), GizmoStyle.stroke(state.color | 0xFF000000, 1));
+		Gizmos.cuboid(new AABB(x, y, z, x + width, y + height, z + depth).move(state.blockPos), GizmoStyle.stroke(state.color | 0xFF000000, state.width));
 	}
 }

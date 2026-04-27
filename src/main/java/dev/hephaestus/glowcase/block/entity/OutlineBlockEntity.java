@@ -12,6 +12,7 @@ public class OutlineBlockEntity extends GlowcaseBlockEntity {
 	public Vec3i offset = Vec3i.ZERO;
 	public Vec3i scale = new Vec3i(1, 1, 1);
 	public int color = 0xFFFFFF;
+	public int width = 1;
 
 	public OutlineBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.OUTLINE_BLOCK_ENTITY.get(), pos, state);
@@ -24,6 +25,7 @@ public class OutlineBlockEntity extends GlowcaseBlockEntity {
 		view.store("offset", Vec3i.CODEC, this.offset);
 		view.store("scale", Vec3i.CODEC, this.scale);
 		view.putInt("color", this.color);
+		view.putInt("width", this.width);
 	}
 
 	@Override
@@ -33,5 +35,6 @@ public class OutlineBlockEntity extends GlowcaseBlockEntity {
 		this.offset = view.read("offset", Vec3i.CODEC).orElse(Vec3i.ZERO);
 		this.scale = view.read("scale", Vec3i.CODEC).orElseGet(() -> new Vec3i(1, 1, 1));
 		this.color = view.getIntOr("color", 0xFFFFFF);
+		this.width = Math.clamp(view.getIntOr("width", 1), 1, 5);
 	}
 }
