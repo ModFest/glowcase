@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 @Environment(EnvType.CLIENT)
 public record GlowcaseTintSource(int defaultColor) implements ItemTintSource {
 	public static final MapCodec<GlowcaseTintSource> CODEC = RecordCodecBuilder.mapCodec(
-		instance -> instance.group(ExtraCodecs.RGB_COLOR_CODEC.fieldOf("default").forGetter(GlowcaseTintSource::defaultColor)).apply(instance, GlowcaseTintSource::new)
+		instance -> instance.group(
+			ExtraCodecs.RGB_COLOR_CODEC.fieldOf("default").forGetter(GlowcaseTintSource::defaultColor)
+		).apply(instance, GlowcaseTintSource::new)
 	);
 
 	@Override
