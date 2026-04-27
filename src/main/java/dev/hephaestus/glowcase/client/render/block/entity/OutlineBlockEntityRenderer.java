@@ -14,7 +14,10 @@ import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Vec3i;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import org.jspecify.annotations.Nullable;
@@ -57,18 +60,6 @@ public record OutlineBlockEntityRenderer(
 		double height = state.scale.getY();
 		double depth = state.scale.getZ();
 
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.lines(), new SubmitNodeCollector.CustomGeometryRenderer() {
-			@Override
-			public void render(PoseStack.Pose pose, VertexConsumer buffer) {
-				poseStack.pushPose();
-				poseStack.mulPose(pose.pose());
-				ShapeRenderer.renderShape(
-					poseStack, buffer,
-					Shapes.box(x, y, z, x + width, y + height, z + depth),
-					0, 0, 0, state.color | 0xFF000000, 1
-				);
-				poseStack.popPose();
-			}
-		});
+		Gizmos.cuboid(new AABB(x, y, z, x + width, y + height, z + depth).move(state.blockPos), GizmoStyle.stroke(state.color | 0xFF000000, 1));
 	}
 }
