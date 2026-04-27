@@ -7,13 +7,36 @@ import net.minecraft.ChatFormatting;
  * @author Ampflower
  **/
 public final class ColorUtil {
-	public static final int WHITE = 0xFFFFFFFF;
-	public static final int TRANSPARENT = 0x00000000;
-	public static final int ALPHA_MASK = 0xFF000000;
-	public static final int COLOR_MASK = 0x00FFFFFF;
+	public static final int CHANNEL_BITS = 8;
+	public static final int RGB_CHANNELS = 3;
+	public static final int CHANNEL_LENGTH = 1 << CHANNEL_BITS;
+	public static final int CHANNEL_MASK = CHANNEL_LENGTH - 1;
+
+	public static final int RGB_BITS = CHANNEL_BITS * RGB_CHANNELS;
+
+	public static final int RGB_MASK = (1 << RGB_BITS) - 1;
+	public static final int ALPHA_MASK = CHANNEL_MASK << RGB_BITS;
+	public static final int WHITE = ALPHA_MASK | RGB_MASK;
+	public static final int TRANSPARENT = 0;
 
 	public static int transferAlpha(int oldColor, int newColor) {
-		return (oldColor & ALPHA_MASK) | (newColor & COLOR_MASK);
+		return (oldColor & ALPHA_MASK) | (newColor & RGB_MASK);
+	}
+
+	public static int alphaFallback(int color) {
+		if ((color & ALPHA_MASK) == TRANSPARENT) {
+			return color & RGB_MASK | ALPHA_MASK;
+		}
+
+		return color;
+	}
+
+	public static int minAlpha(int color, int minAlpha) {
+		if ((color >>> RGB_BITS) < minAlpha) {
+			return (color & RGB_MASK) | (minAlpha << RGB_CHANNELS);
+		}
+
+		return color;
 	}
 
 	public static DataResult<Integer> parse(String string, int reference) {
@@ -46,7 +69,7 @@ public final class ColorUtil {
 				return DataResult.error(() -> "Unknown color: " + string);
 			}
 
-			int rgb = formatting.getColor() & COLOR_MASK;
+			int rgb = formatting.getColor() & RGB_MASK;
 			int a = reference & ALPHA_MASK;
 
 			return DataResult.success(a | rgb);

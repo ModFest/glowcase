@@ -2,6 +2,7 @@ package dev.hephaestus.glowcase.client.render.item.tint;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.color.item.ItemTintSource;
@@ -11,13 +12,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public record GlowcaseTintSource(int defaultColor) implements ItemTintSource {
+	// Require at least 25% of alpha
+	private static final int MIN_ALPHA = ColorUtil.CHANNEL_LENGTH / 4;
+
 	public static final MapCodec<GlowcaseTintSource> CODEC = RecordCodecBuilder.mapCodec(
 		instance -> instance.group(
 			ExtraCodecs.RGB_COLOR_CODEC.fieldOf("default").forGetter(GlowcaseTintSource::defaultColor)
@@ -31,8 +34,11 @@ public record GlowcaseTintSource(int defaultColor) implements ItemTintSource {
 
 		CompoundTag nbt = component.getUnsafe();
 		int color = nbt.getIntOr("color", 0);
-		if (color != 0 && color != defaultColor) return color;
-		return 0xFFAA00AA;
+		if (color != 0 && color != defaultColor) {
+			return ColorUtil.minAlpha(ColorUtil.alphaFallback(color), MIN_ALPHA);
+		}
+
+		return defaultColor;
 	}
 
 	@Override

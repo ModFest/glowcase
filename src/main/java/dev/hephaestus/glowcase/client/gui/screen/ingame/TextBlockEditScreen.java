@@ -71,7 +71,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
 		this.colorEntryWidget.setResponder(string -> {
 			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
-				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.COLOR_MASK);
+				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.RGB_MASK);
 
 				this.textBlockEntity.color = color;
 				// make sure it doesn't update from the color picker updating the text

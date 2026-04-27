@@ -66,9 +66,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.color = view.getIntOr("color", 0xFFFFFFFF);
 
 		// Force-fix alpha of 0 to opaque.
-		if ((this.color & ColorUtil.ALPHA_MASK) == 0) {
-			this.color |= ColorUtil.ALPHA_MASK;
-		}
+		this.color = ColorUtil.alphaFallback(this.color);
 
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
