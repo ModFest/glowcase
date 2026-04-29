@@ -33,11 +33,11 @@ public record GlowcaseSectionsToRender(
 		if (renderTypes.isEmpty()) return;
 
 		ProfilerFiller profiler = Profiler.get();
-		profiler.push("render_" + name);
+		profiler.push("render_" + name); // +0
 
 		List<RenderTask> renderTasks = new ArrayList<>(renderTypes.size());
 
-		profiler.push("setup_textures");
+		profiler.push("setup_textures"); // +1
 		for (int i = 0, len = renderTypes.size(); i < len; i++) {
 			RenderType renderType = renderTypes.get(i);
 
@@ -65,7 +65,7 @@ public record GlowcaseSectionsToRender(
 
 			renderTasks.add(new RenderTask(renderType, toRemove, textureNames, textures));
 		}
-		profiler.pop();
+		profiler.pop(); // -1
 
 		RenderTarget renderTarget = outputTarget(sorted);
 		assert renderTarget.getColorTextureView() != null;
@@ -87,35 +87,35 @@ public record GlowcaseSectionsToRender(
 				RenderType renderType = renderTask.renderType;
 				final String renderName = ((RenderTypeAccessor) renderType).getName();
 
-				profiler.push(renderName);
+				profiler.push(renderName); // +1
 				renderPass.pushDebugGroup(() -> renderName);
 
-				profiler.push("tex_remove");
+				profiler.push("tex_remove"); // +2
 				for (String textureName : renderTask.texturesToRemove) {
 					renderPass.bindTexture(textureName, null, null);
 				}
 
-				profiler.popPush("auto_indices");
+				profiler.popPush("auto_indices"); // 2
 				RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.mode());
 				GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> {
-						profiler.push("new_auto_indices");
+						profiler.push("new_auto_indices"); // +3
 						GpuBuffer buffer = this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired);
-						profiler.pop();
+						profiler.pop(); // -3
 						return buffer;
 					}
 				);
 				VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
 
-				profiler.popPush("tex_bind");
+				profiler.popPush("tex_bind"); // 2
 				for (Texture texture : renderTask.textures) {
 					renderPass.bindTexture(texture.name, texture.textureView, texture.sampler);
 				}
-				profiler.pop();
+				profiler.pop(); // -2
 
 				renderPass.setPipeline(renderType.pipeline());
 
 				var drawGroup = drawGroupsPerType.getValue(renderType);
-				profiler.push("draw");
+				profiler.push("draw"); // +2
 				for (var draws : drawGroup.values()) {
 					if (draws.isEmpty()) continue;
 
@@ -123,16 +123,17 @@ public record GlowcaseSectionsToRender(
 						draws = draws.reversed();
 					}
 
+					//noinspection DataFlowIssue
 					renderPass.drawMultipleIndexed(draws, defaultIndexBuffer, indexType, List.of("DynamicTransforms"), sectionTransforms);
 				}
-				profiler.pop();
+				profiler.pop(); // -2
 
 				renderPass.popDebugGroup();
-				profiler.pop();
+				profiler.pop(); // -1
 			}
 		}
 
-		profiler.pop();
+		profiler.pop(); // -0
 	}
 
 	public RenderTarget outputTarget(boolean translucent) {
