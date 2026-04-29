@@ -27,12 +27,13 @@ public record GlowcaseSectionsToRender(
 	GpuBufferSlice[] sectionTransforms
 ) {
 	public void renderGroup(final boolean sorted) {
-		ProfilerFiller profiler = Profiler.get();
 		final String name = sorted ? "translucent" : "solid";
-		profiler.push("render_" + name);
 		Map<RenderSystem.AutoStorageIndexBuffer, GpuBuffer> indexBuffers = new Object2ObjectArrayMap<>();
 		List<RenderType> renderTypes = sorted ? renderTypeGroups.sorted : renderTypeGroups.unsorted;
 		if (renderTypes.isEmpty()) return;
+
+		ProfilerFiller profiler = Profiler.get();
+		profiler.push("render_" + name);
 
 		List<RenderTask> renderTasks = new ArrayList<>(renderTypes.size());
 
