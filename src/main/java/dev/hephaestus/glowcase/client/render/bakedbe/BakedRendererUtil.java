@@ -1,7 +1,7 @@
 package dev.hephaestus.glowcase.client.render.bakedbe;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.RenderSectionPos;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;

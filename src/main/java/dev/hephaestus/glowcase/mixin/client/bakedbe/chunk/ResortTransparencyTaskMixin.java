@@ -2,8 +2,8 @@ package dev.hephaestus.glowcase.mixin.client.bakedbe.chunk;
 
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseRenderSectionInfo;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseSectionRenderDispatcher;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderSection$ResortTransparencyTask")
-abstract class ResortTransparencyTaskMixin {
+public abstract class ResortTransparencyTaskMixin {
 	@Shadow @Final SectionRenderDispatcher.RenderSection this$1;
 	@Unique SectionRenderDispatcher this$0 = ((RenderSectionAccessor) this$1).getThis$0();
 	@Unique GlowcaseLevelRenderer levelRenderer = GlowcaseLevelRenderer.getInstance(((SectionRenderDispatcherAccessor) this$0).getRenderer());

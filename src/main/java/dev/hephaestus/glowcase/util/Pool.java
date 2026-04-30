@@ -14,36 +14,49 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// A simple resource pool with a semaphore to limit it's size and leak warnings for debugging. The resources are created lazily,
 /// if there is none in the pool and there is a free slot.
 ///
-/// This does not have a close method or approach, it should only be used with classes that can be left for GC to collect
-// If needed, this can get a closing strategy, but it would have to overcome some things for that, like what to do with acquired resources.
+/// If a resource is lost to GC it won't be closed. If the resources have to be closed, set {@link Pool#isGCBad} to {@code true}
 @NullMarked
 public class Pool<T> {
 	private static final boolean DEBUG_LOGGING = Boolean.getBoolean("glowcase.debug.pools");
 	public static final Logger LOGGER = LoggerFactory.getLogger(Pool.class);
 	private static final Cleaner CLEANER = Cleaner.create();
-	private final boolean isGCBad;
+	private final int max;
+	// Functions
 	private final Supplier<T> objectSupplier;
+	private final @Nullable Consumer<T> closingFunction;
+	// Flags
+	private final boolean isGCBad;
+	private transient boolean closed;
+	// Pool handling
+	private final Semaphore semaphore;
 	private final Stack<T> pool = new Stack<>();
 	private final Map<Integer, Lifetime> pending = new Object2ObjectArrayMap<>();
-	private final Semaphore semaphore;
+	private final Map<Integer, Lifetime> pendingClosing = new Object2ObjectArrayMap<>();
+	private final ReentrantLock lock = new ReentrantLock(false);
 
 	public Pool(Supplier<T> objectSupplier, int max) {
-		this(objectSupplier, max, false);
+		this(objectSupplier, null, max, false);
 	}
 
-	public Pool(Supplier<T> objectSupplier, int max, boolean isGCBad) {
+	public Pool(Supplier<T> objectSupplier, @Nullable Consumer<T> closingFunction, int max, boolean isGCBad) {
 		this.objectSupplier = objectSupplier;
+		this.closingFunction = closingFunction;
 		this.semaphore = new Semaphore(max);
 		this.isGCBad = isGCBad || DEBUG_LOGGING;
+		this.max = max;
 	}
 
 	/// Provides a resource from the pool if available, or creates a new one if needed.
-	public synchronized T acquire() {
+	public T acquire() {
+		lock.lock();
+		assertOpen();
 		if (semaphore.availablePermits() == 0) {
 			LOGGER.warn("Resource pool ran out of available slots, possible resource leak!");
 		}
@@ -61,28 +74,76 @@ public class Pool<T> {
 		T resource = pool.empty() ? objectSupplier.get() : pool.pop();
 		Lifetime lifetime = new Lifetime(resource);
 		pending.put(lifetime.resourceId, lifetime);
+		lock.unlock();
 
 		return resource;
 	}
 
-	public synchronized void release(T resource) {
+	public void release(T resource) {
+		lock.lock();
+		if (closed) {
+			if (closingFunction != null) closingFunction.accept(resource);
+			return;
+		}
+
 		int resourceId = System.identityHashCode(resource);
+		if (pendingClosing.remove(resourceId) != null) {
+			if (closingFunction != null) closingFunction.accept(resource);
+			semaphore.release();
+		}
+
 		if (pending.remove(resourceId) == null) {
 			LOGGER.warn("Unexpected resource released into pool!");
 		}
+
 		pool.push(resource);
 		semaphore.release();
+		lock.unlock();
 	}
 
 	public void check() {
 		ProfilerFiller profiler = Profiler.get();
 		profiler.push("pool_check");
 
-		for (Lifetime lifetime : pending.values()) {
-			lifetime.check();
-		}
+		lock.lock();
+		for (Lifetime lifetime : pending.values()) lifetime.check();
+		for (Lifetime lifetime : pendingClosing.values()) lifetime.check();
+		lock.unlock();
 
 		profiler.pop();
+	}
+
+	/// Clear the pool and close all resources, if needed.
+	/// Any resource that was pending is closed once returned.
+	private void clear() {
+		lock.lock();
+		if (closingFunction != null) {
+			while (!pool.isEmpty()) closingFunction.accept(pool.pop());
+		}
+
+		pendingClosing.putAll(pending);
+		pending.clear();
+		semaphore.drainPermits();
+		semaphore.release(this.max);
+		lock.unlock();
+	}
+
+	public void close() {
+		this.closed = true;
+
+		lock.lock();
+		if (closingFunction != null) {
+			while (!pool.isEmpty()) closingFunction.accept(pool.pop());
+		}
+
+		pendingClosing.clear();
+		pending.clear();
+		semaphore.drainPermits();
+		lock.unlock();
+	}
+
+	private void assertOpen() {
+		if (this.closed) throw new IllegalStateException("Resource pool is closed");
 	}
 
 	private class Lifetime {

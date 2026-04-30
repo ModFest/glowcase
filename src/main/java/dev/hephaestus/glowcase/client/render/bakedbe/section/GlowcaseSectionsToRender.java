@@ -97,25 +97,19 @@ public record GlowcaseSectionsToRender(
 
 				profiler.popPush("auto_indices"); // 2
 				RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.mode());
-				GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> {
-						profiler.push("new_auto_indices"); // +3
-						GpuBuffer buffer = this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired);
-						profiler.pop(); // -3
-						return buffer;
-					}
-				);
+				GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired));
 				VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
 
 				profiler.popPush("tex_bind"); // 2
 				for (Texture texture : renderTask.textures) {
 					renderPass.bindTexture(texture.name, texture.textureView, texture.sampler);
 				}
-				profiler.pop(); // -2
 
+				profiler.popPush("set_pipeline"); // 2
 				renderPass.setPipeline(renderType.pipeline());
 
+				profiler.popPush("draw"); // 2
 				var drawGroup = drawGroupsPerType.getValue(renderType);
-				profiler.push("draw"); // +2
 				for (var draws : drawGroup.values()) {
 					if (draws.isEmpty()) continue;
 

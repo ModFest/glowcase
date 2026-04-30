@@ -7,8 +7,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher.ErrorRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.*;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.*;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.LevelRendererAccessor;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.mixinsupport.LevelRendererExtension;
@@ -21,12 +22,17 @@ import net.minecraft.ReportedException;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.DynamicUniforms;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.chunk.SectionMesh;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.Zone;
@@ -52,7 +58,6 @@ public class GlowcaseLevelRenderer implements Closeable {
 	public static final Logger LOGGER = LoggerFactory.getLogger(GlowcaseLevelRenderer.class);
 	private final VisibleSections visibleSections = new VisibleSections();
 	private final LevelRenderer levelRenderer;
-	private final ThreadLocal<BakedBERenderDispatcher> renderDispatchers = ThreadLocal.withInitial(BakedBERenderDispatcher.Builder::createBakedBERenderDispatcher);
 	private @Nullable GlowcaseSectionRenderDispatcher sectionRenderDispatcher;
 	private @Nullable GlowcaseSectionsToRender sectionsToRender;
 
@@ -81,15 +86,21 @@ public class GlowcaseLevelRenderer implements Closeable {
 
 	public void allChanged() {
 		if (sectionRenderDispatcher == null) {
-			this.sectionRenderDispatcher = new GlowcaseSectionRenderDispatcher();
+			this.sectionRenderDispatcher = new GlowcaseSectionRenderDispatcher(this);
 		}
 
-		sectionRenderDispatcher.clearCompileQueue();
 		this.visibleSections.reset();
 	}
 
-	public void applyPendingSectionMapChanges() {
+	public void update(ProfilerFiller profiler) {
+		profiler.popPush("updateSectionMap");
 		visibleSections.update();
+		if (sectionRenderDispatcher != null) {
+			profiler.popPush("sectionRenderDispatcher");
+			sectionRenderDispatcher.update();
+		}
+		profiler.popPush("checkPools");
+		BakedBERenderDispatcher.checkPools();
 	}
 
 	public void prepareRenders(final Matrix4fc modelViewMatrix, final Camera camera) {
@@ -123,12 +134,16 @@ public class GlowcaseLevelRenderer implements Closeable {
 				final var sectionInfo = sectionEntry.sectionInfo();
 				int uboIndex = -1;
 
+				if (sectionInfo.isError()) {
+					Gizmos.cuboid(sectionPos.boundingBox(), GizmoStyle.stroke(ErrorRenderer.LINE_COLOR, 2)).setAlwaysOnTop();
+				}
+
 				for (GlowcaseRenderSectionInfo.DrawEntry drawEntry : sectionInfo) {
 					RenderType renderType = drawEntry.renderType();
 					SectionMesh.SectionDraw draw = drawEntry.draw();
 					boolean translucent = drawEntry.translucent();
 					SectionRenderDispatcher.RenderSectionBufferSlice slice = this.sectionRenderDispatcher.getRenderSectionSlice(sectionNode, renderType);
-					if (slice == null || draw == null || (draw.hasCustomIndexBuffer() && slice.indexBuffer() == null)) continue;
+					if (slice == null || draw.hasCustomIndexBuffer() && slice.indexBuffer() == null) continue;
 					if (uboIndex == -1) {
 						uboIndex = transforms.size();
 
@@ -210,26 +225,10 @@ public class GlowcaseLevelRenderer implements Closeable {
 		profiler.pop();
 	}
 
-	public void allocateSectionMeshes(long section, BakedMeshes meshes) {
-		if (sectionRenderDispatcher == null) {
-			meshes.close();
-			return;
-		}
-
-		visibleSections.setSectionDraws(section, meshes);
-		for (BakedMeshes.Entry entry : meshes) {
-			boolean success = sectionRenderDispatcher.allocateMeshBuffers(section, entry.renderType(), entry.mesh().meshData());
-			entry.close();
-			if (!success) {
-				throw new IllegalStateException("Failed to allocate mesh buffers, possible resource leak or the mesh is too complex");
-			}
-		}
-	}
-
 	public void updateIndexBuffer(long sectionNode, RenderType renderType, ByteBuffer indexBuffer) {
 		if (sectionRenderDispatcher == null) return;
 
-		boolean success = sectionRenderDispatcher.allocateBuffers(sectionNode, renderType, null, indexBuffer);
+		boolean success = sectionRenderDispatcher.allocateBuffers(sectionNode, renderType, null, indexBuffer, null);
 		if (!success) {
 			throw new IllegalStateException("Failed to allocate mesh buffers, possible resource leak or the mesh is too complex");
 		}
@@ -250,28 +249,27 @@ public class GlowcaseLevelRenderer implements Closeable {
 		return visibleSections;
 	}
 
-	public void compilePendingSections() {
-		if (sectionRenderDispatcher == null) return;
-		sectionRenderDispatcher.compileQueue.allocatePending();
-	}
-
-	@Contract("_, !null, null -> fail; _, _, _ -> _")
-	public void queueCompilation(long sectionPos, @Nullable SubmitNodeStorage nodeStorage, @Nullable VertexSorting vertexSorting) {
-		if (sectionRenderDispatcher == null) return;
-
+	@Contract("_, !null, null -> fail; _, null, _ -> null; _, _, _ -> _")
+	public @Nullable BakedMeshes updateAndCompile(long sectionPos, @Nullable SubmitNodeStorage nodeStorage, @Nullable VertexSorting vertexSorting) {
+		assert vertexSorting != null;
 		if (nodeStorage == null) {
 			releaseSection(sectionPos);
-			return;
+			return null;
 		}
 
-		assert vertexSorting != null;
+		if (sectionRenderDispatcher == null) {
+			BakedBERenderDispatcher.returnNodeStorage(nodeStorage);
+			return null;
+		}
 
-		visibleSections.addIfAbsent(sectionPos);
-
+		ProfilerFiller profiler = Profiler.get();
+		profiler.push("glowcase:baked_be/compile");
 		try {
-			sectionRenderDispatcher.compileQueue.compile(sectionPos, nodeStorage, vertexSorting);
+			return BakedBERenderDispatcher.buildAllFeatures(sectionPos, nodeStorage, vertexSorting);
 		} catch (Exception e) {
 			throw new ReportedException(CrashReport.forThrowable(e, "Compiling baked BE"));
+		} finally {
+			profiler.pop();
 		}
 	}
 
@@ -288,9 +286,5 @@ public class GlowcaseLevelRenderer implements Closeable {
 		if (this.sectionRenderDispatcher != null) {
 			this.sectionRenderDispatcher.close();
 		}
-	}
-
-	public BakedBERenderDispatcher renderDispatcher() {
-		return renderDispatchers.get();
 	}
 }

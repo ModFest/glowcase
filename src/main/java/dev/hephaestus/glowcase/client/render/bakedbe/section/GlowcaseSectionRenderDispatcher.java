@@ -3,18 +3,21 @@ package dev.hephaestus.glowcase.client.render.bakedbe.section;
 import com.mojang.blaze3d.GraphicsWorkarounds;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
+import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
+import dev.hephaestus.glowcase.client.render.bakedbe.level.VisibleSections;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
+import dev.hephaestus.glowcase.util.DataFlow;
 import dev.hephaestus.glowcase.util.DefaultedMap;
-import dev.hephaestus.glowcase.util.DefaultedMapBase;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.SectionPos;
-import net.minecraft.util.profiling.Profiler;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3dc;
 import org.joml.Vector3fc;
@@ -23,22 +26,24 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import static dev.hephaestus.glowcase.util.SizeConstants.Mi;
 
 @NullMarked
 public class GlowcaseSectionRenderDispatcher implements Closeable {
-	private final DefaultedMapBase<RenderType, SectionUberBuffers> layerBuffers;
+	private final UberBuffers layerBuffers;
 	private final ReentrantLock copyLock = new ReentrantLock();
-	public final SectionCompileQueue compileQueue = new SectionCompileQueue();
+	private final GlowcaseLevelRenderer levelRenderer;
 
-	public GlowcaseSectionRenderDispatcher() {
+	public GlowcaseSectionRenderDispatcher(GlowcaseLevelRenderer levelRenderer) {
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		GraphicsWorkarounds workarounds = GraphicsWorkarounds.get(gpuDevice);
-		this.layerBuffers = DefaultedMap.openHashMap(renderType -> createUberBuffers(renderType, gpuDevice, workarounds));
+		this.layerBuffers = new UberBuffers(renderType -> createUberBuffers(renderType, gpuDevice, workarounds));
+		this.levelRenderer = levelRenderer;
 	}
 
 	public static VertexSorting createVertexSorting(final SectionPos sectionPos, final Vec3 cameraPos) {
@@ -56,6 +61,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	public static VertexSorting createVertexSorting(final Vector3fc relativePos) {
 		// There is a method that takes Vector3fc but for some reason sodium doesn't handle it like it does for the 3 param one
 		return VertexSorting.byDistance(relativePos.x(), relativePos.y(), relativePos.z());
+	}
+
+	public void update() {
+		layerBuffers.addPending();
 	}
 
 	public void uploadGlobalGeomBuffersToGPU() {
@@ -95,27 +104,30 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		}
 	}
 
-	public boolean allocateMeshBuffers(long sectionPos, RenderType renderType, MeshData meshData) {
-		return allocateBuffers(sectionPos, renderType, meshData.vertexBuffer(), meshData.indexBuffer());
+	public boolean allocateMeshBuffers(long sectionPos, RenderType renderType, MeshData meshData, @Nullable UberBufferCallbacks callbacks) {
+		return allocateBuffers(sectionPos, renderType, meshData.vertexBuffer(), meshData.indexBuffer(), callbacks);
 	}
 
-	public boolean allocateBuffers(long sectionPos, RenderType renderType, @Nullable ByteBuffer vertexBuffer, @Nullable ByteBuffer indexBuffer) {
-		ProfilerFiller profiler = Profiler.get();
-		String renderTypeName = ((RenderTypeAccessor) renderType).getName();
-		profiler.push(renderTypeName);
+	public boolean allocateBuffers(long sectionPos, RenderType renderType, @Nullable ByteBuffer vertexBuffer, @Nullable ByteBuffer indexBuffer, @Nullable UberBufferCallbacks callbacks) {
 		lock();
 
 		boolean success = true;
 
 		try {
-			SectionUberBuffers sectionBuffers = layerBuffers.getValue(renderType);
+			SectionUberBuffers sectionBuffers = layerBuffers.getWithoutDefault(renderType);
+			if (sectionBuffers == null) {
+				layerBuffers.queueBuffer(renderType);
+				return false;
+			}
 
 			if (vertexBuffer != null) {
-				success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, null, vertexBuffer);
+				var callback = DataFlow.nullable(callbacks, ubCallbacks -> ubCallbacks.vertexCallback(renderType));
+				success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, callback, vertexBuffer);
 			}
 
 			if (indexBuffer != null) {
-				success &= sectionBuffers.indexBuffer.addAllocation(sectionPos, null, indexBuffer);
+				var callback = DataFlow.nullable(callbacks, ubCallbacks -> ubCallbacks.indexCallback(renderType));
+				success &= sectionBuffers.indexBuffer.addAllocation(sectionPos, callback, indexBuffer);
 			}
 
 			if (!success && RenderSystem.isOnRenderThread()) {
@@ -123,29 +135,14 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 			}
 		} finally {
 			unlock();
-			profiler.pop();
 		}
 
 		return success;
 	}
 
-	public void assertRenderTypeBuffer(RenderType renderType) {
-		layerBuffers.assertPresent(renderType);
-	}
-
-	public boolean hasAllRenderTypes(Set<RenderType> renderTypes) {
-		return renderTypes().containsAll(renderTypes);
-	}
-
-	public Set<RenderType> renderTypes() {
-		return layerBuffers.keySet();
-	}
-
 	public void releaseSection(long section) {
 		lock();
 		try {
-			this.compileQueue.remove(section);
-
 			for (SectionUberBuffers buffers : layerBuffers.values()) {
 				var vertexBuffer = buffers.vertexBuffer;
 				vertexBuffer.removeAllocation(section);
@@ -167,15 +164,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		this.copyLock.unlock();
 	}
 
-	public void clearCompileQueue() {
-		this.compileQueue.clear();
-	}
-
 	public void close() {
 		lock();
 
 		try {
-			this.compileQueue.close();
 			for (SectionUberBuffers buffers : this.layerBuffers.values()) {
 				buffers.vertexBuffer.close();
 				if (buffers.indexBuffer != null) {
@@ -200,14 +192,82 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 			workarounds
 		);
 
-		Optional<BlendFunction> blendFunction = renderType.pipeline().getColorTargetState().blendFunction();
-		boolean isTranslucent = blendFunction.isPresent() && blendFunction.get().equals(BlendFunction.TRANSLUCENT);
+		boolean isTranslucent =
+			renderType.sortOnUpload() ||
+			// For some reason text isn't marked as sortOnUpload, so we hack our way into knowing if we need to sort
+			!renderType.pipeline().getColorTargetState().blendFunction()
+				.map(BlendFunction::destAlpha)
+				.map(destAlpha ->
+					destAlpha == DestFactor.CONSTANT_ALPHA ||
+					destAlpha == DestFactor.ONE ||
+					destAlpha == DestFactor.ZERO
+				)
+				.orElse(true);
+
 		UberGpuBuffer<Long> indexUberBuffer = isTranslucent ?
-			new UberGpuBuffer<>(renderTypeName, GpuBuffer.USAGE_INDEX, 128 * Mi, 8, gpuDevice, 2 * Mi, workarounds) :
+			new UberGpuBuffer<>(renderTypeName, GpuBuffer.USAGE_INDEX, 128 * Mi, 8, gpuDevice, 16 * Mi, workarounds) :
 			null;
 
 		return new SectionUberBuffers(vertexUberBuffer, indexUberBuffer);
 	}
 
 	private record SectionUberBuffers(UberGpuBuffer<Long> vertexBuffer, @Nullable UberGpuBuffer<Long> indexBuffer) {}
+
+	private static class UberBuffers extends DefaultedMap<Object2ObjectOpenHashMap<RenderType, SectionUberBuffers>, RenderType, SectionUberBuffers> {
+		private final ConcurrentLinkedDeque<RenderType> pending = new ConcurrentLinkedDeque<>();
+
+		public UberBuffers(Function<RenderType, SectionUberBuffers> defaultValue) {
+			super(new Object2ObjectOpenHashMap<>(), defaultValue);
+		}
+
+		public void addPending() {
+			RenderSystem.assertOnRenderThread();
+			while (!pending.isEmpty()) assertPresent(pending.poll());
+		}
+
+		public void queueBuffer(RenderType renderType) {
+			if (RenderSystem.isOnRenderThread()) {
+				this.assertPresent(renderType);
+			} else {
+				pending.add(renderType);
+			}
+		}
+	}
+
+	public static class UberBufferCallbacks {
+		private final VisibleSections visibleSections;
+		private final BakedMeshes bakedMeshes;
+		private final Set<RenderType> pendingVertex = new HashSet<>();
+		private final Set<RenderType> pendingIndex = new HashSet<>();
+
+		public UberBufferCallbacks(VisibleSections visibleSections, BakedMeshes bakedMeshes) {
+			this.visibleSections = visibleSections;
+			this.bakedMeshes = bakedMeshes;
+			for (BakedMeshes.Entry entry : bakedMeshes) {
+				pendingVertex.add(entry.renderType());
+				if (entry.hasCustomIndexBuffer()) {
+					pendingIndex.add(entry.renderType());
+				}
+			}
+		}
+
+		public UberGpuBuffer.UploadCallback<Long> vertexCallback(RenderType renderType) {
+			return node -> {
+				pendingVertex.remove(renderType);
+				checkBuffers(node);
+			};
+		}
+
+		public UberGpuBuffer.UploadCallback<Long> indexCallback(RenderType renderType) {
+			return node -> {
+				pendingIndex.remove(renderType);
+				checkBuffers(node);
+			};
+		}
+
+		private void checkBuffers(long sectionNode) {
+			if (!pendingVertex.isEmpty() || !pendingIndex.isEmpty()) return;
+			visibleSections.setSectionDraws(sectionNode, bakedMeshes);
+		}
+	}
 }

@@ -1,16 +1,14 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe.chunk;
 
-import com.llamalad7.mixinextras.expression.Definition;
-import com.llamalad7.mixinextras.expression.Expression;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedRendererUtil;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.SectionCompileQueue;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
@@ -31,6 +29,8 @@ import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -87,7 +87,7 @@ public class SectionCompilerMixin {
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
 					if (nodeStorage == null) {
-						nodeStorageRef.set(nodeStorage = SectionCompileQueue.getNodeStorage());
+						nodeStorageRef.set(nodeStorage = BakedBERenderDispatcher.getNodeStorage());
 					}
 
 					BakedRendererUtil.submitForBaking(renderer, pos, renderState, poseStackRef.get(), nodeStorage);
@@ -110,21 +110,35 @@ public class SectionCompilerMixin {
 		}
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Ljava/util/Map;entrySet()Ljava/util/Set;"), method = "compile")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/BlockModelLighter;clearCache()V"), method = "compile")
 	private void queueCompilation(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Local(argsOnly = true, name = "sectionPos") SectionPos sectionPos,
 		@Local(argsOnly = true, name = "vertexSorting") VertexSorting vertexSorting,
-		@Local(name = "results") SectionCompiler.Results results,
+		@Local(name = "results") SectionCompiler.@NonNull Results results,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
 	) {
-		if (nodeStorageRef.get() != null) ((ExtendedResults) (Object) results).glowcase$trickMinecraft();
-		GlowcaseLevelRenderer.getInstance().queueCompilation(sectionPos.asLong(), nodeStorageRef.get(), vertexSorting);
+		if (nodeStorageRef.get() == null) return;
+		var extension = (ExtendedResults) (Object) results;
+		var meshes = GlowcaseLevelRenderer.getInstance().updateAndCompile(sectionPos.asLong(), nodeStorageRef.get(), vertexSorting);
+		if (meshes != null && meshes.hasTranslucency()) extension.glowcase$trickMinecraft();
+		extension.glowcase$setBakedMeshes(meshes);
 	}
 
 	@Mixin(SectionCompiler.Results.class)
 	private static class ResultsMixin implements ExtendedResults {
+		private @Unique @Nullable BakedMeshes bakedMeshes;
 		private @Unique boolean shouldTrickMinecraft = false;
+
+		@Override
+		public void glowcase$setBakedMeshes(BakedMeshes meshes) {
+			this.bakedMeshes = meshes;
+		}
+
+		@Override
+		public @Nullable BakedMeshes glowcase$getBakedMeshes() {
+			return bakedMeshes;
+		}
 
 		@Override
 		public boolean glowcase$shouldTrickMinecraft() {
@@ -151,9 +165,9 @@ public class SectionCompilerMixin {
 			}
 		}
 
-		@WrapOperation(at = @At(value = "INVOKE", target = "Ljava/util/Map;containsKey(Ljava/lang/Object;)Z"), method = "isEmpty")
-		private boolean checkForNullValue(Map<ChunkSectionLayer, SectionMesh.SectionDraw> instance, Object key, Operation<Boolean> original) {
-			return original.call(instance, key) && instance.get(key) != null;
+		@ModifyReturnValue(at = @At("RETURN"), method = "isEmpty")
+		private boolean checkForNullValue(boolean original, @Local(argsOnly = true, name = "layer") final ChunkSectionLayer layer) {
+			return original && this.draws.get(layer) != null;
 		}
 	}
 }

@@ -2,8 +2,8 @@ package dev.hephaestus.glowcase.client.sodium;
 
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseRenderSectionInfo;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseSectionRenderDispatcher;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.util.Pool;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
@@ -13,6 +13,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.compile.estimation.MeshTas
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.translucent_sorting.data.TranslucentData;
 import net.caffeinemc.mods.sodium.client.util.task.CancellationToken;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.joml.Vector3dc;
@@ -21,7 +22,12 @@ import org.spongepowered.asm.mixin.Unique;
 
 public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Output> {
 	// If this runs out, something is horribly wrong, this is acquired and reclaimed in the same task, and can't possibly have more than the available threads acquiring it
-	public static final @Unique Pool<ByteBufferBuilder> indexBufferPool = new Pool<>(() -> new ByteBufferBuilder(786432), Runtime.getRuntime().availableProcessors(), false);
+	public static final @Unique Pool<ByteBufferBuilder> indexBufferPool = new Pool<>(
+		() -> new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE),
+		ByteBufferBuilder::close,
+		Runtime.getRuntime().availableProcessors(),
+		true
+	);
 	private final GlowcaseRenderSectionInfo sectionInfo;
 	private final GlowcaseLevelRenderer levelRenderer;
 	private final long sectionNode;

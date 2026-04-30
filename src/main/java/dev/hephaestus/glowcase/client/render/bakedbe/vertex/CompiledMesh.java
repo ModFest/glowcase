@@ -18,11 +18,13 @@ public record CompiledMesh(MeshData meshData, @Nullable Sorter sorter) implement
 		meshData.close();
 	}
 
+	@Deprecated
 	public interface Sorter {
 		@Nullable Result buildSortedIndexBuffer(final ByteBufferBuilder target, final VertexSorting sorting);
 		CompactVectorArray centroids();
 	}
 
+	@Deprecated
 	public record SodiumSortState(CompactVectorArray centroids, IndexType indexType) implements Sorter {
 		public static @Nullable SodiumSortState create(MeshData meshData) {
 			MeshData.DrawState drawState = meshData.drawState();

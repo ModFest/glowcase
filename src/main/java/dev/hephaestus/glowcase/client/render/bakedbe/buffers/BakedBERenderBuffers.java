@@ -10,6 +10,8 @@ import net.minecraft.util.Util;
 
 import java.util.SequencedMap;
 
+import static dev.hephaestus.glowcase.util.SizeConstants.Mi;
+
 public class BakedBERenderBuffers {
 	private static final DummyOutlineBufferSource outlineBufferSource = new DummyOutlineBufferSource();
 	private static final DummyBufferSource crumblingBufferSource = new DummyBufferSource();
@@ -29,7 +31,7 @@ public class BakedBERenderBuffers {
 			put(map, RenderTypes.waterMask());
 		});
 
-		this.bufferSource = new BakedBEBufferSource(renderType -> new ByteBufferBuilder(renderType.bufferSize()), fixedBuffers);
+		this.bufferSource = new BakedBEBufferSource(renderType -> new ByteBufferBuilder(renderType.bufferSize(), 32 * Mi), fixedBuffers);
 	}
 
 	private static void put(final Object2ObjectLinkedOpenHashMap<RenderType, ByteBufferBuilder> map, final RenderType type) {

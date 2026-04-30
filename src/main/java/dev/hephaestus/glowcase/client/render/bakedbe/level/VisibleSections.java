@@ -2,8 +2,8 @@ package dev.hephaestus.glowcase.client.render.bakedbe.level;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseRenderSectionInfo;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.RenderSectionPos;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
 import it.unimi.dsi.fastutil.longs.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
@@ -103,7 +103,9 @@ public final class VisibleSections implements Iterable<VisibleSections.Entry> {
 	}
 
 	public void setSectionDraws(final long sectionNode, final BakedMeshes meshes) {
+		addIfAbsent(sectionNode);
 		if (RenderSystem.isOnRenderThread()) {
+			this.update();
 			visibleSections.get(sectionNode).setSectionDraws(meshes);
 		} else {
 			pending.add(() -> visibleSections.get(sectionNode).setSectionDraws(meshes));
@@ -233,7 +235,6 @@ public final class VisibleSections implements Iterable<VisibleSections.Entry> {
 			}
 		}
 	}
-
 
 	private boolean isClose(final AABB boundingBox) {
 		final int closeDistance = NEARBY_DIST;

@@ -1,24 +1,18 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseSectionRenderDispatcher;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
-import dev.hephaestus.glowcase.client.render.font.GlyphBakeQueue;
 import dev.hephaestus.glowcase.mixinsupport.LevelRendererExtension;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
-import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
-import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.joml.Matrix4f;
@@ -70,21 +64,15 @@ public class LevelRendererMixin implements LevelRendererExtension {
 	}
 
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;cullTerrain(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Z)V", shift = At.Shift.AFTER), method = "update")
-	private void applyPendingSectionMapChanges(CallbackInfo ci) {
-		levelRenderer.applyPendingSectionMapChanges();
+	private void applyPendingSectionMapChanges(CallbackInfo ci, @Local(name = "profiler") ProfilerFiller profiler) {
+		profiler.popPush("glowcase");
+		levelRenderer.update(profiler);
 	}
 
 	@Inject(at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/renderer/LevelRenderer;prepareChunkRenders(Lorg/joml/Matrix4fc;)Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;"), method = "extractLevel")
 	private void prepareBakedRenders(DeltaTracker deltaTracker, Camera camera, float deltaPartialTick, CallbackInfo ci, @Local(name = "modelViewMatrix") Matrix4f modelViewMatrix, @Local(name = "profiler") ProfilerFiller profiler) {
 		profiler.push("glowcase");
 		levelRenderer.prepareRenders(modelViewMatrix, camera);
-		profiler.pop();
-	}
-
-	@Inject(at = @At("RETURN"), method = "compileSections")
-	private void compilePendingSections(final Camera camera, CallbackInfo ci, @Local(name = "profiler") ProfilerFiller profiler) {
-		profiler.push("glowcase:allocate_pending");
-		levelRenderer.compilePendingSections();
 		profiler.pop();
 	}
 

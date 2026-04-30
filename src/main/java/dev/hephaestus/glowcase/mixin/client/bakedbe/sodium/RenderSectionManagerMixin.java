@@ -21,7 +21,6 @@ import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilder
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -52,7 +51,7 @@ public abstract class RenderSectionManagerMixin implements RenderSectionManagerE
 
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;successfully(Ljava/lang/Object;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;"), method = "submitSectionTask")
 	private void clearEmptySection(CallbackInfo ci, @Local(argsOnly = true, name = "section") RenderSection section) {
-		GlowcaseLevelRenderer.getInstance().queueCompilation(section.getPosition().asLong(), null, null);
+		GlowcaseLevelRenderer.getInstance().updateAndCompile(section.getPosition().asLong(), null, null);
 	}
 
 	public void glowcase$scheduleBakedBESort(long sectionPos) {

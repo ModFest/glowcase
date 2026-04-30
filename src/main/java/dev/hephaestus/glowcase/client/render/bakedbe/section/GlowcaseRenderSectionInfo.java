@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.chunk.SectionMesh.SectionDraw;
 import net.minecraft.client.renderer.chunk.TranslucencyPointOfView;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3dc;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
@@ -22,6 +21,7 @@ public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSection
 	private final TranslucencyPointOfView translucencyPointOfView = new TranslucencyPointOfView();
 	private final List<DrawEntry> draws = new ObjectArrayList<>();
 	private final RenderSectionPos sectionPos;
+	private boolean error;
 
 	public GlowcaseRenderSectionInfo(long sectionNode) {
 		this.sectionPos = new RenderSectionPos(sectionNode);
@@ -29,6 +29,7 @@ public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSection
 
 	public void setSectionDraws(BakedMeshes meshes) {
 		this.draws.clear();
+		this.error = meshes.isFallback();
 
 		for (BakedMeshes.Entry entry : meshes) {
 			draws.add(DrawEntry.create(entry));
@@ -45,6 +46,10 @@ public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSection
 
 	public RenderSectionPos sectionPos() {
 		return sectionPos;
+	}
+
+	public boolean isError() {
+		return error;
 	}
 
 	@Override

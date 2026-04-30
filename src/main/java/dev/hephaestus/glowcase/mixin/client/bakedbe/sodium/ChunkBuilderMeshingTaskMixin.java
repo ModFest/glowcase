@@ -5,12 +5,15 @@ import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
+import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedRendererUtil;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.GlowcaseSectionRenderDispatcher;
-import dev.hephaestus.glowcase.client.render.bakedbe.chunk.SectionCompileQueue;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
+import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
 import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
@@ -91,7 +94,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
 					if (nodeStorage == null) {
-						nodeStorageRef.set(nodeStorage = SectionCompileQueue.getNodeStorage());
+						nodeStorageRef.set(nodeStorage = BakedBERenderDispatcher.getNodeStorage());
 					}
 
 					BakedRendererUtil.submitForBaking(bakedRenderer, blockPos, renderState, poseStackRef.get(), nodeStorage);
@@ -126,13 +129,14 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		((TranslucentDataExtension) translucentData).glowcase$initialCameraPos(getAbsoluteCameraPos());
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/Reference2ReferenceOpenHashMap;<init>()V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;setOcclusionData(Lnet/minecraft/client/renderer/chunk/VisibilitySet;)V", shift = At.Shift.AFTER), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private void queueCompilation(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef,
-		@Share("vertexSorting") LocalRef<VertexSorting> vertexSortingRef
+		@Share("vertexSorting") LocalRef<VertexSorting> vertexSortingRef,
+		@Share("bakedMeshes") LocalRef<BakedMeshes> bakedMeshes
 	) {
-		GlowcaseLevelRenderer.getInstance().queueCompilation(this.render.getPosition().asLong(), nodeStorageRef.get(), vertexSortingRef.get());
+		bakedMeshes.set(GlowcaseLevelRenderer.getInstance().updateAndCompile(this.render.getPosition().asLong(), nodeStorageRef.get(), vertexSortingRef.get()));
 	}
 
 	@Expression("return null")
@@ -140,6 +144,51 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 	private void releaseNodeStorage(CallbackInfoReturnable<SectionCompiler.Results> cir, @Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef) {
 		if (nodeStorageRef.get() == null) return;
 
-		SectionCompileQueue.returnNodeStorage(nodeStorageRef.get());
+		BakedBERenderDispatcher.returnNodeStorage(nodeStorageRef.get());
+	}
+
+	@Inject(at = @At("TAIL"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	private void allocateBuffers(
+		ChunkBuildContext buildContext,
+		CancellationToken cancellationToken,
+		CallbackInfoReturnable<ChunkBuildOutput> cir,
+		@Local(name = "output") ChunkBuildOutput output,
+		@Share("bakedMeshes") LocalRef<BakedMeshes> bakedMeshesRef
+	) {
+		GlowcaseLevelRenderer levelRenderer = GlowcaseLevelRenderer.getInstance();
+		BakedMeshes meshes = bakedMeshesRef.get();
+		long sectionNode = render.getPosition().asLong();
+		if (meshes == null) {
+			levelRenderer.releaseSection(sectionNode);
+			return;
+		}
+
+		GlowcaseSectionRenderDispatcher renderDispatcher = levelRenderer.getSectionRenderDispatcher();
+		if (renderDispatcher == null) {
+			meshes.close();
+			return;
+		}
+
+		GlowcaseSectionRenderDispatcher.UberBufferCallbacks callbacks = new GlowcaseSectionRenderDispatcher.UberBufferCallbacks(levelRenderer.visibleSections(), meshes);
+		for (BakedMeshes.Entry entry : meshes) {
+			CompiledMesh mesh = entry.mesh();
+			boolean success = false;
+
+			while (!success) {
+				if (cancellationToken.isCancelled()) {
+					meshes.close();
+					output.destroy();
+					cir.setReturnValue(null);
+				}
+
+				success = renderDispatcher.allocateMeshBuffers(sectionNode, entry.renderType(), mesh.meshData(), callbacks);
+
+				if (!success && !RenderSystem.isOnRenderThread()) {
+					Thread.onSpinWait();
+				}
+			}
+
+			mesh.close();
+		}
 	}
 }
