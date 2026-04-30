@@ -3,7 +3,6 @@ package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
@@ -35,8 +34,10 @@ public class RenderSectionPos extends Vec3i {
 	private static final int RELATIVE_Z_SHIFT = SECTION_BITS; // 4
 	private static final int RELATIVE_X_SHIFT = RELATIVE_Z_SHIFT + SECTION_BITS; // 8
 
-	private final Vec3i origin = new Vec3i(x() << SECTION_BITS, y() << SECTION_BITS, z() << SECTION_BITS);
-	private final AABB boundingBox = new AABB(Vec3.atLowerCornerOf(origin), Vec3.atCenterOf(origin.offset(SECTION_SIZE, SECTION_SIZE, SECTION_SIZE)));;
+	public static final AABB ORIGIN_BOUNDING_BOX = new AABB(0, 0, 0, SECTION_SIZE, SECTION_SIZE, SECTION_SIZE);
+
+	private final BlockPos origin = new BlockPos(getX() << SECTION_BITS, getY() << SECTION_BITS, getZ() << SECTION_BITS);
+	private final AABB boundingBox = ORIGIN_BOUNDING_BOX.move(origin());
 
 	public RenderSectionPos(int x, int y, int z) {
 		super(x, y, z);
@@ -57,11 +58,11 @@ public class RenderSectionPos extends Vec3i {
 		return node | (getZ() & Z_MASK) << Z_OFFSET;
 	}
 
-	public Vec3i origin() {
+	public BlockPos origin() {
 		return origin;
 	}
 
-	public Vec3i center() {
+	public BlockPos center() {
 		return origin().offset(SECTION_HALF_SIZE, SECTION_HALF_SIZE, SECTION_HALF_SIZE);
 	}
 
@@ -69,7 +70,7 @@ public class RenderSectionPos extends Vec3i {
 		return Vec3.atCenterOf(center());
 	}
 
-	public Vec3i maxBlockPos() {
+	public BlockPos maxBlockPos() {
 		return origin().offset(SECTION_MAX_INDEX, SECTION_MAX_INDEX, SECTION_MAX_INDEX);
 	}
 
