@@ -52,9 +52,9 @@ public class RenderSectionPos extends Vec3i {
 
 	public long asLong() {
 		long node = 0;
-		node |= (x() & X_MASK) << X_OFFSET;
-		node |= (y() & Y_MASK) << Y_OFFSET;
-		return node | (z() & Z_MASK) << Z_OFFSET;
+		node |= (getX() & X_MASK) << X_OFFSET;
+		node |= (getY() & Y_MASK) << Y_OFFSET;
+		return node | (getZ() & Z_MASK) << Z_OFFSET;
 	}
 
 	public Vec3i origin() {
@@ -75,22 +75,6 @@ public class RenderSectionPos extends Vec3i {
 
 	public AABB boundingBox() {
 		return boundingBox;
-	}
-
-	public String toSimpleString() {
-		return "(%d,%d,%d)".formatted(x(), y(), z());
-	}
-
-	public int x() {
-		return this.getX();
-	}
-
-	public int y() {
-		return this.getY();
-	}
-
-	public int z() {
-		return this.getZ();
 	}
 
 	public static BlockPos maskToSection(BlockPos pos) {
