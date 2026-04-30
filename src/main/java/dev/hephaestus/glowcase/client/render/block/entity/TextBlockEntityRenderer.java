@@ -25,7 +25,6 @@ import java.util.List;
 @NullMarked
 public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlockEntity, TextBlockEntityRenderer.TextRenderState, TextBlockEntityRenderer.TextRenderState> {
 	public static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/text_block.png");
-
 	private final Font font;
 
 	public TextBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
