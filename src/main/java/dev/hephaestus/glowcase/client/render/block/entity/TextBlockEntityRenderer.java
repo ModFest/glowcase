@@ -44,6 +44,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		public int backgroundColor;
 	}
 
+	// Unbaked rendering
+
 	@Override
 	public TextRenderState createRenderState() {
 		return new TextRenderState();
@@ -69,6 +71,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 		BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
 	}
+
+	// Baked rendering
 
 	@Override
 	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state) {
