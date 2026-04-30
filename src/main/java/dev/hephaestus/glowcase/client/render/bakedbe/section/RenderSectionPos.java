@@ -108,7 +108,7 @@ public class RenderSectionPos extends Vec3i {
 	}
 
 	public static int zFromNode(final long sectionNode) {
-		return (int)(sectionNode >> Z_OFFSET & Z_MASK);
+		return (int)(sectionNode << X_BITS >> X_OFFSET);
 	}
 
 	public static double distanceSqr(final long sectionNode, Position pos) {
