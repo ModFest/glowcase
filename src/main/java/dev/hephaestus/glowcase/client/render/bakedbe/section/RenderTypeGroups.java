@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
+package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;

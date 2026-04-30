@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
+package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;

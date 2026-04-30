@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
+package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
 import com.mojang.blaze3d.vertex.MeshData;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;

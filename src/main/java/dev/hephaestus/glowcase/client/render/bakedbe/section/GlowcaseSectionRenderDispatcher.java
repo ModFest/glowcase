@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.client.render.bakedbe.chunk;
+package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
 import com.mojang.blaze3d.GraphicsWorkarounds;
 import com.mojang.blaze3d.buffers.GpuBuffer;
