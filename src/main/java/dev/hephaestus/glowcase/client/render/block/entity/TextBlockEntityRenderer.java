@@ -33,7 +33,6 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 	@SuppressWarnings("NotNullFieldNotInitialized")
 	public static class TextRenderState extends BlockEntityRenderState {
-		public boolean shouldRenderPlaceholder;
 		public int rotation16;
 		public List<FormattedCharSequence> lines = List.of();
 		public TextBlockEntity.TextAlignment textAlignment;
@@ -51,17 +50,24 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	}
 
 	@Override
-	public TextRenderState createBakedRenderState() {
-		return new TextRenderState();
+	public boolean shouldRender(TextBlockEntity blockEntity, Vec3 cameraPosition) {
+		return BakedBlockEntityRenderer.super.shouldRender(blockEntity, cameraPosition) && shouldRenderPlaceholder(blockEntity);
+	}
+
+	private boolean shouldRenderPlaceholder(TextBlockEntity blockEntity) {
+		return blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 	}
 
 	@Override
 	public void extractRenderState(TextBlockEntity blockEntity, TextRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BakedBlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
-		state.shouldRenderPlaceholder = blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
-
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 		state.zOffset = blockEntity.zOffset;
+	}
+
+	@Override
+	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+		BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
 	}
 
 	@Override
@@ -81,15 +87,13 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	}
 
 	@Override
-	public boolean shouldBake(TextBlockEntity entity) {
-		return !entity.lines.isEmpty();
+	public TextRenderState createBakedRenderState() {
+		return new TextRenderState();
 	}
 
 	@Override
-	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		if (state.shouldRenderPlaceholder) {
-			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
-		}
+	public boolean shouldBake(TextBlockEntity entity) {
+		return !entity.lines.isEmpty();
 	}
 
 	@Override
