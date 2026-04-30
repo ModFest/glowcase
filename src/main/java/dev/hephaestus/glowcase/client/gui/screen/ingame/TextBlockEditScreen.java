@@ -55,7 +55,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			() -> this.textBlockEntity.getRawLine(this.currentRow),
 			(string) -> {
 				textBlockEntity.setRawLine(this.currentRow, string);
-				this.textBlockEntity.renderDirty(true);
+				this.textBlockEntity.rebake(true);
 			},
 			TextFieldHelper.createClipboardGetter(this.minecraft),
 			TextFieldHelper.createClipboardSetter(this.minecraft),
@@ -78,7 +78,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				if (this.colorEntryWidget.isFocused()) {
 					this.colorPickerWidget.setColor(new Color(color));
 				}
-				this.textBlockEntity.renderDirty(true);
+				this.textBlockEntity.rebake(true);
 			});
 		});
 
@@ -229,7 +229,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				this.textBlockEntity.setRawLine(this.currentRow,
 					this.textBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
 					));
-				this.textBlockEntity.renderDirty(true);
+				this.textBlockEntity.rebake(true);
 				++this.currentRow;
 				this.selectionManager.setCursorToStart();
 				return true;
@@ -290,7 +290,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 							this.textBlockEntity.setRawLine(i,
 								this.textBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.textBlockEntity.getRawLine(i).length())
 								));
-							this.textBlockEntity.renderDirty(true);
+							this.textBlockEntity.rebake(true);
 							++this.currentRow;
 							this.selectionManager.setCursorToEnd();
 							this.selectionManager.moveByChars(-selectionOffset);
@@ -312,7 +312,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		);
 
 		this.textBlockEntity.lines.remove(this.currentRow + 1);
-		this.textBlockEntity.renderDirty(true);
+		this.textBlockEntity.rebake(true);
 	}
 
 	private void colorListenerClicked(EditBox textWidget) {
@@ -462,7 +462,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 				entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
 				if (scaleResponder != null) scaleResponder.accept(entity.scale);
 
-				entity.renderDirty(true);
+				entity.rebake(true);
 			}
 
 			public void setScaleResponder(Consumer<Float> responder) {
@@ -487,7 +487,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 					entity.scale = (float) Math.clamp(ParseUtil.parseOrDefault(input, 1d), MIN_SCALE, MAX_SCALE);
 					if (scaleResponder != null) scaleResponder.accept(entity.scale);
 
-					entity.renderDirty(true);
+					entity.rebake(true);
 				});
 			}
 

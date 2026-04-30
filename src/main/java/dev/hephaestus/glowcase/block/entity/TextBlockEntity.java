@@ -7,7 +7,6 @@ import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -74,7 +73,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
-		this.renderDirty(false);
+		this.rebake(false);
 	}
 
 	public String getRawLine(int i) {
@@ -112,7 +111,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		}
 	}
 
-	public void renderDirty(boolean immediate) {
+	public void rebake(boolean immediate) {
 		if (!this.hasLevel() || !this.getLevel().isClientSide()) return;
 		this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), immediate ? Block.UPDATE_IMMEDIATE : 0);
 	}

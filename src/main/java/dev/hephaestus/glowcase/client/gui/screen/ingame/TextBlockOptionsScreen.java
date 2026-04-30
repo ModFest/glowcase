@@ -13,8 +13,6 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.Mth;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
@@ -52,7 +50,7 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.x_offset_label"),
 					(_, alignment) -> {
 						entity.horizontalAlignment = alignment;
-						entity.renderDirty(true);
+						entity.rebake(true);
 					}
 				),
 			CycleButton.builder(
@@ -64,7 +62,7 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.z_offset_label"),
 					(_, offset) -> {
 						entity.zOffset = offset;
-						entity.renderDirty(true);
+						entity.rebake(true);
 					}
 				)
 		);
@@ -84,14 +82,14 @@ public class TextBlockOptionsScreen extends Screen {
 					Component.translatable("gui.glowcase.text_alignment"),
 					(_, alignment) -> {
 						entity.textAlignment = alignment;
-						entity.renderDirty(true);
+						entity.rebake(true);
 					}
 				),
 			CycleButton.onOffBuilder(entity.shadow).create(
 				Component.translatable("gui.glowcase.text_shadow"),
 				(_, shadow) -> {
 					entity.shadow = shadow;
-					entity.renderDirty(true);
+					entity.rebake(true);
 				}
 			)
 		);
@@ -107,7 +105,7 @@ public class TextBlockOptionsScreen extends Screen {
 		colorEditBox.setResponder(string -> ColorUtil.parse(string, entity.color)
 			.ifSuccess(newColor -> {
 				entity.color = newColor;
-				entity.renderDirty(true);
+				entity.rebake(true);
 			}));
 
 		var backgroundEditBox = new EditBox(
@@ -120,7 +118,7 @@ public class TextBlockOptionsScreen extends Screen {
 		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, entity.backgroundColor)
 			.ifSuccess(newColor -> {
 				entity.backgroundColor = newColor;
-				entity.renderDirty(true);
+				entity.rebake(true);
 			}));
 
 		this.options.add(colorEditBox, backgroundEditBox);
