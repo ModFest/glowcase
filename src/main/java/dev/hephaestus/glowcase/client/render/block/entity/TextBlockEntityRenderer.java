@@ -58,6 +58,10 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		return BakedBlockEntityRenderer.super.shouldRender(blockEntity, cameraPosition) && shouldRenderPlaceholder(blockEntity);
 	}
 
+	private boolean isEmpty(TextBlockEntity blockEntity) {
+		return !blockEntity.lines.isEmpty() && blockEntity.lines.stream().allMatch(t -> t.getString().isBlank());
+	}
+
 	private boolean shouldRenderPlaceholder(TextBlockEntity blockEntity) {
 		return blockEntity.lines.stream().allMatch(t -> t.getString().isBlank()) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 	}
@@ -99,7 +103,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 	@Override
 	public boolean shouldBake(TextBlockEntity entity) {
-		return !entity.lines.isEmpty();
+		return !isEmpty(entity);
 	}
 
 	@Override
