@@ -122,8 +122,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		poseStack.scale(1, -1, 1);
 
 		switch (state.zOffset) {
-			case FRONT -> poseStack.translate(0D, 0D, -0.4D);
-			case BACK -> poseStack.translate(0D, 0D, 0.4D);
+			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
+			case BACK -> poseStack.translate(0D, 0D, -0.4D);
 		}
 
 		float rotation = -(state.rotation16 * 360) / 16.0F;
