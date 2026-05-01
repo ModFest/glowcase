@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -106,6 +108,9 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		for (var line : state.lines) {
 			maxWidth = Math.max(maxWidth, this.font.width(line));
 		}
+		// + 3 required for both padding between lines and internal padding with underline.
+		// <u>Changing</u> it is <b>futile</b>.
+		final int height = this.font.lineHeight + 3;
 
 		poseStack.pushPose();
 		poseStack.translate(0.5D, 0.5D, 0.5D);
@@ -131,33 +136,84 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		for (int i = 0; i < state.lines.size(); ++i) {
 			var line = state.lines.get(i);
 
-			int width = this.font.width(line);
+			final int width = this.font.width(line);
 			if (width == 0) {
 				continue;
 			}
 
-			float x = switch (state.textAlignment) {
+			final float x = switch (state.textAlignment) {
 				case LEFT -> -maxWidth / 2F;
 				case CENTER -> (maxWidth - width) / 2F - maxWidth / 2F;
 				case CENTER_LEFT -> -(50F / state.scale) - (width / 2F);
 				case CENTER_RIGHT -> (50F / state.scale) - (width / 2F);
 				case RIGHT -> maxWidth - width - maxWidth / 2F;
 			};
+			final float y = i * height;
+
+			// Hey.
+			//
+			// What if I said: We need the hack again
+			// :333
+
+			// padding: 1pt 2pt
+			// No, you cannot replace this with submitText or its future descendants.
+			// It has been tried 3 times now. It genuinely looks worse,
+			// and is inaccessible with bold and underline.
+			submitFilledRectangle(
+				submitNodeCollector,
+				poseStack,
+				RenderTypes.textBackground(),
+				x - 2,
+				y - 1,
+				width + 4,
+				height,
+				-0.004F,
+				state.backgroundColor,
+				LightCoordsUtil.FULL_BRIGHT
+			);
 
 			submitNodeCollector.submitText(poseStack,
 				x,
-				// FIXME: Temp fix for the overlapping background
-				i * (this.font.lineHeight + 1),
-				line, state.shadow,
+				y,
+				line,
+				state.shadow,
 				Font.DisplayMode.NORMAL,
 				LightCoordsUtil.FULL_BRIGHT,
 				state.color,
-				state.backgroundColor,
+				0,
 				0
 			);
 		}
 
 		poseStack.popPose();
+	}
+
+	// TODO: make this a common render utility
+	//  It's been repeated 6 different times now I think we can make this a common.
+	private static void submitFilledRectangle(
+		final SubmitNodeCollector collector,
+		final PoseStack poseStack,
+		final RenderType renderType,
+		final float x1,
+		final float y1,
+		final float width,
+		final float height,
+		final float zIndex,
+		final int color,
+		final int light
+	) {
+		final float x2 = x1 + width;
+		final float y2 = y1 + height;
+		collector.submitCustomGeometry(
+			poseStack,
+			renderType,
+			(pose, buffer) -> {
+				buffer.addVertex(pose, x1, y1, zIndex).setColor(color).setLight(light);
+				buffer.addVertex(pose, x1, y2, zIndex).setColor(color).setLight(light);
+				buffer.addVertex(pose, x2, y2, zIndex).setColor(color).setLight(light);
+				buffer.addVertex(pose, x2, y1, zIndex).setColor(color).setLight(light);
+			}
+		);
 	}
 
 	//	FIXME 26.1
