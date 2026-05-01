@@ -16,23 +16,28 @@ public class RenderSectionPos extends Vec3i {
 	public static final int SECTION_MASK = SECTION_MAX_INDEX;
 
 	// The number of bits needed to represent all regions. In vanilla, it is 22
-	private static final int HORIZONTAL_LENGTH_BITS = BlockPos.PACKED_HORIZONTAL_LENGTH - SECTION_BITS;
+	private static final int REGION_BITS = Long.SIZE;
+	// BlockPos.PACKED_HORIZONTAL_LENGTH = 26
+	private static final int HORIZONTAL_LENGTH_BITS = 26 - SECTION_BITS;
 	private static final int X_BITS = /* 22 */ HORIZONTAL_LENGTH_BITS;
 	private static final int Z_BITS = /* 22 */ HORIZONTAL_LENGTH_BITS;
-	private static final int Y_BITS = /* 20 */ Long.SIZE - X_BITS - Z_BITS;
+	private static final int Y_BITS = /* 20 */ REGION_BITS - X_BITS - Z_BITS;
 
 	private static final long X_MASK = (1L << X_BITS) - 1;
 	private static final long Y_MASK = (1L << Y_BITS) - 1;
 	private static final long Z_MASK = (1L << Z_BITS) - 1;
 
-	// I have no idea why the order is Y, Z, X
+	// I have no idea why the packing order is X, Z Y
 	private static final int Y_OFFSET = 0;
 	private static final int Z_OFFSET = Y_BITS; // 20
 	private static final int X_OFFSET = Z_OFFSET + Z_BITS; // 42
 
-	private static final int RELATIVE_Y_SHIFT = 0;
-	private static final int RELATIVE_Z_SHIFT = SECTION_BITS; // 4
-	private static final int RELATIVE_X_SHIFT = RELATIVE_Z_SHIFT + SECTION_BITS; // 8
+	private static final int X_CUT = REGION_BITS - X_OFFSET - X_BITS; // 0
+	private static final int Y_CUT = REGION_BITS - Y_OFFSET - Y_BITS; // 44
+	private static final int Z_CUT = REGION_BITS - Z_OFFSET - Z_BITS; // 22
+	private static final int X_SHIFT_BACK = REGION_BITS - X_BITS; // 42
+	private static final int Y_SHIFT_BACK = REGION_BITS - Y_BITS; // 44
+	private static final int Z_SHIFT_BACK = REGION_BITS - Z_BITS; // 42
 
 	public static final AABB ORIGIN_BOUNDING_BOX = new AABB(0, 0, 0, SECTION_SIZE, SECTION_SIZE, SECTION_SIZE);
 
@@ -83,17 +88,15 @@ public class RenderSectionPos extends Vec3i {
 	}
 
 	public static int xFromNode(final long sectionNode) {
-		// No need to use the mask, there is no bit to mask
-		return (int)(sectionNode >> X_OFFSET);
+		return (int) (sectionNode << X_CUT >> X_SHIFT_BACK);
 	}
 
 	public static int yFromNode(final long sectionNode) {
-		// No need to offset, it's already at the right position
-		return (int)(sectionNode << X_BITS + Z_BITS >> X_OFFSET);
+		return (int) (sectionNode << Y_CUT >> Y_SHIFT_BACK);
 	}
 
 	public static int zFromNode(final long sectionNode) {
-		return (int)(sectionNode << X_BITS >> X_OFFSET);
+		return (int) (sectionNode << Z_CUT >> Z_SHIFT_BACK);
 	}
 
 	public static double distanceSqr(final long sectionNode, Position pos) {
