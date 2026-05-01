@@ -89,7 +89,7 @@ public class RenderSectionPos extends Vec3i {
 
 	public static int yFromNode(final long sectionNode) {
 		// No need to offset, it's already at the right position
-		return (int)(sectionNode & Y_MASK);
+		return (int)(sectionNode << X_BITS + Z_BITS >> X_OFFSET);
 	}
 
 	public static int zFromNode(final long sectionNode) {
