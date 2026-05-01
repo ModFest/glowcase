@@ -34,10 +34,14 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 	@Definition(id = "CompiledSectionMesh", type = CompiledSectionMesh.class)
 	@Expression("? = new CompiledSectionMesh(?, ?)")
 	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), method = "doTask", cancellable = true)
-	private void handleResults(CallbackInfoReturnable<SectionTaskResult> cir, @Local(name = "results") Results results) {
+	private void handleResults(
+		CallbackInfoReturnable<SectionTaskResult> cir,
+		@Local(name = "results") Results results,
+		@Local(name = "compiledSectionMesh") CompiledSectionMesh compiledSectionMesh
+	) {
 		ExtendedResults extendedResults = (ExtendedResults) (Object) results;
 		BakedMeshes meshes = extendedResults.glowcase$getBakedMeshes();
-		if (meshes == null) {
+		if (meshes == null || meshes.isEmpty()) {
 			levelRenderer.releaseSection(this$1.getSectionNode());
 			return;
 		}
@@ -57,6 +61,14 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 			while (!success) {
 				if (isCancelled.get()) {
 					meshes.close();
+					results.release();
+					this$0.lock();
+
+					try {
+						((RenderSectionAccessor) this$1).callReleaseSectionMesh(compiledSectionMesh);
+					} finally {
+						this$0.unlock();
+					}
 					cir.setReturnValue(SectionTaskResult.CANCELLED);
 					return;
 				}

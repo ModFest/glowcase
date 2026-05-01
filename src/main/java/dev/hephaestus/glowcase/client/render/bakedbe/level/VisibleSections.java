@@ -266,24 +266,24 @@ public final class VisibleSections implements Iterable<VisibleSections.Entry> {
 	public class FastIterator implements Iterator<Entry> {
 		private final BitSet presence = VisibleSections.this.presence;
 		private final Entry entry = new Entry();
-		private int index = presence.nextSetBit(0);
+		private int nextIndex = presence.nextSetBit(0);
 
 		@Override
 		public boolean hasNext() {
-			return index != -1;
+			return nextIndex != -1;
 		}
 
 		@Override
 		public Entry next() {
-			entry.index = index;
-			index = presence.nextSetBit(index + 1);
+			entry.index = nextIndex;
+			nextIndex = presence.nextSetBit(nextIndex + 1);
 			return entry;
 		}
 	}
 
 	public class Entry {
 		private final long[] orderedSections = VisibleSections.this.orderedSections.elements();
-		private final Object[] sectionDataByIndex = VisibleSections.this.sectionDataByIndex.elements();
+		private final @Nullable Object[] sectionDataByIndex = VisibleSections.this.sectionDataByIndex.elements();
 		private final BitSet nearby = VisibleSections.this.nearby;
 		private int index;
 

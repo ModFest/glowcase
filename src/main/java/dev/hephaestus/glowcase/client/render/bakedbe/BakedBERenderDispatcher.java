@@ -7,16 +7,14 @@ import dev.hephaestus.glowcase.client.render.bakedbe.buffers.BakedBEBufferSource
 import dev.hephaestus.glowcase.client.render.bakedbe.buffers.BakedBERenderBuffers;
 import dev.hephaestus.glowcase.client.render.bakedbe.buffers.MeshTooComplex;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
-import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.FeatureRenderDispatcherAccessor;
-import dev.hephaestus.glowcase.util.Pool;
+import dev.hephaestus.glowcase.util.collections.Pool;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.feature.*;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.resources.model.ModelManager;
@@ -24,14 +22,11 @@ import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.util.profiling.Zone;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 @NullMarked
 @Environment(EnvType.CLIENT)
@@ -141,36 +136,21 @@ public class BakedBERenderDispatcher {
 
 	private BakedMeshes buildAll(final SubmitNodeStorage submitNodeStorage, final VertexSorting vertexSorting) throws MeshTooComplex {
 		ProfilerFiller profiler = Profiler.get();
-		Map<RenderType, CompiledMesh> solidMeshes = null;
-		Map<RenderType, CompiledMesh> translucentMeshes = null;
 
 		try {
-			try (Zone _  = profiler.zone("solid")) {
-				profiler.push("build_buffers");
-				renderSolidFeatures(submitNodeStorage);
+			profiler.push("build_mesh");
+			renderSolidFeatures(submitNodeStorage);
+			renderTranslucentFeatures(submitNodeStorage);
 
-				profiler.popPush("build_mesh");
-				solidMeshes = bufferSource.buildAllBatches(vertexSorting, false);
-			} finally {
-				profiler.pop();
-			}
-
-			try (Zone _  = profiler.zone("translucent")) {
-				profiler.push("build_buffers");
-				renderTranslucentFeatures(submitNodeStorage);
-
-				profiler.popPush("build_mesh");
-				translucentMeshes = bufferSource.buildAllBatches(vertexSorting, true);
-			} finally {
-				profiler.pop();
-			}
+			profiler.popPush("bake");
+			return new BakedMeshes(bufferSource.buildAllBatches(vertexSorting));
 		} catch (MeshTooComplex | IllegalArgumentException e) {
 			// We only want to catch the buffer capacity exceeded exception from IllegalArgumentException
 			if (e instanceof IllegalArgumentException && !e.getStackTrace()[0].getClassName().equals(ByteBufferBuilder.class.getName())) throw e;
-			throw bufferSource.abort(e, solidMeshes,  translucentMeshes);
+			throw bufferSource.abort(e);
+		} finally {
+			profiler.pop();
 		}
-
-		return new BakedMeshes(solidMeshes, translucentMeshes);
 	}
 
 	private static BakedBERenderDispatcher createBakedBERenderDispatcher() {
@@ -200,7 +180,7 @@ public class BakedBERenderDispatcher {
 			renderCube(BOUNDING_BOX, CUBE_COLOR);
 
 			try {
-				return new BakedMeshes(bufferSource.buildAllBatches(null, false), null, true);
+				return new BakedMeshes(bufferSource.buildAllBatches(null), true);
 			} catch (MeshTooComplex e) {
 				throw new IllegalStateException("Failed to create fallback mesh", e);
 			}

@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.util;
+package dev.hephaestus.glowcase.util.collections;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

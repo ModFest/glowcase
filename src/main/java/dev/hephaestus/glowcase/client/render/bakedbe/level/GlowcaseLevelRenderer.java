@@ -141,9 +141,11 @@ public class GlowcaseLevelRenderer implements Closeable {
 				for (GlowcaseRenderSectionInfo.DrawEntry drawEntry : sectionInfo) {
 					RenderType renderType = drawEntry.renderType();
 					SectionMesh.SectionDraw draw = drawEntry.draw();
-					boolean translucent = drawEntry.translucent();
+					boolean translucent = draw.hasCustomIndexBuffer();
 					SectionRenderDispatcher.RenderSectionBufferSlice slice = this.sectionRenderDispatcher.getRenderSectionSlice(sectionNode, renderType);
-					if (slice == null || draw.hasCustomIndexBuffer() && slice.indexBuffer() == null) continue;
+
+					if (slice == null || translucent && slice.indexBuffer() == null) continue;
+
 					if (uboIndex == -1) {
 						uboIndex = transforms.size();
 
@@ -262,14 +264,10 @@ public class GlowcaseLevelRenderer implements Closeable {
 			return null;
 		}
 
-		ProfilerFiller profiler = Profiler.get();
-		profiler.push("glowcase:baked_be/compile");
-		try {
+		try (Zone _ = Profiler.get().zone("glowcase:baked_be/compile")) {
 			return BakedBERenderDispatcher.buildAllFeatures(sectionPos, nodeStorage, vertexSorting);
 		} catch (Exception e) {
 			throw new ReportedException(CrashReport.forThrowable(e, "Compiling baked BE"));
-		} finally {
-			profiler.pop();
 		}
 	}
 

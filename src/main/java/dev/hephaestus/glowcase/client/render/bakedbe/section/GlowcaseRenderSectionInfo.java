@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.chunk.TranslucencyPointOfView;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -17,9 +16,10 @@ import java.util.Iterator;
 import java.util.List;
 
 // This should not have values that have to be closed, such as buffers
+@NullMarked
 public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSectionInfo.DrawEntry> {
 	private final TranslucencyPointOfView translucencyPointOfView = new TranslucencyPointOfView();
-	private final List<DrawEntry> draws = new ObjectArrayList<>();
+	private final ObjectArrayList<DrawEntry> draws = new ObjectArrayList<>();
 	private final RenderSectionPos sectionPos;
 	private boolean error;
 
@@ -53,12 +53,11 @@ public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSection
 	}
 
 	@Override
-	public @NonNull Iterator<DrawEntry> iterator() {
-		return draws.iterator();
+	public FastIterator iterator() {
+		return new FastIterator();
 	}
 
-	@NullMarked
-	public record DrawEntry(RenderType renderType, SectionDraw draw, CompiledMesh.@Nullable Sorter sorter, boolean translucent) {
+	public record DrawEntry(RenderType renderType, SectionDraw draw, CompiledMesh.@Nullable Sorter sorter) {
 		private static DrawEntry create(BakedMeshes.Entry entry) {
 			MeshData mesh = entry.mesh().meshData();
 			return new DrawEntry(
@@ -68,13 +67,28 @@ public class GlowcaseRenderSectionInfo implements Iterable<GlowcaseRenderSection
 					mesh.drawState().indexType(),
 					entry.hasCustomIndexBuffer()
 				),
-				entry.mesh().sorter(),
-				entry.translucent()
+				entry.mesh().sorter()
 			);
 		}
 
 		public int indexCount() {
 			return sorter == null ? 0 : sorter.centroids().size();
+		}
+	}
+
+	public class FastIterator implements Iterator<DrawEntry> {
+		private final Object[] draws = GlowcaseRenderSectionInfo.this.draws.elements();
+		private final int size = GlowcaseRenderSectionInfo.this.draws.size();
+		private int index = 0;
+
+		@Override
+		public boolean hasNext() {
+			return index < size;
+		}
+
+		@Override
+		public DrawEntry next() {
+			return (DrawEntry) draws[index++];
 		}
 	}
 }

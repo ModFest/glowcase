@@ -3,17 +3,16 @@ package dev.hephaestus.glowcase.client.render.bakedbe.buffers;
 import com.mojang.blaze3d.vertex.*;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh.Sorter;
-import net.caffeinemc.mods.sodium.client.util.sorting.VertexSorters;
+import dev.hephaestus.glowcase.util.collections.ObjectPairArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.caffeinemc.mods.sodium.client.util.sorting.VertexSortingExtended;
 import net.caffeinemc.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting.MeshDataAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import org.jetbrains.annotations.Contract;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.SequencedMap;
 import java.util.function.Function;
@@ -24,7 +23,8 @@ import static dev.hephaestus.glowcase.util.SizeConstants.Mi;
 public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 	private static final boolean HAS_SODIUM = FabricLoader.getInstance().isModLoaded("sodium");
 	private static final DummyByteBufferBuilder sharedBuffer = new DummyByteBufferBuilder();
-	protected final Map<RenderType, ByteBufferBuilder> startedBuffers = new HashMap<>();
+	protected final Map<RenderType, ByteBufferBuilder> startedBuffers = new Object2ObjectLinkedOpenHashMap<>();
+	protected final Map<RenderType, BufferBuilder> startedBuilders = new Object2ObjectLinkedOpenHashMap<>();
 	private final Function<RenderType, ByteBufferBuilder> bufferSupplier;
 
 	protected BakedBEBufferSource(Function<RenderType, ByteBufferBuilder> bufferSupplier, SequencedMap<RenderType, ByteBufferBuilder> fixedBuffers) {
@@ -61,14 +61,15 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 		}
 	}
 
-	public Map<RenderType, CompiledMesh> buildAllBatches(@Nullable VertexSorting vertexSorting, boolean sort) throws MeshTooComplex {
-		Map<RenderType, CompiledMesh> meshData = new HashMap<>();
+	public ObjectPairArrayList<RenderType, CompiledMesh> buildAllBatches(@Nullable VertexSorting vertexSorting) throws MeshTooComplex {
+		ObjectPairArrayList<RenderType, CompiledMesh> meshData = new ObjectPairArrayList<>();
+
 		for (Map.Entry<RenderType, BufferBuilder> entry : this.startedBuilders.entrySet()) {
 			RenderType renderType = entry.getKey();
 			BufferBuilder bufferBuilder = entry.getValue();
 
 			try {
-				CompiledMesh mesh = this.buildBatch(renderType, bufferBuilder, vertexSorting, sort);
+				CompiledMesh mesh = this.buildBatch(renderType, bufferBuilder, vertexSorting);
 				if (mesh == null) continue;
 
 				int meshSize = mesh.meshData().drawState().vertexCount() * renderType.format().getVertexSize();
@@ -77,7 +78,7 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 					throw abort(meshData);
 				}
 
-				meshData.put(renderType, mesh);
+				meshData.add(renderType, mesh);
 			} catch (IllegalArgumentException e) {
 				if (!e.getStackTrace()[0].getClassName().equals(ByteBufferBuilder.class.getName())) throw e;
 				throw abort(e, meshData);
@@ -89,15 +90,13 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 		return meshData;
 	}
 
-	@Contract("_, _, null, true -> fail;")
-	public @Nullable CompiledMesh buildBatch(RenderType renderType, BufferBuilder bufferBuilder, @Nullable VertexSorting vertexSorting, boolean sort) {
+	public @Nullable CompiledMesh buildBatch(RenderType renderType, BufferBuilder bufferBuilder, @Nullable VertexSorting vertexSorting) {
 		MeshData meshData = bufferBuilder.build();
 		if (meshData == null) return null;
 
 		Sorter sortState = null;
 
-		if (sort) {
-			assert vertexSorting != null;
+		if (renderType.hasBlending() && vertexSorting != null) {
 			ByteBufferBuilder buffer = this.startedBuffers.get(renderType);
 			assert buffer != null;
 			sortState = HAS_SODIUM ? useSodiumQuadSort(meshData, buffer, vertexSorting) : (Sorter) (Object) meshData.sortQuads(buffer, vertexSorting);
@@ -107,6 +106,7 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 	}
 
 	// Having sodium classes here is fine, as it's only called when sodium is present
+	@Deprecated
 	private @Nullable Sorter useSodiumQuadSort(final MeshData meshData, final ByteBufferBuilder indexBufferTarget, final VertexSorting sorting) {
 		if (sorting instanceof VertexSortingExtended sortingExtended) {
 			CompiledMesh.SodiumSortState sortState = CompiledMesh.SodiumSortState.create(meshData);
@@ -120,14 +120,14 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 	}
 
 	@SafeVarargs
-	public final MeshTooComplex abort(@Nullable Map<RenderType, CompiledMesh>... built) {
+	public final MeshTooComplex abort(@Nullable ObjectPairArrayList<RenderType, CompiledMesh>... built) {
 		return abort(null, built);
 	}
 
 	@SafeVarargs
-	public final MeshTooComplex abort(@Nullable Exception cause, @Nullable Map<RenderType, CompiledMesh>... built) {
-		for (Map<RenderType, CompiledMesh> meshes : built) {
-			if (meshes != null) meshes.values().forEach(CompiledMesh::close);
+	public final MeshTooComplex abort(@Nullable Exception cause, @Nullable ObjectPairArrayList<RenderType, CompiledMesh>... built) {
+		for (var meshes : built) {
+			if (meshes != null) meshes.forEachRight(CompiledMesh::close);
 		}
 
 		this.startedBuffers.values().forEach(ByteBufferBuilder::discard);

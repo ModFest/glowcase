@@ -2,8 +2,6 @@ package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
 import com.mojang.blaze3d.GraphicsWorkarounds;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -125,9 +123,11 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 				success &= sectionBuffers.vertexBuffer.addAllocation(sectionPos, callback, vertexBuffer);
 			}
 
-			if (indexBuffer != null) {
-				var callback = DataFlow.nullable(callbacks, ubCallbacks -> ubCallbacks.indexCallback(renderType));
+			var callback = DataFlow.nullable(callbacks, ubCallbacks -> ubCallbacks.indexCallback(renderType));
+			if (indexBuffer != null && sectionBuffers.indexBuffer != null) {
 				success &= sectionBuffers.indexBuffer.addAllocation(sectionPos, callback, indexBuffer);
+			} else if (callback != null) {
+				callback.bufferHasBeenUploaded(sectionPos);
 			}
 
 			if (!success && RenderSystem.isOnRenderThread()) {
@@ -192,19 +192,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 			workarounds
 		);
 
-		boolean isTranslucent =
-			renderType.sortOnUpload() ||
-			// For some reason text isn't marked as sortOnUpload, so we hack our way into knowing if we need to sort
-			!renderType.pipeline().getColorTargetState().blendFunction()
-				.map(BlendFunction::destAlpha)
-				.map(destAlpha ->
-					destAlpha == DestFactor.CONSTANT_ALPHA ||
-					destAlpha == DestFactor.ONE ||
-					destAlpha == DestFactor.ZERO
-				)
-				.orElse(true);
-
-		UberGpuBuffer<Long> indexUberBuffer = isTranslucent ?
+		UberGpuBuffer<Long> indexUberBuffer = renderType.hasBlending() ?
 			new UberGpuBuffer<>(renderTypeName, GpuBuffer.USAGE_INDEX, 128 * Mi, 8, gpuDevice, 16 * Mi, workarounds) :
 			null;
 

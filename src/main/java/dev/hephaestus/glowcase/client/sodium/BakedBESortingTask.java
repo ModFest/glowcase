@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
-import dev.hephaestus.glowcase.util.Pool;
+import dev.hephaestus.glowcase.util.collections.Pool;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.BuilderTaskOutput;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildContext;

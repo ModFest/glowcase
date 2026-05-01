@@ -1,4 +1,4 @@
-package dev.hephaestus.glowcase.util;
+package dev.hephaestus.glowcase.util.collections;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.util.Util;

@@ -1,5 +1,8 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.vertex;
 
+import net.caffeinemc.mods.sodium.client.util.sorting.VertexSorters;
+import net.caffeinemc.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting.MultiBufferSourceMixin;
+
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder.Result;
 import com.mojang.blaze3d.vertex.VertexFormat.IndexType;
@@ -18,6 +21,15 @@ public record CompiledMesh(MeshData meshData, @Nullable Sorter sorter) implement
 		meshData.close();
 	}
 
+	/// @see MultiBufferSourceMixin#acceleratedSort
+	/// @see VertexSorters.AbstractSorter#sort
+	/// @see VertexSorters#sort
+	/// @deprecated We're not using anything special from sodium, their custom method is exactly the as
+	/// the one from {@link VertexSorters.AbstractSorter}.
+	///
+	/// There are other issues with it.
+	/// For example, this is chosen based of the sorting at the moment of creation, but the sorting could change at any run.
+	@SuppressWarnings("JavadocReference")
 	@Deprecated
 	public interface Sorter {
 		@Nullable Result buildSortedIndexBuffer(final ByteBufferBuilder target, final VertexSorting sorting);
