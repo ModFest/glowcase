@@ -1,6 +1,8 @@
 package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.client.GlowcaseClient;
+import dev.hephaestus.glowcase.client.util.RRVClientUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
@@ -25,9 +27,9 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 	@Environment(EnvType.CLIENT)
 	public void openRecipe() {
 		Identifier rid = Identifier.tryParse(recipe);
-		/*if (GlowcaseClient.EMI_LOADED) {
-			EmiClientUtils.displayRecipe(rid);
-		}*/
+		if (GlowcaseClient.RRV_LOADED) {
+			RRVClientUtils.displayRecipe(rid);
+		}
 	}
 
 	public void setRecipe(String newRecipe) {

@@ -4,25 +4,22 @@ package dev.hephaestus.glowcase.client.util;
 //import dev.emi.emi.api.recipe.EmiRecipe;
 //import dev.emi.emi.api.widget.Widget;
 //import dev.emi.emi.widget.RecipeBackground;
-import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
+import cc.cassian.rrv.common.overlay.itemlist.view.ItemViewOverlay;
+import dev.hephaestus.glowcase.util.RequiresRRVLoaded;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
-public class EmiClientUtils {
+public class RRVClientUtils {
 	public static void displayRecipe(Identifier recipeId) {
-		/*if (recipeId == null) {
+		if (recipeId == null) {
 			return;
 		}
-		EmiRecipe recipe = EmiApi.getRecipeManager().getRecipe(recipeId);
-		if (recipe == null) {
-			return;
-		}
-		EmiApi.displayRecipe(recipe);*/
+		ItemViewOverlay.INSTANCE.openRecipeView(recipeId, false);
 	}
 
-	public static void updateWidgetHolder(String recipeId, AtomicReference<RequiresEmiLoaded> widgetHolder) {
+	public static void updateWidgetHolder(String recipeId, AtomicReference<RequiresRRVLoaded> widgetHolder) {
 		/*EmiRecipe recipe = EmiUtils.getRecipe(recipeId);
 
 		GlowcaseWidgetHolder glowcaseWidgetHolder = (GlowcaseWidgetHolder) widgetHolder.get();
@@ -46,7 +43,7 @@ public class EmiClientUtils {
 		recipe.addWidgets(glowcaseWidgetHolder);*/
 	}
 
-	public static void renderEmiRecipe(RequiresEmiLoaded widgetHolder, GuiGraphicsExtractor context, float delta) {
+	public static void renderEmiRecipe(RequiresRRVLoaded widgetHolder, GuiGraphicsExtractor context, float delta) {
 		/*GlowcaseWidgetHolder holder = (GlowcaseWidgetHolder) widgetHolder;
 
 		for (Widget widget : holder.getWidgets()) {
@@ -54,12 +51,12 @@ public class EmiClientUtils {
 		}*/
 	}
 
-	public static int getHolderWidth(RequiresEmiLoaded widgetHolder) {
+	public static int getHolderWidth(RequiresRRVLoaded widgetHolder) {
 		//return ((GlowcaseWidgetHolder) widgetHolder).getWidth();
 		return 0;
 	}
 
-	public static int getHolderHeight(RequiresEmiLoaded widgetHolder) {
+	public static int getHolderHeight(RequiresRRVLoaded widgetHolder) {
 		//return ((GlowcaseWidgetHolder) widgetHolder).getHeight();
 		return 0;
 	}

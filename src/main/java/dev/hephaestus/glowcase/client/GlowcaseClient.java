@@ -28,7 +28,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseClient implements ClientModInitializer {
-	public static final Boolean EMI_LOADED = FabricLoader.getInstance().isModLoaded("emi");
+	public static final Boolean RRV_LOADED = FabricLoader.getInstance().isModLoaded("rrv");
 	public static final Identifier PROVIDER_CROSSHAIR_TEXTURE = Glowcase.id("hud/provider_crosshair");
 	public static final ScreenImageCache screenImageCache = new ScreenImageCache();
 

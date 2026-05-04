@@ -28,6 +28,18 @@ repositories {
 		url = uri("https://maven.caffeinemc.net/releases")
 	}
 
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Cassian's Maven"
+				url = uri("https://maven.cassian.cc")
+			}
+		}
+		filter {
+			includeGroupAndSubgroups("cc.cassian")
+		}
+	}
+
 	mavenLocal()
 }
 
@@ -51,6 +63,9 @@ dependencies {
 
 	/*compileOnly(libs.emi)
 	localRuntime(libs.emi)*/
+
+	compileOnly(libs.rrv)
+	localRuntime(libs.rrv)
 
 	compileOnly(libs.modmenu)
 	localRuntime(libs.modmenu)
