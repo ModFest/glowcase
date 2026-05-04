@@ -12,6 +12,7 @@ asm = "v2.3"
 placeholder = "3.0.0-beta.2+26.1"
 #polydex = "1.8.1+1.21.11"
 # emi = "1.1.19+1.21.1"
+rrv = "8.1.1+26.1.2"
 modmenu = "18.0.0-alpha.6"
 sodium = "0.8.9+mc26.1.1"
 
@@ -30,5 +31,6 @@ placeholder = { group = "eu.pb4", name = "placeholder-api", version.ref = "place
 kaleidoConfig = { group = "folk.sisby", name = "kaleido-config", version.ref = "kaleidoConfig" }
 
 # emi = { group = "dev.emi", name = "emi-fabric", version.ref = "emi" }
+rrv = { group = "cc.cassian.rrv", name = "reliable-recipe-viewer-fabric", version.ref = "rrv" }
 modmenu = { group = "com.terraformersmc", name = "modmenu", version.ref = "modmenu" }
 sodium = { group = "net.caffeinemc", name = "sodium-fabric", version.ref = "sodium" }

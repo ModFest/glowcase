@@ -39,9 +39,9 @@ public record RecipeBlockEntityRenderer(
 
 	@Override
 	public void submit(RecipeRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
+//		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
 			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
-		}
+//		}
 	}
 // FIXME 26.1
 //	public void render(RecipeBlockEntity entity, float f, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {

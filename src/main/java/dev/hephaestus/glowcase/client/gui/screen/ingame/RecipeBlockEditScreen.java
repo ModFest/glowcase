@@ -6,10 +6,10 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.client.util.EmiClientUtils;
+import dev.hephaestus.glowcase.client.util.RRVClientUtils;
 import dev.hephaestus.glowcase.packet.C2SEditRecipeBlock;
-import dev.hephaestus.glowcase.util.EmiUtils;
-import dev.hephaestus.glowcase.util.RequiresEmiLoaded;
+import dev.hephaestus.glowcase.util.RRVUtils;
+import dev.hephaestus.glowcase.util.RequiresRRVLoaded;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -35,7 +35,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 
 	// Can't use GlowcaseWidgetHolder as that can crash if EMI is not present
 	@NotNull
-	private final AtomicReference<RequiresEmiLoaded> glowcaseWidgetHolder = new AtomicReference<>(null);
+	private final AtomicReference<RequiresRRVLoaded> glowcaseWidgetHolder = new AtomicReference<>(null);
 
 	private Button zOffsetToggle;
 	private int fontHeight = -1;
@@ -54,7 +54,7 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 
 		if (fontHeight == -1) {
 			fontHeight = this.minecraft.font.lineHeight;
-			baseY = height / 2 - ((2 * fontHeight + 95) / 2) + fontHeight - (GlowcaseClient.EMI_LOADED ? 46 : 0);
+			baseY = height / 2 - ((2 * fontHeight + 95) / 2) + fontHeight - (GlowcaseClient.RRV_LOADED ? 46 : 0);
 		}
 
 
@@ -97,10 +97,10 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 				this.recipeBlockEntity.recipe = this.recipeWidget.getValue();
 			}
 
-			if (GlowcaseClient.EMI_LOADED) {
-				suggestionWidget.updateSuggestions(EmiUtils.RECIPE_LIST.get(), text, false, this);
+			if (GlowcaseClient.RRV_LOADED) {
+				suggestionWidget.updateSuggestions(RRVUtils.RECIPE_LIST.get(), text, false, this);
 
-				EmiClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
+				RRVClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
 			}
 		});
 
@@ -109,8 +109,8 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		this.addRenderableWidget(this.rotationYWidget);
 		this.addRenderableWidget(this.zOffsetToggle);
 
-		if (GlowcaseClient.EMI_LOADED && glowcaseWidgetHolder.get() == null) {
-			EmiClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
+		if (GlowcaseClient.RRV_LOADED && glowcaseWidgetHolder.get() == null) {
+			RRVClientUtils.updateWidgetHolder(recipeWidget.getValue(), glowcaseWidgetHolder);
 		}
 	}
 
@@ -149,20 +149,20 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 		// render the list over everything
 		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 
-		if (GlowcaseClient.EMI_LOADED && glowcaseWidgetHolder.get() != null) {
+		if (GlowcaseClient.RRV_LOADED && glowcaseWidgetHolder.get() != null) {
 			int baseYForRecipe = (baseY + fontHeight + 95);
 			int spaceForRecipe = height - baseYForRecipe;
 
-			RequiresEmiLoaded widgetHolder = glowcaseWidgetHolder.get();
+			RequiresRRVLoaded widgetHolder = glowcaseWidgetHolder.get();
 
-			int holderWidth = EmiClientUtils.getHolderWidth(widgetHolder);
-			int holderHeight = EmiClientUtils.getHolderHeight(widgetHolder);
+			int holderWidth = RRVClientUtils.getHolderWidth(widgetHolder);
+			int holderHeight = RRVClientUtils.getHolderHeight(widgetHolder);
 
 			Matrix3x2fStack matrixStack = graphics.pose();
 			matrixStack.pushMatrix();
 			matrixStack.translate(width / 2f - holderWidth / 2f, baseYForRecipe + spaceForRecipe / 2f - holderHeight / 2f);
 
-			EmiClientUtils.renderEmiRecipe(widgetHolder, graphics, delta);
+			RRVClientUtils.renderEmiRecipe(widgetHolder, graphics, delta);
 
 			matrixStack.popMatrix();
 		}

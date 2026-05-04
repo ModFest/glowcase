@@ -49,7 +49,7 @@
 	"block.glowcase.popup_block.tooltip.0": "Displays formatted text when interacted",
 	"block.glowcase.popup_block.tooltip.1": "Supports Placeholder QuickText",
 	"block.glowcase.screen_block.tooltip.0": "Displays remotely configurable images",
-	"block.glowcase.recipe_block.tooltip.0": "Displays a recipe from EMI",
+	"block.glowcase.recipe_block.tooltip.0": "Displays a recipe from RRV",
 	"block.glowcase.sprite_block.tooltip.0": "Displays a sprite",
 	"block.glowcase.sprite_block.tooltip.1": "Can be extended with resource packs",
 	"block.glowcase.outline_block.tooltip.0": "Displays an outline",
