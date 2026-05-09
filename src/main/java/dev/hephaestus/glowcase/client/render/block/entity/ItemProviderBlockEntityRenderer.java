@@ -68,8 +68,18 @@ public record ItemProviderBlockEntityRenderer(
 		if (state.canGive) {
 			state.countText = Component.literal("%dx".formatted(blockEntity.getStack().getCount()));
 		} else {
-			long cooldownMS = blockEntity.getCooldownTicks(Minecraft.getInstance().player) * 50;
-			state.countText = Component.literal("[%s]".formatted(blockEntity.getGivesItem() == ItemProviderBlockEntity.GivesItem.TIMED ? DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss") : "MAX")).withStyle(ChatFormatting.YELLOW);
+			state.countText = switch (blockEntity.getGivesItem()) {
+				case ONE -> Component.literal("[MAX]").withStyle(ChatFormatting.YELLOW);
+				case TIMED -> {
+					final long cooldownMS = blockEntity.getCooldownTicks(Minecraft.getInstance().player) * 50;
+					if (cooldownMS <= 0) {
+						yield Component.literal("[??:??]").withStyle(ChatFormatting.RED);
+					}
+					yield Component.literal("[%s]".formatted(DurationFormatUtils.formatDuration(cooldownMS, cooldownMS > 3600000 ? "HH:mm:ss" : "mm:ss"))).withStyle(ChatFormatting.YELLOW);
+				}
+				case ALWAYS ->
+					Component.literal("[I'm sorry, I'm actually the item unprovider.]").withStyle(ChatFormatting.RED);
+			};
 		}
 	}
 
