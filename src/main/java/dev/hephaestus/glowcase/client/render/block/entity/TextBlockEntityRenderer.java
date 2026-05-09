@@ -121,16 +121,24 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		// 2D rendering of the font has Y axis going down, not up
 		poseStack.scale(1, -1, 1);
 
+		float rotation = -(state.rotation16 * 360) / 16.0F;
+		poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+
+		// Must be done after rotation.
+		// Else it's always along global Z-axis as unintended.
 		switch (state.zOffset) {
 			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
 			case BACK -> poseStack.translate(0D, 0D, -0.4D);
 		}
 
-		float rotation = -(state.rotation16 * 360) / 16.0F;
-		poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+		// Scale for parity with older versions of Glowcase.
+		// Unless Mojang ever changes the rendering scale, this shall remain.
+		final float scale = 0.010416667F * state.scale;
+		poseStack.scale(scale, scale, scale);
 
-		poseStack.scale(0.1F * state.scale, 0.1F * state.scale, 0.1F * state.scale);
-		poseStack.translate(0, -(state.lines.size() * this.font.lineHeight) / 2D, 0D);
+		// Adjusts the text positioning to parity. For some reason, the text moved up;
+		// 24/26.d is roughly the required movement down for 100% parity.
+		poseStack.translate(0, Math.fma(state.lines.size(), height / -2.d, 24.d / 16.d), 0D);
 
 		switch (state.horizontalAlignment) {
 			case LEFT -> poseStack.translate(-maxWidth / 2F, 0, 0);
@@ -168,7 +176,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 				poseStack,
 				RenderTypes.textBackground(),
 				x - 2,
-				y - 1,
+				y - 2,
 				width + 4,
 				height,
 				-0.004F,
