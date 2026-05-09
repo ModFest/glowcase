@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen {
 	private static final int innerPadding = 4;
+	private static final int editorOffset = 20;
 	private final TextBlockEntity textBlockEntity;
 
 	private List<EditBox> textWidgets;
@@ -132,7 +133,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, 20 + 2 * this.width / 100F);
+		graphics.pose().translate(0, editorOffset + 2 * this.width / 100F);
 		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
 			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
 
@@ -341,7 +342,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		double mouseX = event.x();
 		double mouseY = event.y();
-		int topOffset = (int) (40 + 2 * this.width / 100F);
+		int topOffset = (int) (editorOffset + 2 * this.width / 100F);
 
 		for (final var text : textWidgets) {
 			if (!text.mouseClicked(event, doubleClick)) {
