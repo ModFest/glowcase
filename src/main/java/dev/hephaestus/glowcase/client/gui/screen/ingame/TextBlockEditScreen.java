@@ -201,26 +201,40 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		var keyCode = event.key();
-		if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
-			for (final var element : this.textWidgets) {
-				if (element.isFocused()) {
-					return element.keyPressed(event);
-				}
-			}
-		}
 
-		if (this.colorPickerWidget.active && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
-			if (keyCode == GLFW.GLFW_KEY_ENTER) {
-				this.colorPickerWidget.confirmColor();
-			} else {
-				this.colorPickerWidget.cancel();
+		if (this.colorPickerWidget.active) {
+			switch (keyCode) {
+				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> this.colorPickerWidget.confirmColor();
+				case GLFW.GLFW_KEY_ESCAPE -> this.colorPickerWidget.cancel();
+				default -> {
+					final GuiEventListener listener = this.colorPickerWidget.targetElement;
+					if (listener != null) {
+						this.setFocused(listener);
+						return listener.keyPressed(event);
+					}
+				}
 			}
 
 			this.toggleColorPicker(false);
 			this.setFocused(null);
 
 			return true;
-		} else {
+		}
+
+		if (this.getFocused() != null) {
+			if (this.getFocused().keyPressed(event)) {
+				return true;
+			}
+
+			this.toggleColorPicker(false);
+			this.setFocused(null);
+
+			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+				return true;
+			}
+		}
+
+		{
 			setFocused(null);
 			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
 				this.textBlockEntity.addRawLine(this.currentRow + 1,
@@ -319,9 +333,12 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	private void colorListenerClicked(EditBox textWidget) {
 		this.colorPickerWidget.setPosition(Math.min(textWidget.getX(), width - colorPickerWidget.getWidth()), textWidget.getY() + textWidget.getHeight());
 		this.colorPickerWidget.setTargetElement(textWidget);
-		this.colorPickerWidget.setOnAccept(null);
+		this.colorPickerWidget.setOnAccept(picker -> {
+			textWidget.setValue(ColorUtil.toAlphaHex(picker.getCurrentColor().getRGB()));
+		});
 		this.colorPickerWidget.setOnCancel(picker -> {
 			picker.setColor(this.colorEntryPreColorPicker);
+			textWidget.setValue(ColorUtil.toAlphaHex(this.colorEntryPreColorPicker.getRGB()));
 		});
 		this.colorPickerWidget.setChangeListener(color -> {
 			final int newColor = ColorUtil.transferAlpha(this.colorEntryPreColorPicker.getRGB(), color.getRGB());
@@ -352,7 +369,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			if (this.colorListeners.contains(text)) {
 				this.colorListenerClicked(text);
 			}
-			if (this.colorPickerWidget.targetElement != text || !this.colorPickerWidget.isMouseOver(mouseX, mouseY)) {
+			if (this.colorPickerWidget.targetElement != text) {
 				text.setFocused(false);
 			}
 			break;
