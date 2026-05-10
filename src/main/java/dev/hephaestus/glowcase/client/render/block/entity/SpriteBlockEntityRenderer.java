@@ -134,7 +134,7 @@ public record SpriteBlockEntityRenderer(
 			return identifier;
 		}
 
-		if (identifier.getNamespace().equals("mod")) { // Special mod namespace uses mod icon.
+		if (identifier != null && identifier.getNamespace().equals("mod")) { // Special mod namespace uses mod icon.
 			String modId = identifier.getPath();
 			modIconCache.computeIfAbsent(modId, SpriteBlockEntityRenderer::fetchModIcon);
 			if (!modIconCache.containsKey(modId)) {
