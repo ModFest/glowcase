@@ -124,7 +124,7 @@ public class BakedBERenderDispatcher {
 			return dispatcher.buildAll(submitNodeStorage, vertexSorting);
 		} catch (MeshTooComplex e) {
 			ErrorRenderer.logError(e, sectionNode);
-			return dispatcher.new ErrorRenderer().build();
+			return dispatcher.new ErrorRenderer().build(vertexSorting);
 		}  finally {
 			RENDER_DISPATCHERS.release(dispatcher);
 
@@ -176,11 +176,11 @@ public class BakedBERenderDispatcher {
 		public static final int CUBE_COLOR = ARGB.colorFromFloat(0.375F, 1.0F, 0.0F, 0.0F);
 		public static final int LINE_COLOR = ARGB.colorFromFloat(0.75F, 1.0F, 0.0F, 0.0F);
 
-		public BakedMeshes build() {
+		public BakedMeshes build(VertexSorting sorting) {
 			renderCube(BOUNDING_BOX, CUBE_COLOR);
 
 			try {
-				return new BakedMeshes(bufferSource.buildAllBatches(null), true);
+				return new BakedMeshes(bufferSource.buildAllBatches(sorting), true);
 			} catch (MeshTooComplex e) {
 				throw new IllegalStateException("Failed to create fallback mesh", e);
 			}
