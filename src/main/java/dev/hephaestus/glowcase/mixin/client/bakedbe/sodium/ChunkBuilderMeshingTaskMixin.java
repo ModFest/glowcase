@@ -147,7 +147,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		BakedBERenderDispatcher.returnNodeStorage(nodeStorageRef.get());
 	}
 
-	@Inject(at = @At("TAIL"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	@Inject(at = @At("TAIL"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;", cancellable = true)
 	private void allocateBuffers(
 		ChunkBuildContext buildContext,
 		CancellationToken cancellationToken,
