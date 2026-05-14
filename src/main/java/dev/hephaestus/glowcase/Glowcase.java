@@ -226,16 +226,14 @@ public class Glowcase implements ModInitializer {
 	public void onInitialize() {
 		GlowcaseNetworking.init();
 
-//		if (FabricLoader.getInstance().isModLoaded("polydex2")) {
-//			PolydexCompatibility.onInitialize();
-//		}
+		// if (FabricLoader.getInstance().isModLoaded("polydex2")) {
+		// 	PolydexCompatibility.onInitialize();
+		// }
 
 		// Never make this command available outside of dev
-		/*if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
-			if (FabricLoader.getInstance().isModLoaded("emi")) {
-				EmiUtils.registerDevCommands();
-			}
-		}*/
+		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
+			DevCommands.registerDevCommands();
+		}
 	}
 
 	static {

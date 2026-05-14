@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.render.bakedbe.section;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
@@ -81,6 +82,18 @@ public class RenderSectionPos extends Vec3i {
 
 	public AABB boundingBox() {
 		return boundingBox;
+	}
+
+	public BoundingBox structuralBoundingBox() {
+		return BoundingBox.fromCorners(BlockPos.containing(boundingBox.getMinPosition()), BlockPos.containing(boundingBox.getMaxPosition().subtract(1)));
+	}
+
+	public String toCommandString() {
+		return this.getX() + " " + this.getY() + " " + this.getZ();
+	}
+
+	public static RenderSectionPos fromVec3i(Vec3i sectionPos) {
+		return new RenderSectionPos(sectionPos.getX(), sectionPos.getY(), sectionPos.getZ());
 	}
 
 	public static BlockPos maskToSection(BlockPos pos) {
