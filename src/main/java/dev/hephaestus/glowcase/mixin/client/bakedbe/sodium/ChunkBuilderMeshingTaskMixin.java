@@ -179,6 +179,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 					meshes.close();
 					output.destroy();
 					cir.setReturnValue(null);
+					return;
 				}
 
 				success = renderDispatcher.allocateMeshBuffers(sectionNode, entry.renderType(), mesh.meshData(), callbacks);
