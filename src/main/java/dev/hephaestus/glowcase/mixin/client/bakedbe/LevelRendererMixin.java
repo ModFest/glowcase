@@ -1,9 +1,6 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.mixinsupport.LevelRendererExtension;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
