@@ -40,7 +40,7 @@ public class LevelRendererMixin implements LevelRendererExtension {
 		return levelRenderer;
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V", ordinal = 0, shift = At.Shift.AFTER), method = "lambda$addMainPass$0")
+	@Inject(at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Lighting;setupFor(Lcom/mojang/blaze3d/platform/Lighting$Entry;)V", ordinal = 0, shift = At.Shift.AFTER), method = "lambda$addMainPass$0")
 	private void renderOpaque(CallbackInfo ci) {
 		levelRenderer.renderGroup(false);
 	}
