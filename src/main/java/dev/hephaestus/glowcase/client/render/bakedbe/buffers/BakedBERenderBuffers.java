@@ -35,7 +35,7 @@ public class BakedBERenderBuffers {
 	}
 
 	private static void put(final Object2ObjectLinkedOpenHashMap<RenderType, ByteBufferBuilder> map, final RenderType type) {
-		map.put(type, new ByteBufferBuilder(type.bufferSize()));
+		map.put(type, new ByteBufferBuilder(type.bufferSize(), 32 * Mi));
 	}
 
 	public SectionBufferBuilderPack fixedBufferPack() {
