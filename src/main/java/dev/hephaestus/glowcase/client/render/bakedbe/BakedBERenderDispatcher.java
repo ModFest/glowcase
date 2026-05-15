@@ -76,6 +76,8 @@ public class BakedBERenderDispatcher {
 	}
 
 	public static void returnNodeStorage(final SubmitNodeStorage submitNodeStorage) {
+		submitNodeStorage.clear();
+		submitNodeStorage.endFrame();
 		NODE_STORAGE_POOL.release(submitNodeStorage);
 	}
 
@@ -127,10 +129,7 @@ public class BakedBERenderDispatcher {
 			return dispatcher.new ErrorRenderer().build(vertexSorting);
 		}  finally {
 			RENDER_DISPATCHERS.release(dispatcher);
-
-			submitNodeStorage.clear();
-			submitNodeStorage.endFrame();
-			NODE_STORAGE_POOL.release(submitNodeStorage);
+			returnNodeStorage(submitNodeStorage);
 		}
 	}
 
