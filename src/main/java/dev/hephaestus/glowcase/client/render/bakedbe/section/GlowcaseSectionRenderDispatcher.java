@@ -36,6 +36,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	private final UberBuffers layerBuffers;
 	private final ReentrantLock copyLock = new ReentrantLock();
 	private final GlowcaseLevelRenderer levelRenderer;
+	private transient boolean closed;
 
 	public GlowcaseSectionRenderDispatcher(GlowcaseLevelRenderer levelRenderer) {
 		GpuDevice gpuDevice = RenderSystem.getDevice();
@@ -66,6 +67,8 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	}
 
 	public void uploadGlobalGeomBuffersToGPU() {
+		if (closed) return;
+
 		CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
 		boolean performedBufferResize = false;
 
@@ -107,6 +110,8 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	}
 
 	public boolean allocateBuffers(long sectionPos, RenderType renderType, @Nullable ByteBuffer vertexBuffer, @Nullable ByteBuffer indexBuffer, @Nullable UberBufferCallbacks callbacks) {
+		if (closed) return true;
+
 		lock();
 
 		boolean success = true;
@@ -165,6 +170,8 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 	}
 
 	public void close() {
+		closed = true;
+
 		lock();
 
 		try {
