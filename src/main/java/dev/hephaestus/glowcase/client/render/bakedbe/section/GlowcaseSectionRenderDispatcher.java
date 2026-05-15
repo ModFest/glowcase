@@ -105,6 +105,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		}
 	}
 
+	public boolean allocateIndexBuffers(long sectionNode, RenderType renderType, ByteBuffer indexBuffer) {
+		return allocateBuffers(sectionNode, renderType, null, indexBuffer, null);
+	}
+
 	public boolean allocateMeshBuffers(long sectionPos, RenderType renderType, MeshData meshData, @Nullable UberBufferCallbacks callbacks) {
 		return allocateBuffers(sectionPos, renderType, meshData.vertexBuffer(), meshData.indexBuffer(), callbacks);
 	}

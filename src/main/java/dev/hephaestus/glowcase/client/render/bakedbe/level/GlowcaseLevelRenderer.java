@@ -32,7 +32,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.Zone;
@@ -48,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -225,15 +223,6 @@ public class GlowcaseLevelRenderer implements Closeable {
 		profiler.push("glowcase");
 		sectionsToRender.renderGroup(sorted);
 		profiler.pop();
-	}
-
-	public void updateIndexBuffer(long sectionNode, RenderType renderType, ByteBuffer indexBuffer) {
-		if (sectionRenderDispatcher == null) return;
-
-		boolean success = sectionRenderDispatcher.allocateBuffers(sectionNode, renderType, null, indexBuffer, null);
-		if (!success) {
-			throw new IllegalStateException("Failed to allocate mesh buffers, possible resource leak or the mesh is too complex");
-		}
 	}
 
 	public void releaseSection(long section) {

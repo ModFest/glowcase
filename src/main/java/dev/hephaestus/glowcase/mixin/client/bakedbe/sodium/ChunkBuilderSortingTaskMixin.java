@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
@@ -48,6 +49,9 @@ public abstract class ChunkBuilderSortingTaskMixin extends ChunkBuilderTask<Chun
 		VertexSorting vertexSorting = GlowcaseSectionRenderDispatcher.createVertexSorting(this.getRelativeCameraPos());
 		ByteBufferBuilder bufferBuilder = BakedBESortingTask.indexBufferPool.acquire();
 
+		GlowcaseSectionRenderDispatcher renderDispatcher = levelRenderer.getSectionRenderDispatcher();
+		if (renderDispatcher == null) return;
+
 		GlowcaseRenderSectionInfo sectionInfo = visibleSections.get(sectionNode);
 		for (GlowcaseRenderSectionInfo.DrawEntry entry : sectionInfo) {
 			final var sorter = entry.sorter();
@@ -56,7 +60,26 @@ public abstract class ChunkBuilderSortingTaskMixin extends ChunkBuilderTask<Chun
 			ByteBufferBuilder.Result indexBuffer = sorter.buildSortedIndexBuffer(bufferBuilder, vertexSorting);
 			if (indexBuffer == null) continue;
 
-			levelRenderer.updateIndexBuffer(sectionNode, entry.renderType(), indexBuffer.byteBuffer());
+			boolean success = false;
+
+			while (!success) {
+				if (cancellationToken.isCancelled()) {
+					indexBuffer.close();
+					bufferBuilder.clear();
+					BakedBESortingTask.indexBufferPool.release(bufferBuilder);
+					profiler.pop();
+
+					cir.setReturnValue(null);
+					return;
+				}
+
+				success = renderDispatcher.allocateIndexBuffers(sectionNode, entry.renderType(), indexBuffer.byteBuffer());
+
+				if (!success && !RenderSystem.isOnRenderThread()) {
+					Thread.onSpinWait();
+				}
+			}
+
 			indexBuffer.close();
 		}
 

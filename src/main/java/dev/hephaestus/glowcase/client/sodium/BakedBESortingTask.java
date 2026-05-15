@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.sodium;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseRenderSectionInfo;
@@ -43,6 +44,9 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 	public Output execute(ChunkBuildContext context, CancellationToken cancellationToken) {
 		if (cancellationToken.isCancelled() || isGone()) return null;
 
+		GlowcaseSectionRenderDispatcher renderDispatcher = levelRenderer.getSectionRenderDispatcher();
+		if (renderDispatcher == null) return null;
+
 		ProfilerFiller profiler = Profiler.get();
 		profiler.push("glowcase:bbe_translucency_sort");
 		VertexSorting vertexSorting = GlowcaseSectionRenderDispatcher.createVertexSorting(this.getRelativeCameraPos());
@@ -56,7 +60,24 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 			ByteBufferBuilder.Result indexBuffer = sorter.buildSortedIndexBuffer(bufferBuilder, vertexSorting);
 			if (indexBuffer == null) continue;
 
-			levelRenderer.updateIndexBuffer(sectionNode, entry.renderType(), indexBuffer.byteBuffer());
+			boolean success = false;
+
+			while (!success) {
+				if (cancellationToken.isCancelled()) {
+					indexBuffer.close();
+					bufferBuilder.clear();
+					indexBufferPool.release(bufferBuilder);
+					profiler.pop();
+					return null;
+				}
+
+				success = renderDispatcher.allocateIndexBuffers(sectionNode, entry.renderType(), indexBuffer.byteBuffer());
+
+				if (!success && !RenderSystem.isOnRenderThread()) {
+					Thread.onSpinWait();
+				}
+			}
+
 			size += indexBuffer.byteBuffer().capacity();
 			indexBuffer.close();
 		}
