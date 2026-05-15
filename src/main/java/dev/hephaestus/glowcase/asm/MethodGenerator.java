@@ -10,9 +10,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.Function;
 
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.INSTANCEOF;
@@ -164,15 +163,17 @@ public class MethodGenerator extends GeneratorAdapter {
 		visitLabel(getStartLabel());
 	}
 
-	public AbstractInsnNode findFirstInst(int opcode) {
+	@SuppressWarnings("unchecked")
+	public <T extends AbstractInsnNode> List<T> findInst(int opcode, Function<T, Boolean> predicate) {
 		assertMethodNode();
+		List<T> nodes = new ArrayList<>();
 		for (AbstractInsnNode node : methodNode.instructions) {
-			if (node.getOpcode() == opcode) {
-				return node;
+			if (node.getOpcode() == opcode && predicate.apply((T) node)) {
+				nodes.add((T) node);
 			}
 		}
 
-		throw new NoSuchElementException("Could not find an instruction with opcode " + opcode);
+		return nodes;
 	}
 
 	public MethodNode methodNode() {

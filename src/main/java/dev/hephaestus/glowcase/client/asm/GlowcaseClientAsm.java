@@ -3,27 +3,17 @@ package dev.hephaestus.glowcase.client.asm;
 import com.chocohead.mm.api.ClassTinkerers;
 import dev.hephaestus.glowcase.asm.MethodGenerator;
 import net.fabricmc.loader.api.FabricLoader;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.*;
 
 import static dev.hephaestus.glowcase.asm.MethodGenerator.NOARG_VOID_DESCRIPTOR;
-import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
-import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ICONST_M1;
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static org.objectweb.asm.Opcodes.LCONST_0;
-import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.*;
 
 public class GlowcaseClientAsm implements Runnable {
 	@Override
 	public void run() {
 		outlineBufferConstructors();
 		byteBufferBuilderConstructors();
+		concurrentSheets();
 		// sodiumCompat();
 	}
 
@@ -116,6 +106,23 @@ public class GlowcaseClientAsm implements Runnable {
 			// End
 			constructor.returnValue();
 			constructor.endMethod();
+		});
+	}
+
+	private void concurrentSheets() {
+		ClassTinkerers.addTransformation("net.minecraft.client.renderer.Sheets", classNode -> {
+			var clinit = MethodGenerator.of(classNode, ACC_STATIC, "<clinit>", NOARG_VOID_DESCRIPTOR);
+			for (TypeInsnNode node : clinit.<TypeInsnNode>findInst(NEW, node -> node.desc.equals("java/util/HashMap"))) {
+				node.desc = "java/util/concurrent/ConcurrentHashMap";
+			}
+
+			for (MethodInsnNode node : clinit.<MethodInsnNode>findInst(INVOKESPECIAL, node ->
+				node.owner.equals("java/util/HashMap") &&
+				node.name.equals("<init>") &&
+				node.desc.equals(NOARG_VOID_DESCRIPTOR)
+			)) {
+				node.owner = "java/util/concurrent/ConcurrentHashMap";
+			}
 		});
 	}
 
