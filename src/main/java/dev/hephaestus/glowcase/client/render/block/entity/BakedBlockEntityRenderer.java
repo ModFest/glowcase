@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,9 +25,11 @@ public interface BakedBlockEntityRenderer<T extends BlockEntity, U extends Block
 
 	B createBakedRenderState();
 
-	/// The extract stage for the baked rendering
-	default void extractBakingRenderState(final T blockEntity, final B state) {
+	/// The extract stage for the baked rendering \
+	/// This takes the block light as a param as BE rendering uses the uncached light from the level, which is not thread safe
+	default void extractBakingRenderState(final T blockEntity, final B state, final int light) {
 		BlockEntityRenderState.extractBase(blockEntity, state, null);
+		state.lightCoords = light == -1 ? LightCoordsUtil.FULL_BRIGHT : light;
 	}
 
 	/// Internal override of the submit method for renaming it into a clearer one

@@ -81,8 +81,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	// Baked rendering
 
 	@Override
-	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state) {
-		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state);
+	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state, int light) {
+		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state, light);
 		state.zOffset = blockEntity.zOffset;
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 

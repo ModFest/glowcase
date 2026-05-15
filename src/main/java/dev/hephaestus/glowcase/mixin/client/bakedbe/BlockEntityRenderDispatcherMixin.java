@@ -18,7 +18,7 @@ public abstract class BlockEntityRenderDispatcherMixin implements BakingBlockEnt
 	@Shadow public abstract @Nullable <E extends BlockEntity, S extends BlockEntityRenderState> BlockEntityRenderer<E, S> getRenderer(E blockEntity);
 
 	@Override
-	public <E extends BlockEntity, S extends BlockEntityRenderState> @Nullable S glowcase$tryExtractBakingRenderState(final E blockEntity) {
+	public <E extends BlockEntity, S extends BlockEntityRenderState> @Nullable S glowcase$tryExtractBakingRenderState(final E blockEntity, int light) {
 		BlockEntityRenderer<E, ?> entityRenderer = this.getRenderer(blockEntity);
 
 		if (!(entityRenderer instanceof BakedBlockEntityRenderer<?, ?, ?>)) return null;
@@ -28,7 +28,7 @@ public abstract class BlockEntityRenderDispatcherMixin implements BakingBlockEnt
 		if (!renderer.shouldBake(blockEntity)) return null;
 
 		S state = renderer.createBakedRenderState();
-		renderer.extractBakingRenderState(blockEntity, state);
+		renderer.extractBakingRenderState(blockEntity, state, light);
 		return state;
 	}
 }

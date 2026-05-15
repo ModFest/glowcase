@@ -4,9 +4,6 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
@@ -14,15 +11,18 @@ import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedRendererUtil;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.ModelBlockRendererAccessor;
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
 import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
 import dev.hephaestus.glowcase.mixinsupport.ExtendedResults;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.block.BlockModelLighter;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -52,13 +52,25 @@ public class SectionCompilerMixin {
 	@Shadow @Final private BlockEntityRenderDispatcher blockEntityRenderer;
 
 	@Inject(at = @At("HEAD"), method = "compile")
-	private void createPoseStack(
+	private void init(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("poseStack") LocalRef<PoseStack> poseStack,
 		@Share("profiler") LocalRef<ProfilerFiller> profiler
 	) {
 		profiler.set(Profiler.get());
 		poseStack.set(new PoseStack());
+	}
+
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;betweenClosed(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;"), method = "compile")
+	private void lateValues(
+		CallbackInfoReturnable<SectionCompiler.Results> cir,
+		@Local(name = "region", argsOnly = true) RenderSectionRegion region,
+		@Local(name = "blockRenderer") ModelBlockRenderer blockRenderer,
+		@Share("lighter") LocalRef<BlockModelLighter> lighter,
+		@Share("level") LocalRef<ClientLevel> level
+	) {
+		lighter.set(((ModelBlockRendererAccessor) blockRenderer).getLighter());
+		level.set(((RenderSectionRegionAccessor) region).getLevel());
 	}
 
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/SectionCompiler;handleBlockEntity(Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;Lnet/minecraft/world/level/block/entity/BlockEntity;)V"), method = "compile")
@@ -73,6 +85,8 @@ public class SectionCompilerMixin {
 		@Local(name = "pos") BlockPos pos,
 		@Share("poseStack") LocalRef<PoseStack> poseStackRef,
 		@Share("profiler") LocalRef<ProfilerFiller> profilerRef,
+		@Share("lighter") LocalRef<BlockModelLighter> lighter,
+		@Share("level") LocalRef<ClientLevel> level,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
 	) {
 		ProfilerFiller profiler = profilerRef.get();
@@ -87,7 +101,10 @@ public class SectionCompilerMixin {
 
 			if (rendererExtension != null && rendererExtension.glowcase$isBakingRenderer()) {
 				BakedBlockEntityRenderer<E, ?, B> renderer = (BakedBlockEntityRenderer<E, ?, B>) baseRenderer;
-				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(blockEntity);
+				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(
+					blockEntity,
+					lighter.get().getLightCoords(blockState, level.get(), BlockPos.ZERO)
+				);
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
 					if (nodeStorage == null) {
@@ -119,6 +136,7 @@ public class SectionCompilerMixin {
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Local(argsOnly = true, name = "sectionPos") SectionPos sectionPos,
 		@Local(argsOnly = true, name = "vertexSorting") VertexSorting vertexSorting,
+		@SuppressWarnings("UnresolvedLocalCapture") // Idk why MCDev is complaining
 		@Local(name = "results") SectionCompiler.@NonNull Results results,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
 	) {

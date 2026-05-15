@@ -18,9 +18,11 @@ import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRender
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
 import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
 import dev.hephaestus.glowcase.mixinsupport.sodium.TranslucentDataExtension;
+import net.caffeinemc.mods.sodium.client.model.light.data.LightDataAccess;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildOutput;
+import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.translucent_sorting.data.TranslucentData;
@@ -62,7 +64,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 	}
 
 	@Inject(at = @At("HEAD"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
-	private void createValues(
+	private void init(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("poseStack") LocalRef<PoseStack> poseStackRef,
 		@Share("vertexSorting") LocalRef<VertexSorting> vertexSortingRef
@@ -71,17 +73,27 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		vertexSortingRef.set(GlowcaseSectionRenderDispatcher.createVertexSorting(cameraPos));
 	}
 
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", ordinal = 0), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	private void lateValues(
+		CallbackInfoReturnable<ChunkBuildOutput> cir,
+		@Local(name = "cache") BlockRenderCache cache,
+		@Share("lightCache") LocalRef<LightDataAccess> lightCache
+	) {
+		lightCache.set(((BlockRenderCacheAccessor) cache).getLightDataCache());
+	}
+
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;addBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;Z)V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private <E extends BlockEntity, B extends BlockEntityRenderState> void submitBakedRenderers(
 		ChunkBuildContext buildContext,
 		CancellationToken cancellationToken,
 		CallbackInfoReturnable<ChunkBuildOutput> cir,
-		@Local(name = "entity") E entity,
+		@Local(name = "profiler") ProfilerFiller profiler,
 		@Local(name = "blockPos") BlockPos.MutableBlockPos blockPos,
 		@Local(name = "blockState") BlockState blockState,
+		@Local(name = "entity") E entity,
 		@Local(name = "renderer") BlockEntityRenderer<E, ?> renderer,
-		@Local(name = "profiler") ProfilerFiller profiler,
 		@Share("poseStack") LocalRef<PoseStack> poseStackRef,
+		@Share("lightCache") LocalRef<LightDataAccess> lightCache,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef
 	) {
 		profiler.push("glowcase:baked_be/submit");
@@ -90,7 +102,10 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 			BakingRendererExtension rendererExtension = (BakingRendererExtension) renderer;
 			if (rendererExtension != null && rendererExtension.glowcase$isBakingRenderer()) {
 				BakedBlockEntityRenderer<E, ?, B> bakedRenderer = (BakedBlockEntityRenderer<E, ?, B>) renderer;
-				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(entity);
+				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(
+					entity,
+					lightCache.get().get(blockPos)
+				);
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
 					if (nodeStorage == null) {
