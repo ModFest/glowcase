@@ -22,6 +22,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -577,9 +578,7 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public void onClose() {
-		super.onClose();
-
+	public CustomPacketPayload getUpdatePayload() {
 		if (finalizing) {
 			// Remove insertion for optimization as it is not needed anymore
 			for (int i = 0; i < lines.size(); i++) {
@@ -589,12 +588,12 @@ public class NoteEditScreen extends TextEditorScreen {
 			}
 		}
 
-		new C2SEditNoteItem(new NoteComponent(
+		return new C2SEditNoteItem(new NoteComponent(
 			lines,
 			textAlignment,
 			finalizing ? Optional.of(title) : Optional.empty(),
 			(finalizing && !author.isBlank()) ? Optional.of(author) : Optional.empty()
-		)).send();
+		));
 	}
 
 	@Override

@@ -1,11 +1,12 @@
 package dev.hephaestus.glowcase.block;
 
 import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.block.entity.GlowcaseBlockEntity;
 import dev.hephaestus.glowcase.block.entity.StackInteractable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -25,28 +26,53 @@ public abstract class StackInteractableBlock extends WaterloggableGlowcaseBlock 
 	}
 
 	@Override
-	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-		loadClientSideNBT(world, pos, placer, stack);
-	}
-
-	@Override
 	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-		if (!(world.getBlockEntity(pos) instanceof StackInteractable be)) return InteractionResult.CONSUME;
+		if (!(world.getBlockEntity(pos) instanceof GlowcaseBlockEntity glowcase)) {
+			// Consider this infallible?
+			return InteractionResult.CONSUME;
+		}
+		if (!(glowcase instanceof StackInteractable interactable)) {
+			return InteractionResult.CONSUME;
+		}
 
-		if (canEditGlowcase(player, pos)) {
-			boolean holdingGlowcaseItem = stack.is(Glowcase.ITEM_TAG);
-			boolean holdingSameAsDisplay = be.matchesStack(stack);
+		// If it matches the stack, delegate to openEditScreen.
+		if (interactable.matchesStack(stack)) {
+			// TODO: increment if non-creative instead?
+			//  tho this might already do that-
+			return this.openEditScreen(world, pos, player);
+		}
 
-			if (be.matchesStack(ItemStack.EMPTY)) {
-				if (!world.isClientSide()) be.setFromStack(stack);
-				return InteractionResult.SUCCESS;
-			} else if (holdingSameAsDisplay) {
-				if (world.isClientSide()) openEditScreen(pos);
-				return InteractionResult.SUCCESS;
-			} else if (holdingGlowcaseItem) {
-				if (!world.isClientSide()) be.unsetFromStack();
-				return InteractionResult.SUCCESS;
+		if (!canEditGlowcase(player, pos)) {
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
+		}
+
+		// Check if the player may obtain a lock first before calling the other mutators.
+		// TODO: broadcast lock status to clients?
+		//  The hardest question in computer science: cache invalidation
+		if (world.isClientSide()) {
+			return InteractionResult.CONSUME;
+		}
+		if (!glowcase.mayObtainLock(player)) {
+			glowcase.notifyPlayerOfLockHolder(player, this.getName());
+			if (player instanceof ServerPlayer serverPlayer) {
+				final var packet = glowcase.getUpdatePacket();
+				if (packet != null) {
+					serverPlayer.connection.send(packet);
+				}
 			}
+			return InteractionResult.CONSUME;
+		}
+
+		// Set if empty.
+		if (interactable.matchesStack(ItemStack.EMPTY)) {
+			interactable.setFromStack(stack);
+			return InteractionResult.SUCCESS_SERVER;
+		}
+
+		// Clear if glowcase.
+		if (stack.is(Glowcase.ITEM_TAG)) {
+			interactable.unsetFromStack();
+			return InteractionResult.SUCCESS_SERVER;
 		}
 
 		return InteractionResult.TRY_WITH_EMPTY_HAND;

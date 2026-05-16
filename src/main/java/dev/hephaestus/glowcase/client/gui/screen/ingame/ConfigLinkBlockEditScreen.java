@@ -7,32 +7,29 @@ import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.lwjgl.glfw.GLFW;
 
-public class ConfigLinkBlockEditScreen extends GlowcaseScreen {
-    private final ConfigLinkBlockEntity configLinkBlockEntity;
-
+public class ConfigLinkBlockEditScreen extends BlockEditorScreen<ConfigLinkBlockEntity> {
     private EditBox titleEntryWidget;
     private EditBox urlEntryWidget;
 
-    public ConfigLinkBlockEditScreen(ConfigLinkBlockEntity configLinkBlockEntity) {
-        this.configLinkBlockEntity = configLinkBlockEntity;
+	public ConfigLinkBlockEditScreen(ConfigLinkBlockEntity blockEntity) {
+		super(blockEntity);
     }
 
     @Override
     public void init() {
         super.init();
 
-        if (this.minecraft == null) return;
-
         this.titleEntryWidget = new EditBox(this.minecraft.font, width / 10, height / 2 - 30, 8 * width / 10, 20, Component.empty());
         this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
-        this.titleEntryWidget.setValue(this.configLinkBlockEntity.getTitle());
+		this.titleEntryWidget.setValue(this.blockEntity.getTitle());
         this.titleEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.title"));
 
         this.urlEntryWidget = new EditBox(this.minecraft.font, width / 10, height / 2 + 10, 8 * width / 10, 20, Component.empty());
         this.urlEntryWidget.setMaxLength(HyperlinkBlockEntity.URL_MAX_LENGTH);
-        this.urlEntryWidget.setValue(this.configLinkBlockEntity.getUrl());
+		this.urlEntryWidget.setValue(this.blockEntity.getUrl());
         this.urlEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.url"));
 
         this.addRenderableWidget(this.titleEntryWidget);
@@ -54,11 +51,10 @@ public class ConfigLinkBlockEditScreen extends GlowcaseScreen {
         }
     }
 
-    @Override
-    public void onClose() {
-        configLinkBlockEntity.setUrl(urlEntryWidget.getValue());
-        configLinkBlockEntity.setTitle(titleEntryWidget.getValue());
-        C2SEditConfigLinkBlock.of(configLinkBlockEntity).send();
-        super.onClose();
-    }
+	@Override
+	public CustomPacketPayload getUpdatePayload() {
+		blockEntity.setUrl(urlEntryWidget.getValue());
+		blockEntity.setTitle(titleEntryWidget.getValue());
+		return C2SEditConfigLinkBlock.of(blockEntity);
+	}
 }

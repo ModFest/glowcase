@@ -3,15 +3,15 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
-
-import java.util.Arrays;
-import java.util.Comparator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.network.chat.Component;
 
-public abstract class TextEditorScreen extends GlowcaseScreen implements ColorPickerIncludedScreen {
+import java.util.Arrays;
+import java.util.Comparator;
+
+public abstract class TextEditorScreen extends EditorScreen implements ColorPickerIncludedScreen {
 	private Button colorText;
 	private Button[] widgets = new Button[0];
 

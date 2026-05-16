@@ -21,7 +21,9 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -29,7 +31,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
-public class TextBlockEditScreen extends TextEditorScreen {
+public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor<TextBlockEntity> {
 	private static final int innerPadding = 4;
 	private static final int editorOffset = 20;
 	private final TextBlockEntity textBlockEntity;
@@ -115,9 +117,13 @@ public class TextBlockEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public void onClose() {
-		C2SEditTextBlock.of(textBlockEntity).send();
-		super.onClose();
+	public TextBlockEntity getBlockEntity() {
+		return this.textBlockEntity;
+	}
+
+	@Override
+	public @Nullable CustomPacketPayload getUpdatePayload() {
+		return C2SEditTextBlock.of(textBlockEntity);
 	}
 
 	private boolean isFocusedTextActive() {
@@ -126,6 +132,13 @@ public class TextBlockEditScreen extends TextEditorScreen {
 			return text.canConsumeInput();
 		}
 		return false;
+	}
+
+	private void checkRow() {
+		final int size = this.textBlockEntity.lines.size();
+		if (this.currentRow >= size) {
+			this.currentRow = size - 1;
+		}
 	}
 
 	@Override
@@ -151,6 +164,7 @@ public class TextBlockEditScreen extends TextEditorScreen {
 		int caretEnd = this.selectionManager.getSelectionPos();
 
 		if (caretStart >= 0) {
+			this.checkRow();
 			String line = this.textBlockEntity.getRawLine(this.currentRow);
 			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
 			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());

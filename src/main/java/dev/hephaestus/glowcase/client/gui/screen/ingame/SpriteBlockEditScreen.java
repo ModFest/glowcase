@@ -15,6 +15,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
@@ -23,9 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class SpriteBlockEditScreen extends GlowcaseScreen {
-	private final SpriteBlockEntity spriteBlockEntity;
-
+public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> {
 	private EditBox spriteWidget;
 	private Button spriteWidgetHelpButton;
 	private Button rotationWidget;
@@ -38,8 +37,8 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	private SuggestionListWidget<String> suggestionWidget;
     private List<String> validSprites = new ArrayList<>();
 
-	public SpriteBlockEditScreen(SpriteBlockEntity spriteBlockEntity) {
-		this.spriteBlockEntity = spriteBlockEntity;
+	public SpriteBlockEditScreen(SpriteBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
@@ -48,9 +47,9 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 
 		this.spriteWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 90, height / 2 - 55, 180, 20, Component.empty());
 		this.spriteWidget.setMaxLength(255);
-		this.spriteWidget.setValue(spriteBlockEntity.getSprite());
+		this.spriteWidget.setValue(blockEntity.getSprite());
 		this.spriteWidget.setResponder(string -> {
-			this.spriteBlockEntity.setSprite(this.spriteWidget.getValue());
+			this.blockEntity.setSprite(this.spriteWidget.getValue());
 		});
 
 		Tooltip spriteHelpTooltip =  Tooltip.create(Component.translatable("gui.glowcase.screen.sprite_edit.sprite"));
@@ -61,32 +60,32 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 			.build();
 
 		this.rotationWidget = Button.builder(Component.translatable("gui.glowcase.rotate"), (action) -> {
-			this.spriteBlockEntity.rotation = (this.spriteBlockEntity.rotation + 45) % 360;
+			this.blockEntity.rotation = (this.blockEntity.rotation + 45) % 360;
 		}).bounds(width / 2 - 90, height / 2 - 25, 180, 20).build();
 
-		this.zOffsetToggle = Button.builder(Component.literal(this.spriteBlockEntity.zOffset.name()), action -> {
-			switch (spriteBlockEntity.zOffset) {
-				case FRONT -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> spriteBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
+		this.zOffsetToggle = Button.builder(Component.literal(this.blockEntity.zOffset.name()), action -> {
+			switch (blockEntity.zOffset) {
+				case FRONT -> blockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
+				case CENTER -> blockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
+				case BACK -> blockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
 			}
 
-			this.zOffsetToggle.setMessage(Component.literal(this.spriteBlockEntity.zOffset.name()));
+			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 90, height / 2 + 5, 180, 20).build();
 
 		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 35, 180, 20, Component.empty());
-		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.spriteBlockEntity.color & 0x00FFFFFF));
+		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
 		this.colorEntryWidget.setResponder(string -> {
 			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-				this.spriteBlockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
+				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
 			});
 		});
 
 		this.scaleEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 65, 180, 20, Component.empty());
-		this.scaleEntryWidget.setValue(String.valueOf(this.spriteBlockEntity.scale));
+		this.scaleEntryWidget.setValue(String.valueOf(this.blockEntity.scale));
 		this.scaleEntryWidget.setResponder(string -> {
 			 try {
-				 this.spriteBlockEntity.scale = Float.parseFloat(string);
+				 this.blockEntity.scale = Float.parseFloat(string);
 			 } catch (NumberFormatException ignored) {}
 		});
 
@@ -190,10 +189,9 @@ public class SpriteBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
-		spriteBlockEntity.setSprite(spriteWidget.getValue());
-		spriteBlockEntity.setChanged();
-		C2SEditSpriteBlock.of(spriteBlockEntity).send();
-		super.onClose();
+	public CustomPacketPayload getUpdatePayload() {
+		blockEntity.setSprite(spriteWidget.getValue());
+		blockEntity.setChanged();
+		return C2SEditSpriteBlock.of(blockEntity);
 	}
 }

@@ -9,30 +9,29 @@ import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
-	private final ItemAcceptorBlockEntity itemAcceptorBlockEntity;
-
+public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorBlockEntity> {
 	private GlowcaseEditBox itemWidget;
 	private GlowcaseEditBox countWidget;
 	private GlowcaseEditBox pulseWidget;
 	private Button outputDirectionToggle;
 
-	public ItemAcceptorBlockEditScreen(ItemAcceptorBlockEntity itemAcceptorBlockEntity) {
-		this.itemAcceptorBlockEntity = itemAcceptorBlockEntity;
+	public ItemAcceptorBlockEditScreen(ItemAcceptorBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
 	public void init() {
 		super.init();
 
-		Identifier item = this.itemAcceptorBlockEntity.getItem();
+		Identifier item = this.blockEntity.getItem();
 
 		this.itemWidget = new GlowcaseEditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
 		if (!item.equals(Identifier.withDefaultNamespace("air"))) {
-			this.itemWidget.setValue((this.itemAcceptorBlockEntity.isItemTag ? "#" : "") + item);
+			this.itemWidget.setValue((this.blockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
 		this.itemWidget.setFilter((currentValue, newChar, cursorPos) -> {
@@ -43,22 +42,28 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 		});
 
 		this.countWidget = new GlowcaseEditBox(this.font, width / 2 + 60, height / 2 - 25, 40, 20, Component.empty());
-		this.countWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.count));
+		this.countWidget.setValue(String.valueOf(this.blockEntity.count));
 		this.countWidget.setHint(TextUtils.placeholder("gui.glowcase.count"));
 		this.countWidget.setFilter(InputFilters::integerNumber);
 
-		this.outputDirectionToggle = Button.builder(Component.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()), action -> {
-			switch (itemAcceptorBlockEntity.outputDirection) {
-				case TOP -> itemAcceptorBlockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.BACK;
-				case BACK -> itemAcceptorBlockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.BOTTOM;
-				case BOTTOM -> itemAcceptorBlockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.TOP;
+		this.outputDirectionToggle = Button.builder(Component.translatable(
+			"gui.glowcase.output_direction",
+			this.blockEntity.outputDirection.toString()
+		), action -> {
+			switch (blockEntity.outputDirection) {
+				case TOP -> blockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.BACK;
+				case BACK -> blockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.BOTTOM;
+				case BOTTOM -> blockEntity.outputDirection = ItemAcceptorBlockEntity.OutputDirection.TOP;
 			}
 
-			this.outputDirectionToggle.setMessage(Component.translatable("gui.glowcase.output_direction", this.itemAcceptorBlockEntity.outputDirection.toString()));
+			this.outputDirectionToggle.setMessage(Component.translatable(
+				"gui.glowcase.output_direction",
+				this.blockEntity.outputDirection.toString()
+			));
 		}).bounds(width / 2 - 100, height / 2 + 5, 150, 20).build();
 
 		this.pulseWidget = new GlowcaseEditBox(this.font, width / 2 + 60, height / 2 + 5, 40, 20, Component.empty());
-		this.pulseWidget.setValue(String.valueOf(this.itemAcceptorBlockEntity.pulse));
+		this.pulseWidget.setValue(String.valueOf(this.blockEntity.pulse));
 		this.pulseWidget.setHint(TextUtils.placeholder("gui.glowcase.pulse"));
 		this.pulseWidget.setFilter(InputFilters::integerNumber);
 
@@ -71,7 +76,7 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
+	public CustomPacketPayload getUpdatePayload() {
 		String text = itemWidget.getValue();
 		boolean isItemTag = text.startsWith("#");
 		if (isItemTag) {
@@ -79,21 +84,20 @@ public class ItemAcceptorBlockEditScreen extends GlowcaseScreen {
 		}
 
 		if (!text.isEmpty() && Identifier.tryParse(text) instanceof Identifier id) {
-			this.itemAcceptorBlockEntity.setItem(id);
-			this.itemAcceptorBlockEntity.isItemTag = isItemTag;
+			this.blockEntity.setItem(id);
+			this.blockEntity.isItemTag = isItemTag;
 		} else {
-			this.itemAcceptorBlockEntity.setItem(Identifier.withDefaultNamespace("air"));
+			this.blockEntity.setItem(Identifier.withDefaultNamespace("air"));
 		}
 
 		if (Ints.tryParse(countWidget.getValue()) instanceof Integer integer) {
-			this.itemAcceptorBlockEntity.count = Math.max(0, integer);
+			this.blockEntity.count = Math.max(0, integer);
 		}
 
 		if (Ints.tryParse(pulseWidget.getValue()) instanceof Integer integer) {
-			this.itemAcceptorBlockEntity.pulse = Math.max(0, integer);
+			this.blockEntity.pulse = Math.max(0, integer);
 		}
 
-		C2SEditItemAcceptorBlock.of(this.itemAcceptorBlockEntity).send();
-		super.onClose();
+		return C2SEditItemAcceptorBlock.of(this.blockEntity);
 	}
 }

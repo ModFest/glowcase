@@ -14,6 +14,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
@@ -22,9 +23,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
-	private final SoundPlayerBlockEntity soundBlock;
-
+public class SoundPlayerBlockEditScreen extends BlockEditorScreen<SoundPlayerBlockEntity> {
 	private EditBox soundId;
 	private Button categoryButton;
 	private Button cancelOthersButton;
@@ -40,8 +39,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	private SuggestionListWidget<String> suggestionWidget;
 	private List<String> validSounds = new ArrayList<>();
 
-	public SoundPlayerBlockEditScreen(SoundPlayerBlockEntity soundBlock) {
-		this.soundBlock = soundBlock;
+	public SoundPlayerBlockEditScreen(SoundPlayerBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
@@ -56,18 +55,26 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			8 * width / 10, 20,
 			Component.empty());
 		this.soundId.setMaxLength(1024);
-		this.soundId.setValue(soundBlock.soundId.toString());
+		this.soundId.setValue(blockEntity.soundId.toString());
 		this.addRenderableWidget(soundId);
 
-		this.categoryButton = new Button.Builder(Component.translatableEscape("gui.glowcase.sound_category", this.soundBlock.category.getName()), (action) -> {
-			soundBlock.cycleCategory();
-			this.categoryButton.setMessage(Component.translatableEscape("gui.glowcase.sound_category", this.soundBlock.category.getName()));
+		this.categoryButton = new Button.Builder(Component.translatableEscape(
+			"gui.glowcase.sound_category",
+			this.blockEntity.category.getName()
+		), (action) -> {
+			blockEntity.cycleCategory();
+			this.categoryButton.setMessage(Component.translatableEscape(
+				"gui.glowcase.sound_category",
+				this.blockEntity.category.getName()
+			));
 		}).bounds(width / 10, height / 2 - 60, (4 * width / 10) - 6, 20).build();
 		this.addRenderableWidget(this.categoryButton);
 
-		this.cancelOthersButton = new Button.Builder(Component.nullToEmpty(Boolean.toString(soundBlock.cancelOthers)), (action) -> {
-			soundBlock.cancelOthers = !soundBlock.cancelOthers;
-			this.cancelOthersButton.setMessage(Component.nullToEmpty(Boolean.toString(soundBlock.cancelOthers)));
+		this.cancelOthersButton = new Button.Builder(
+			Component.nullToEmpty(Boolean.toString(blockEntity.cancelOthers)),
+			(action) -> {
+				blockEntity.cancelOthers = !blockEntity.cancelOthers;
+				this.cancelOthersButton.setMessage(Component.nullToEmpty(Boolean.toString(blockEntity.cancelOthers)));
 		}).bounds(width / 10 + (4 * width / 10) + 6, height / 2 - 60, (4 * width / 10) - 6, 20).build();
 		this.addRenderableWidget(this.cancelOthersButton);
 
@@ -77,7 +84,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			(4 * width / 10) - 6, 20,
 			Component.empty());
 		this.volume.setMaxLength(16);
-		this.volume.setValue(String.valueOf(soundBlock.volume));
+		this.volume.setValue(String.valueOf(blockEntity.volume));
 		this.volume.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.volume);
 
@@ -88,7 +95,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty()
 		);
 		this.pitch.setMaxLength(16);
-		this.pitch.setValue(String.valueOf(soundBlock.pitch));
+		this.pitch.setValue(String.valueOf(blockEntity.pitch));
 		this.pitch.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.pitch);
 
@@ -99,7 +106,7 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty()
 		);
 		this.repeatDelay.setMaxLength(16);
-		this.repeatDelay.setValue(String.valueOf(soundBlock.repeatDelay));
+		this.repeatDelay.setValue(String.valueOf(blockEntity.repeatDelay));
 		this.repeatDelay.setFilter(InputFilters::integerNumber);
 		this.addRenderableWidget(this.repeatDelay);
 
@@ -110,13 +117,19 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			Component.empty()
 		);
 		this.distance.setMaxLength(16);
-		this.distance.setValue(String.valueOf(soundBlock.distance));
+		this.distance.setValue(String.valueOf(blockEntity.distance));
 		this.distance.setFilter(InputFilters::realNumber);
 		this.addRenderableWidget(this.distance);
 
-		this.relativeButton = new Button.Builder(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative), (_) -> {
-			soundBlock.relative = !soundBlock.relative;
-			this.relativeButton.setMessage(Component.translatableEscape("gui.glowcase.sound_positioning", soundBlock.relative));
+		this.relativeButton = new Button.Builder(Component.translatableEscape(
+			"gui.glowcase.sound_positioning",
+			blockEntity.relative
+		), (_) -> {
+			blockEntity.relative = !blockEntity.relative;
+			this.relativeButton.setMessage(Component.translatableEscape(
+				"gui.glowcase.sound_positioning",
+				blockEntity.relative
+			));
 		}).bounds(width / 10, height / 2 + 90, (4 * width / 10) - 6, 20).build();
 		this.addRenderableWidget(this.relativeButton);
 
@@ -124,7 +137,8 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
 			(4 * width / 10) - 6, 20,
 			this.minecraft,
-			soundBlock.offset);
+			blockEntity.offset
+		);
 		this.addRenderableWidget(this.offset);
 
 		validSounds = BuiltInRegistries.SOUND_EVENT.stream()
@@ -242,29 +256,27 @@ public class SoundPlayerBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
-		soundBlock.volume = (float) ParseUtil.parseOrDefault(this.volume.getValue(), soundBlock.volume);
-		soundBlock.pitch = (float) ParseUtil.parseOrDefault(this.pitch.getValue(), soundBlock.pitch);
-		soundBlock.repeatDelay = ParseUtil.parseOrDefault(this.repeatDelay.getValue(), soundBlock.repeatDelay);
+	public CustomPacketPayload getUpdatePayload() {
+		blockEntity.volume = (float) ParseUtil.parseOrDefault(this.volume.getValue(), blockEntity.volume);
+		blockEntity.pitch = (float) ParseUtil.parseOrDefault(this.pitch.getValue(), blockEntity.pitch);
+		blockEntity.repeatDelay = ParseUtil.parseOrDefault(this.repeatDelay.getValue(), blockEntity.repeatDelay);
 
-		soundBlock.distance = (float) ParseUtil.parseOrDefault(this.distance.getValue(), soundBlock.distance);
-		soundBlock.offset = this.offset.value();
+		blockEntity.distance = (float) ParseUtil.parseOrDefault(this.distance.getValue(), blockEntity.distance);
+		blockEntity.offset = this.offset.value();
 
-		setSound();
-
-		super.onClose();
+		return setSound();
 	}
 
-	private void setSound() {
+	private CustomPacketPayload setSound() {
 		Objects.requireNonNull(this.minecraft);
 
 		String idText = this.soundId.getValue();
 		Identifier id = Identifier.tryParse(idText);
 
 		if (id != null) {
-			soundBlock.soundId = id;
+			blockEntity.soundId = id;
 		}
 
-		C2SEditSoundBlock.of(soundBlock).send();
+		return C2SEditSoundBlock.of(blockEntity);
 	}
 }

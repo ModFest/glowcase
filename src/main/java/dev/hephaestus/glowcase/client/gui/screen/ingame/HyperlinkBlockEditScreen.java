@@ -6,16 +6,15 @@ import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.lwjgl.glfw.GLFW;
 
-public class HyperlinkBlockEditScreen extends GlowcaseScreen {
-	private final HyperlinkBlockEntity hyperlinkBlockEntity;
-
+public class HyperlinkBlockEditScreen extends BlockEditorScreen<HyperlinkBlockEntity> {
 	private EditBox titleEntryWidget;
 	private EditBox urlEntryWidget;
 
-	public HyperlinkBlockEditScreen(HyperlinkBlockEntity hyperlinkBlockEntity) {
-		this.hyperlinkBlockEntity = hyperlinkBlockEntity;
+	public HyperlinkBlockEditScreen(HyperlinkBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
@@ -24,12 +23,12 @@ public class HyperlinkBlockEditScreen extends GlowcaseScreen {
 
 		this.titleEntryWidget = new EditBox(this.minecraft.font, width / 10, height / 2 - 30, 8 * width / 10, 20, Component.empty());
 		this.titleEntryWidget.setMaxLength(HyperlinkBlockEntity.TITLE_MAX_LENGTH);
-		this.titleEntryWidget.setValue(this.hyperlinkBlockEntity.getTitle());
+		this.titleEntryWidget.setValue(this.blockEntity.getTitle());
 		this.titleEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.title"));
 
 		this.urlEntryWidget = new EditBox(this.minecraft.font, width / 10, height / 2 + 10, 8 * width / 10, 20, Component.empty());
 		this.urlEntryWidget.setMaxLength(HyperlinkBlockEntity.URL_MAX_LENGTH);
-		this.urlEntryWidget.setValue(this.hyperlinkBlockEntity.getUrl());
+		this.urlEntryWidget.setValue(this.blockEntity.getUrl());
 		this.urlEntryWidget.setHint(TextUtils.placeholder("gui.glowcase.url"));
 
 		this.addRenderableWidget(this.titleEntryWidget);
@@ -52,10 +51,9 @@ public class HyperlinkBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
-		hyperlinkBlockEntity.setUrl(urlEntryWidget.getValue());
-		hyperlinkBlockEntity.setTitle(titleEntryWidget.getValue());
-		C2SEditHyperlinkBlock.of(hyperlinkBlockEntity).send();
-		super.onClose();
+	public CustomPacketPayload getUpdatePayload() {
+		blockEntity.setUrl(urlEntryWidget.getValue());
+		blockEntity.setTitle(titleEntryWidget.getValue());
+		return C2SEditHyperlinkBlock.of(blockEntity);
 	}
 }

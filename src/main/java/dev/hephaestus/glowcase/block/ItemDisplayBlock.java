@@ -4,10 +4,6 @@ import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.ItemDisplayBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,6 +17,9 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class ItemDisplayBlock extends StackInteractableBlock {
 	public static final MapCodec<ItemDisplayBlock> CODEC = simpleCodec(ItemDisplayBlock::new);
@@ -30,7 +29,7 @@ public class ItemDisplayBlock extends StackInteractableBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openItemDisplayBlockEditScreen(pos);
 		return true;
 	}

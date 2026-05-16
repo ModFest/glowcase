@@ -3,10 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,6 +28,9 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class ItemProviderBlock extends StackInteractableBlock {
 	public static final MapCodec<ItemProviderBlock> CODEC = simpleCodec(ItemProviderBlock::new);
@@ -70,7 +69,7 @@ public class ItemProviderBlock extends StackInteractableBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openItemProviderBlockEditScreen(pos);
 		return true;
 	}

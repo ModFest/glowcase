@@ -3,9 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -25,6 +22,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class PopupBlock extends WaterloggableGlowcaseBlock {
 	public static final MapCodec<PopupBlock> CODEC = simpleCodec(PopupBlock::new);
@@ -38,7 +38,7 @@ public class PopupBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openPopupBlockEditScreen(pos);
 		return true;
 	}

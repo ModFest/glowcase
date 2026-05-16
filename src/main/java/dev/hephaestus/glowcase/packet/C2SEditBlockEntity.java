@@ -1,33 +1,46 @@
 package dev.hephaestus.glowcase.packet;
 
-import dev.hephaestus.glowcase.block.GlowcaseBlock;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import dev.hephaestus.glowcase.block.entity.GlowcaseBlockEntity;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.Nullable;
 
-public interface C2SEditBlockEntity extends CustomPacketPayload {
-
+public interface C2SEditBlockEntity extends C2SLockingBlockReceiver {
 	BlockPos pos();
 
 	void receive(ServerLevel world, BlockEntity blockEntity);
 
-	default void receive(ServerPlayNetworking.Context context) {
-		if (!canEdit(context.player())) return;
-		receive(context.player().level(), context.player().level().getBlockEntity(this.pos()));
+	@Override
+	default void receive(ServerPlayer player, ServerLevel level, GlowcaseBlockEntity blockEntity) {
+		this.receive(level, blockEntity);
 	}
 
-	default void send() {
-		ClientPlayNetworking.send(this);
-	}
+	@Override
+	@MustBeInvokedByOverriders
+	default void reject(
+		final PacketSender responseSender,
+		final ServerLevel level,
+		final @Nullable BlockEntity entity
+	) {
+		responseSender.sendPacket(new ClientboundBlockUpdatePacket(level, pos()));
 
-	default boolean canEdit(ServerPlayer player) {
-		if (!player.level().areEntitiesLoaded(ChunkPos.pack(pos()))) return false;
-		if (player.distanceToSqr(pos().getCenter()) > (12 * 12)) return false;
-		return player.level().getBlockState(pos()).getBlock() instanceof GlowcaseBlock block && GlowcaseBlock.canEditGlowcase(player, pos());
+		if (entity == null) {
+			return;
+		}
+
+		final Packet<ClientGamePacketListener> packet = entity.getUpdatePacket();
+
+		if (packet == null) {
+			return;
+		}
+
+		responseSender.sendPacket(packet);
 	}
 }

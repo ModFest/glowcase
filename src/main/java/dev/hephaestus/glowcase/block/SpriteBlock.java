@@ -3,10 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +22,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class SpriteBlock extends WaterloggableGlowcaseBlock {
 	public static final MapCodec<SpriteBlock> CODEC = simpleCodec(SpriteBlock::new);
@@ -43,7 +42,7 @@ public class SpriteBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openSpriteBlockEditScreen(pos);
 		return true;
 	}
@@ -55,7 +54,7 @@ public class SpriteBlock extends WaterloggableGlowcaseBlock {
 
 	@Override
 	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-		loadClientSideNBT(world, pos, placer, stack);
+		super.setPlacedBy(world, pos, state, placer, stack);
 		if (placer != null && world.getBlockEntity(pos) instanceof SpriteBlockEntity be) {
 			if (state.getValue(FACING).equals(Direction.UP)) {
 				be.setRotation(Math.round(((540.0F + placer.getYHeadRot()) % 360.0F) / 45.0F) * 45);

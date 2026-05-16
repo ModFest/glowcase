@@ -3,10 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SoundPlayerBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,6 +17,9 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class SoundPlayerBlock extends WaterloggableGlowcaseBlock {
 	public static final MapCodec<SoundPlayerBlock> CODEC = simpleCodec(SoundPlayerBlock::new);
@@ -37,7 +36,7 @@ public class SoundPlayerBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openSoundBlockEditScreen(pos);
 		return true;
 	}

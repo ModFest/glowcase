@@ -23,7 +23,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class HyperlinkBlock extends WaterloggableGlowcaseBlock {
@@ -39,7 +38,7 @@ public class HyperlinkBlock extends WaterloggableGlowcaseBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openHyperlinkBlockEditScreen(pos);
 		return true;
 	}

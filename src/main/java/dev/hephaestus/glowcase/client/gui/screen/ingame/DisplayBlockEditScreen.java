@@ -8,8 +8,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import org.joml.Vector3f;
 
-public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
-	protected final DisplayBlockEntity displayBlock;
+public abstract class DisplayBlockEditScreen extends BlockEditorScreen<DisplayBlockEntity> {
 
 	protected EditBox scaleField;
     protected EditBox xOffsetField;
@@ -35,8 +34,8 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 	private final float pitchYawChange = 15F;
 	private final float scaleOffsetChange = 0.125F;
 
-	public DisplayBlockEditScreen(DisplayBlockEntity displayBlock) {
-		this.displayBlock = displayBlock;
+	public DisplayBlockEditScreen(DisplayBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
@@ -44,135 +43,135 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 		super.init();
 
 		this.scaleField = new EditBox(this.minecraft.font, 90, 10, 60, 20, Component.empty());
-		this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+		this.scaleField.setValue(String.valueOf(this.blockEntity.getScale().x()));
 		this.scaleField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				this.displayBlock.setScale(new Vector3f(parsed, parsed, parsed));
+				this.blockEntity.setScale(new Vector3f(parsed, parsed, parsed));
 				editDisplayBlock();
 			}
 		});
 
 		this.decreaseSize = Button.builder(Component.literal("-"), _ -> {
-			this.displayBlock.getScale().sub(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
+			this.blockEntity.getScale().sub(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
 			editDisplayBlock();
-			this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+			this.scaleField.setValue(String.valueOf(this.blockEntity.getScale().x()));
 		}).bounds(90 + 60 + 5, 10, 20, 20).build();
 
 		this.increaseSize = Button.builder(Component.literal("+"), _ -> {
-			this.displayBlock.getScale().add(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
+			this.blockEntity.getScale().add(scaleOffsetChange, scaleOffsetChange, scaleOffsetChange);
 			editDisplayBlock();
-			this.scaleField.setValue(String.valueOf(this.displayBlock.getScale().x()));
+			this.scaleField.setValue(String.valueOf(this.blockEntity.getScale().x()));
 		}).bounds(90 + 60 + 5 + 20, 10, 20, 20).build();
 
 		this.xOffsetField = new EditBox(this.minecraft.font, 90, 40, 60, 20, Component.empty());
-		this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+		this.xOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().x()));
 		this.xOffsetField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				Vector3f offset = this.displayBlock.getOffset();
+				Vector3f offset = this.blockEntity.getOffset();
 				offset.x = parsed;
-				this.displayBlock.setOffset(offset);
+				this.blockEntity.setOffset(offset);
 				editDisplayBlock();
 			}
 		});
 
 		this.decreaseXOffset = Button.builder(Component.literal("-"), action -> {
-			this.displayBlock.getOffset().sub(scaleOffsetChange, 0, 0);
+			this.blockEntity.getOffset().sub(scaleOffsetChange, 0, 0);
 			editDisplayBlock();
-			this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+			this.xOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().x()));
 		}).bounds(90 + 60 + 5, 40, 20, 20).build();
 
 		this.increaseXOffset = Button.builder(Component.literal("+"), action -> {
-			this.displayBlock.getOffset().add(scaleOffsetChange, 0, 0);
+			this.blockEntity.getOffset().add(scaleOffsetChange, 0, 0);
 			editDisplayBlock();
-			this.xOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().x()));
+			this.xOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().x()));
 		}).bounds(90 + 60 + 5 + 20, 40, 20, 20).build();
 
 		this.yOffsetField = new EditBox(this.minecraft.font, 90, 70, 60, 20, Component.empty());
-		this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+		this.yOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().y()));
 		this.yOffsetField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				Vector3f offset = this.displayBlock.getOffset();
+				Vector3f offset = this.blockEntity.getOffset();
 				offset.y = parsed;
-				this.displayBlock.setOffset(offset);
+				this.blockEntity.setOffset(offset);
 				editDisplayBlock();
 			}
 		});
 
 		this.decreaseYOffset = Button.builder(Component.literal("-"), action -> {
-			this.displayBlock.getOffset().sub(0, scaleOffsetChange, 0);
+			this.blockEntity.getOffset().sub(0, scaleOffsetChange, 0);
 			editDisplayBlock();
-			this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+			this.yOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().y()));
 		}).bounds(90 + 60 + 5, 70, 20, 20).build();
 
 		this.increaseYOffset = Button.builder(Component.literal("+"), action -> {
-			this.displayBlock.getOffset().add(0, scaleOffsetChange, 0);
+			this.blockEntity.getOffset().add(0, scaleOffsetChange, 0);
 			editDisplayBlock();
-			this.yOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().y()));
+			this.yOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().y()));
 		}).bounds(90 + 60 + 5 + 20, 70, 20, 20).build();
 
 		this.zOffsetField = new EditBox(this.minecraft.font, 90, 100, 60, 20, Component.empty());
-		this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+		this.zOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().z()));
 		this.zOffsetField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				Vector3f offset = this.displayBlock.getOffset();
+				Vector3f offset = this.blockEntity.getOffset();
 				offset.z = parsed;
-				this.displayBlock.setOffset(offset);
+				this.blockEntity.setOffset(offset);
 				editDisplayBlock();
 			}
 		});
 
 		this.decreaseZOffset = Button.builder(Component.literal("-"), action -> {
-			this.displayBlock.getOffset().sub(0, 0, scaleOffsetChange);
+			this.blockEntity.getOffset().sub(0, 0, scaleOffsetChange);
 			editDisplayBlock();
-			this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+			this.zOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().z()));
 		}).bounds(90 + 60 + 5, 100, 20, 20).build();
 
 		this.increaseZOffset = Button.builder(Component.literal("+"), action -> {
-			this.displayBlock.getOffset().add(0, 0, scaleOffsetChange);
+			this.blockEntity.getOffset().add(0, 0, scaleOffsetChange);
 			editDisplayBlock();
-			this.zOffsetField.setValue(String.valueOf(this.displayBlock.getOffset().z()));
+			this.zOffsetField.setValue(String.valueOf(this.blockEntity.getOffset().z()));
 		}).bounds(90 + 60 + 5 + 20, 100, 20, 20).build();
 
 		this.pitchField = new EditBox(this.minecraft.font, 90, 130, 60, 20, Component.empty());
-		this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+		this.pitchField.setValue(String.valueOf(this.blockEntity.getPitch()));
 		this.pitchField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				this.displayBlock.setPitch(parsed);
+				this.blockEntity.setPitch(parsed);
 				editDisplayBlock();
 			}
 		});
 
 		this.decreasePitch = Button.builder(Component.literal("-"), action -> {
-			this.displayBlock.setPitch(this.displayBlock.getPitch() - pitchYawChange);
+			this.blockEntity.setPitch(this.blockEntity.getPitch() - pitchYawChange);
 			editDisplayBlock();
-			this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+			this.pitchField.setValue(String.valueOf(this.blockEntity.getPitch()));
 		}).bounds(90 + 60 + 5, 130, 20, 20).build();
 
 		this.increasePitch = Button.builder(Component.literal("+"), action -> {
-			this.displayBlock.setPitch(this.displayBlock.getPitch() + pitchYawChange);
+			this.blockEntity.setPitch(this.blockEntity.getPitch() + pitchYawChange);
 			editDisplayBlock();
-			this.pitchField.setValue(String.valueOf(this.displayBlock.getPitch()));
+			this.pitchField.setValue(String.valueOf(this.blockEntity.getPitch()));
 		}).bounds(90 + 60 + 5 + 20, 130, 20, 20).build();
 
 		this.yawField = new EditBox(this.minecraft.font, 90, 160, 60, 20, Component.empty());
-		this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+		this.yawField.setValue(String.valueOf(this.blockEntity.getYaw()));
 		this.yawField.setResponder(string -> {
 			if (Floats.tryParse(string) instanceof Float parsed) {
-				this.displayBlock.setYaw(parsed);
+				this.blockEntity.setYaw(parsed);
 				editDisplayBlock();
 			}
 		});
 
 		this.decreaseYaw = Button.builder(Component.literal("-"), action -> {
-			this.displayBlock.setYaw(this.displayBlock.getYaw() - pitchYawChange);
+			this.blockEntity.setYaw(this.blockEntity.getYaw() - pitchYawChange);
 			editDisplayBlock();
-			this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+			this.yawField.setValue(String.valueOf(this.blockEntity.getYaw()));
 		}).bounds(90 + 60 + 5, 160, 20, 20).build();
 
 		this.increaseYaw = Button.builder(Component.literal("+"), action -> {
-			this.displayBlock.setYaw(this.displayBlock.getYaw() + pitchYawChange);
+			this.blockEntity.setYaw(this.blockEntity.getYaw() + pitchYawChange);
 			editDisplayBlock();
-			this.yawField.setValue(String.valueOf(this.displayBlock.getYaw()));
+			this.yawField.setValue(String.valueOf(this.blockEntity.getYaw()));
 		}).bounds(90 + 60 + 5 + 20, 160, 20, 20).build();
 
 		this.addRenderableWidget(this.scaleField);
@@ -206,5 +205,7 @@ public abstract class DisplayBlockEditScreen extends GlowcaseScreen {
 		graphics.text(minecraft.font, Component.translatable("gui.glowcase.yaw_value"), 20, 167, 0xFFFFFFFF);
 	}
 
-	protected abstract void editDisplayBlock();
+	protected final void editDisplayBlock() {
+		this.sendUpdatePacket();
+	}
 }

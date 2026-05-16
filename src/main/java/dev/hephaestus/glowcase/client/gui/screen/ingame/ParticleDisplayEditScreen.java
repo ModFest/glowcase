@@ -28,8 +28,10 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +39,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ParticleDisplayEditScreen extends GlowcaseScreen {
-	private final ParticleDisplayBlockEntity blockEntity;
+public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplayBlockEntity> {
 	private EditBox particleId;
 
 	private Vec3FieldsWidget positionMean;
@@ -57,7 +58,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	private List<Identifier> validParticles = new ArrayList<>();
 
 	public ParticleDisplayEditScreen(ParticleDisplayBlockEntity blockEntity) {
-		this.blockEntity = blockEntity;
+		super(blockEntity);
 	}
 
 	@Override
@@ -293,7 +294,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
+	public @Nullable CustomPacketPayload getUpdatePayload() {
 		setParticle();
 
 		blockEntity.position = new DeviatedVec3d(positionMean.value(), positionStdDev.value());
@@ -309,8 +310,7 @@ public class ParticleDisplayEditScreen extends GlowcaseScreen {
 			ParseUtil.parseOrDefault(tickRateStdDev.getValue(), blockEntity.tickRate.stdDev())
 		);
 
-		C2SEditParticleDisplayBlock.of(blockEntity).send();
-		super.onClose();
+		return C2SEditParticleDisplayBlock.of(blockEntity);
 	}
 
 	@SuppressWarnings("unchecked")

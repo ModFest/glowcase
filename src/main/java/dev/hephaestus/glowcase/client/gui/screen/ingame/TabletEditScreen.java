@@ -8,22 +8,22 @@ import dev.hephaestus.glowcase.client.ScreenImageCache.ScreenTexture;
 import dev.hephaestus.glowcase.packet.C2SEditTabletItem;
 import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.MutableComponent;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.UUID;
-
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-public class TabletEditScreen extends GlowcaseScreen {
+import java.util.ArrayList;
+import java.util.UUID;
+
+public class TabletEditScreen extends EditorScreen {
 	private static final Identifier TEXTURE = Glowcase.id("textures/gui/tablet.png");
 	private static final int TXT_COLOR = 0x8af4b9;
 
@@ -224,10 +224,7 @@ public class TabletEditScreen extends GlowcaseScreen {
 	}
 
 	public void syncSlide() {
-		if (slide_dirty) {
-			slides.set(current, new Pair<>(this.urlEntryWidget.getValue(), this.altEntryWidget.getValue()));
-			C2SEditTabletItem.of(current, this.urlEntryWidget.getValue(), this.altEntryWidget.getValue()).send();
-		}
+		this.sendUpdatePacket();
 	}
 
 	/**
@@ -282,8 +279,11 @@ public class TabletEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
-		syncSlide();
-		super.onClose();
+	public CustomPacketPayload getUpdatePayload() {
+		if (slide_dirty) {
+			slides.set(current, new Pair<>(this.urlEntryWidget.getValue(), this.altEntryWidget.getValue()));
+			return C2SEditTabletItem.of(current, this.urlEntryWidget.getValue(), this.altEntryWidget.getValue());
+		}
+		return null;
 	}
 }

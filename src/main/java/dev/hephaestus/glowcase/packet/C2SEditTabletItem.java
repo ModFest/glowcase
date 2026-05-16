@@ -3,13 +3,13 @@ package dev.hephaestus.glowcase.packet;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
+
 import java.util.ArrayList;
 
 public record C2SEditTabletItem(int index, String url, String alt) implements CustomPacketPayload {
@@ -56,10 +56,6 @@ public record C2SEditTabletItem(int index, String url, String alt) implements Cu
 		}
 
 		stack.set(Glowcase.SLIDESHOW_COMPONENT.get(), slideshow);
-	}
-
-	public void send() {
-		ClientPlayNetworking.send(this);
 	}
 
 	@Override

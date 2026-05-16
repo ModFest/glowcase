@@ -6,28 +6,32 @@ import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
-public class TextBlockOptionsScreen extends Screen {
+public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> {
 	private final Screen returnScreen;
-	private final TextBlockEntity entity;
 
 	public final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 	public TextOptionList options;
 
-	public TextBlockOptionsScreen(Screen returnScreen, TextBlockEntity entity) {
-		super(Component.translatable("gui.glowcase.text_options"));
+	public TextBlockOptionsScreen(Screen returnScreen, TextBlockEntity blockEntity) {
+		super(blockEntity, Component.translatable("gui.glowcase.text_options"));
 		this.returnScreen = returnScreen;
-		this.entity = entity;
 	}
 
 	@Override
@@ -43,26 +47,26 @@ public class TextBlockOptionsScreen extends Screen {
 		this.options.add(
 			CycleButton.builder(
 					alignment -> Component.literal(alignment.toString()),
-					entity.horizontalAlignment
+					blockEntity.horizontalAlignment
 				)
 				.withValues(TextBlockEntity.HorizontalAlignment.values())
 				.create(
 					Component.translatable("gui.glowcase.x_offset_label"),
 					(_, alignment) -> {
-						entity.horizontalAlignment = alignment;
-						entity.rebake(true);
+						blockEntity.horizontalAlignment = alignment;
+						blockEntity.rebake(true);
 					}
 				),
 			CycleButton.builder(
 					offset -> Component.literal(offset.toString()),
-					entity.zOffset
+					blockEntity.zOffset
 				)
 				.withValues(TextBlockEntity.ZOffset.values())
 				.create(
 					Component.translatable("gui.glowcase.z_offset_label"),
 					(_, offset) -> {
-						entity.zOffset = offset;
-						entity.rebake(true);
+						blockEntity.zOffset = offset;
+						blockEntity.rebake(true);
 					}
 				)
 		);
@@ -70,7 +74,7 @@ public class TextBlockOptionsScreen extends Screen {
 		this.options.add(
 			CycleButton.builder(
 					alignment -> Component.literal(alignment.toString()),
-					entity.textAlignment
+					blockEntity.textAlignment
 				)
 				.withValues(
 					// not `.values()` to not have CENTER_LEFT or CENTER_RIGHT, unless they get removed
@@ -81,15 +85,15 @@ public class TextBlockOptionsScreen extends Screen {
 				.create(
 					Component.translatable("gui.glowcase.text_alignment"),
 					(_, alignment) -> {
-						entity.textAlignment = alignment;
-						entity.rebake(true);
+						blockEntity.textAlignment = alignment;
+						blockEntity.rebake(true);
 					}
 				),
-			CycleButton.onOffBuilder(entity.shadow).create(
+			CycleButton.onOffBuilder(blockEntity.shadow).create(
 				Component.translatable("gui.glowcase.text_shadow"),
 				(_, shadow) -> {
-					entity.shadow = shadow;
-					entity.rebake(true);
+					blockEntity.shadow = shadow;
+					blockEntity.rebake(true);
 				}
 			)
 		);
@@ -101,11 +105,11 @@ public class TextBlockOptionsScreen extends Screen {
 			Button.DEFAULT_HEIGHT,
 			Component.translatable("gui.glowcase.color")
 		);
-		colorEditBox.setValue(ColorUtil.toAlphaHex(this.entity.color));
-		colorEditBox.setResponder(string -> ColorUtil.parse(string, entity.color)
+		colorEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.color));
+		colorEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.color)
 			.ifSuccess(newColor -> {
-				entity.color = newColor;
-				entity.rebake(true);
+				blockEntity.color = newColor;
+				blockEntity.rebake(true);
 			}));
 
 		var backgroundEditBox = new EditBox(
@@ -114,11 +118,11 @@ public class TextBlockOptionsScreen extends Screen {
 			Button.DEFAULT_HEIGHT,
 			Component.translatable("gui.glowcase.background_color")
 		);
-		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.entity.backgroundColor));
-		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, entity.backgroundColor)
+		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.backgroundColor));
+		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.backgroundColor)
 			.ifSuccess(newColor -> {
-				entity.backgroundColor = newColor;
-				entity.rebake(true);
+				blockEntity.backgroundColor = newColor;
+				blockEntity.rebake(true);
 			}));
 
 		this.options.add(colorEditBox, backgroundEditBox);
@@ -128,8 +132,15 @@ public class TextBlockOptionsScreen extends Screen {
 	}
 
 	private void addScaleWidgetRow(TextOptionList options) {
-		var slider = new TextScale.SliderWidget(this.entity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT);
-		var input = new TextScale.InputWidget(this.entity, this.font, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT);
+		var slider = new TextScale.SliderWidget(this.blockEntity, -1, -1, Button.DEFAULT_WIDTH, Button.DEFAULT_HEIGHT);
+		var input = new TextScale.InputWidget(
+			this.blockEntity,
+			this.font,
+			-1,
+			-1,
+			Button.DEFAULT_WIDTH,
+			Button.DEFAULT_HEIGHT
+		);
 
 		slider.setScaleResponder(scale -> input.setValue(String.valueOf(scale)));
 		input.setScaleResponder(scale -> slider.updateValue((scale - TextScale.MIN_SCALE) / TextScale.SCALE_DELTA));
@@ -138,10 +149,14 @@ public class TextBlockOptionsScreen extends Screen {
 	}
 
 	@Override
+	public CustomPacketPayload getUpdatePayload() {
+		return C2SEditTextBlock.of(this.blockEntity);
+	}
+
+	@Override
 	public void onClose() {
 		super.onClose();
-		C2SEditTextBlock.of(this.entity).send();
-		Minecraft.getInstance().setScreen(this.returnScreen);
+		this.minecraft.setScreen(this.returnScreen);
 	}
 
 	@NullMarked

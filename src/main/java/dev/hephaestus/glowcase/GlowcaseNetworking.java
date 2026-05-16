@@ -18,6 +18,10 @@ import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import dev.hephaestus.glowcase.packet.C2SEditTabletItem;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
+import dev.hephaestus.glowcase.packet.C2SUnlockEditor;
+import dev.hephaestus.glowcase.packet.S2CCloseEditor;
+import dev.hephaestus.glowcase.packet.S2COpenEditor;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +48,7 @@ public class GlowcaseNetworking {
 		PayloadTypeRegistry.serverboundPlay().register(C2SEditNoteItem.ID, C2SEditNoteItem.PACKET_CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(C2SEditEntityDisplayBlock.ID, C2SEditEntityDisplayBlock.PACKET_CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(C2SSlotScrolled.ID, C2SSlotScrolled.PACKET_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(C2SUnlockEditor.ID, C2SUnlockEditor.PACKET_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditHyperlinkBlock.ID, C2SEditHyperlinkBlock::receive);
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditConfigLinkBlock.ID, C2SEditConfigLinkBlock::receive);
@@ -62,6 +67,13 @@ public class GlowcaseNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditNoteItem.ID, C2SEditNoteItem::receive);
 		ServerPlayNetworking.registerGlobalReceiver(C2SEditEntityDisplayBlock.ID, C2SEditEntityDisplayBlock::receive);
 		ServerPlayNetworking.registerGlobalReceiver(C2SSlotScrolled.ID, GlowcaseNetworking::slotScrolled);
+		ServerPlayNetworking.registerGlobalReceiver(C2SUnlockEditor.ID, C2SUnlockEditor::receive);
+
+		PayloadTypeRegistry.clientboundPlay().register(S2COpenEditor.ID, S2COpenEditor.PACKET_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(S2CCloseEditor.ID, S2CCloseEditor.PACKET_CODEC);
+
+		ClientPlayNetworking.registerGlobalReceiver(S2COpenEditor.ID, S2COpenEditor::receive);
+		ClientPlayNetworking.registerGlobalReceiver(S2CCloseEditor.ID, S2CCloseEditor::receive);
 	}
 
 	/**

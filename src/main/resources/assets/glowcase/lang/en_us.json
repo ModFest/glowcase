@@ -75,6 +75,8 @@
 	"item.glowcase.linked_screen": "Linked Screen",
 	"item.glowcase.current_slide": "Current Slide",
 	"item.glowcase.slideshow": "Slideshow",
+	"gui.glowcase.editor.locked": "This %s is being edited by %s",
+	"gui.glowcase.editor.toofar": "This %s is too far away to edit",
 
 	"gui.glowcase.recipe": "Recipe",
 	"gui.glowcase.scale_value": "Scale: %d",

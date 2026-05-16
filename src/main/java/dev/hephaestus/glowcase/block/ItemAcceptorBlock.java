@@ -3,9 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,6 +39,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class ItemAcceptorBlock extends GlowcaseBlock {
 	public static final MapCodec<ItemAcceptorBlock> CODEC = simpleCodec(ItemAcceptorBlock::new);
@@ -71,21 +71,14 @@ public class ItemAcceptorBlock extends GlowcaseBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openItemAcceptorBlockEditScreen(pos);
 		return true;
 	}
 
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-		if (!(world.getBlockEntity(pos) instanceof ItemAcceptorBlockEntity be)) return InteractionResult.CONSUME;
-		if (canEditGlowcase(player, pos)) {
-			if (world.isClientSide()) {
-				openEditScreen(pos);
-			}
-			return InteractionResult.SUCCESS;
-		}
-		return InteractionResult.PASS;
+		return this.openEditScreen(world, pos, player);
 	}
 
 	@Override

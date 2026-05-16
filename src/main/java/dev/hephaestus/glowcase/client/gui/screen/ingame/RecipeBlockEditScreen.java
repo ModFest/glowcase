@@ -16,16 +16,17 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RecipeBlockEditScreen extends GlowcaseScreen {
+public class RecipeBlockEditScreen extends BlockEditorScreen<RecipeBlockEntity> {
 	private static final List<Identifier> NO_SUGGESTIONS = List.of();
-	private final RecipeBlockEntity recipeBlockEntity;
 
 	private EditBox recipeWidget;
 	private EditBox rotationXWidget;
@@ -42,8 +43,8 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 
 	private int baseY;
 
-	public RecipeBlockEditScreen(RecipeBlockEntity recipeBlockEntity) {
-		this.recipeBlockEntity = recipeBlockEntity;
+	public RecipeBlockEditScreen(RecipeBlockEntity blockEntity) {
+		super(blockEntity);
 	}
 
 	@Override
@@ -60,41 +61,41 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 
 		this.recipeWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 150, baseY + 10, 300, 20, Component.empty());
 		this.recipeWidget.setMaxLength(1024);
-		this.recipeWidget.setValue(recipeBlockEntity.recipe);
+		this.recipeWidget.setValue(blockEntity.recipe);
 
 		this.rotationXWidget = new EditBox(this.minecraft.font, (width - 145) / 2, baseY + fontHeight + 45, 70, 20, Component.empty());
 		this.rotationXWidget.setMaxLength(1024);
-		this.rotationXWidget.setValue(Float.toString(recipeBlockEntity.rotationX));
+		this.rotationXWidget.setValue(Float.toString(blockEntity.rotationX));
 		this.rotationXWidget.setResponder(s -> {
 			if (Floats.tryParse(s) instanceof Float parsed) {
-				recipeBlockEntity.rotationX = parsed;
+				blockEntity.rotationX = parsed;
 			}
 		});
 
 		this.rotationYWidget = new EditBox(this.minecraft.font, (width - 145) / 2 + 75, baseY + fontHeight + 45, 70, 20, Component.empty());
 		this.rotationYWidget.setMaxLength(1024);
-		this.rotationYWidget.setValue(Float.toString(recipeBlockEntity.rotationY));
+		this.rotationYWidget.setValue(Float.toString(blockEntity.rotationY));
 		this.rotationYWidget.setResponder(s -> {
 			if (Floats.tryParse(s) instanceof Float parsed) {
-				recipeBlockEntity.rotationY = parsed;
+				blockEntity.rotationY = parsed;
 			}
 		});
 
-		this.zOffsetToggle = Button.builder(Component.literal(this.recipeBlockEntity.zOffset.name()), action -> {
-			switch (recipeBlockEntity.zOffset) {
-				case FRONT -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> recipeBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
+		this.zOffsetToggle = Button.builder(Component.literal(this.blockEntity.zOffset.name()), action -> {
+			switch (blockEntity.zOffset) {
+				case FRONT -> blockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
+				case CENTER -> blockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
+				case BACK -> blockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
 			}
 
-			this.zOffsetToggle.setMessage(Component.literal(this.recipeBlockEntity.zOffset.name()));
+			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 75, baseY + fontHeight + 75, 150, 20).build();
 
 		suggestionWidget = SuggestionListWidget.forTextField(recipeWidget, minecraft.font, Identifier::toString);
 
 		recipeWidget.setResponder((text) -> {
 			if (Identifier.tryParse(this.recipeWidget.getValue()) != null) {
-				this.recipeBlockEntity.recipe = this.recipeWidget.getValue();
+				this.blockEntity.recipe = this.recipeWidget.getValue();
 			}
 
 			if (GlowcaseClient.RRV_LOADED) {
@@ -209,10 +210,9 @@ public class RecipeBlockEditScreen extends GlowcaseScreen {
 	}
 
 	@Override
-	public void onClose() {
-		recipeBlockEntity.setRecipe(recipeWidget.getValue());
-		C2SEditRecipeBlock.of(recipeBlockEntity).send();
-		super.onClose();
+	public @Nullable CustomPacketPayload getUpdatePayload() {
+		blockEntity.setRecipe(recipeWidget.getValue());
+		return C2SEditRecipeBlock.of(blockEntity);
 	}
 
 }

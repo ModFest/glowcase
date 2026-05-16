@@ -5,11 +5,6 @@ import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -30,6 +25,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import java.util.function.Consumer;
 
 public class RecipeBlock extends RotatableBlock {
 	public static final MapCodec<RecipeBlock> CODEC = simpleCodec(RecipeBlock::new);
@@ -39,7 +38,7 @@ public class RecipeBlock extends RotatableBlock {
 	}
 
 	@Override
-	protected boolean openEditScreen(BlockPos pos) {
+	public boolean openEditScreen(BlockPos pos) {
 		Glowcase.proxy.openRecipeBlockEditScreen(pos);
 		return true;
 	}

@@ -1,14 +1,12 @@
 package dev.hephaestus.glowcase.block.entity;
 
 import dev.hephaestus.glowcase.util.DisplayBlockSettings;
-import org.joml.Vector3f;
-
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.joml.Vector3f;
 
 public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 	private Vector3f offset = new Vector3f(0.0F);
