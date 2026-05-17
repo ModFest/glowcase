@@ -107,7 +107,6 @@ public class GlowcaseLevelRenderer implements Closeable {
 			return;
 		}
 
-		var iterator = this.visibleSections.iterator();
 		int largestIndexCount = 0;
 		List<DynamicUniforms.Transform> transforms = new ObjectArrayList<>();
 		RenderTypeGroups.Builder renderGroups = new RenderTypeGroups.Builder();
@@ -125,8 +124,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 				this.sectionRenderDispatcher.uploadGlobalGeomBuffersToGPU();
 			}
 
-			while (iterator.hasNext()) {
-				final var sectionEntry = iterator.next();
+			for (VisibleSections.Entry sectionEntry : this.visibleSections) {
 				final long sectionNode = sectionEntry.sectionNode();
 				final RenderSectionPos sectionPos = new RenderSectionPos(sectionNode);
 				final var sectionInfo = sectionEntry.sectionInfo();
