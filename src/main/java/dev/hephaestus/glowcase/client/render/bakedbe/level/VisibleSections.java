@@ -232,6 +232,7 @@ public final class VisibleSections implements Iterable<VisibleSections.Entry> {
 			if (index != -1) {
 				sectionDataByIndex.set(index, null);
 				presence.clear(index);
+				nearby.clear(index);
 			}
 		}
 	}
