@@ -173,7 +173,7 @@ public class Pool<T> {
 							  Id: {}""",
 						resourceClassName,
 						polledAt,
-						polledAt - Util.getMillis(),
+						Util.getMillis() - polledAt,
 						resourceId,
 						exception
 					);
