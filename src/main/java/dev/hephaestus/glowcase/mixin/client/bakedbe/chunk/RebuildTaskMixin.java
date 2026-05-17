@@ -42,9 +42,7 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 		ExtendedResults extendedResults = (ExtendedResults) (Object) results;
 		BakedMeshes meshes = extendedResults.glowcase$getBakedMeshes();
 		if (meshes == null || meshes.isEmpty()) {
-			if (meshes != null) {
-				meshes.close();
-			}
+			if (meshes != null) meshes.close();
 			levelRenderer.releaseSection(this$1.getSectionNode());
 			return;
 		}
@@ -65,8 +63,8 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 				if (isCancelled.get()) {
 					meshes.close();
 					results.release();
-					this$0.lock();
 
+					this$0.lock();
 					try {
 						((RenderSectionAccessor) this$1).callReleaseSectionMesh(compiledSectionMesh);
 					} finally {
@@ -85,5 +83,7 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 
 			mesh.close();
 		}
+
+		meshes.finish();
 	}
 }

@@ -213,5 +213,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 
 			mesh.close();
 		}
+
+		meshes.finish();
 	}
 }

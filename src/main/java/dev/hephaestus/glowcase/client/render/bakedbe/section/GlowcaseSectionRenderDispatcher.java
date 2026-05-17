@@ -290,7 +290,6 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 		private void checkBuffers(long sectionNode) {
 			if (!pendingVertex.isEmpty() || !pendingIndex.isEmpty()) return;
-			bakedMeshes.finish();
 			visibleSections.setSectionDraws(sectionNode, bakedMeshes);
 		}
 	}
