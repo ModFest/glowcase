@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.Util;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3dc;
 import org.joml.Vector3fc;
@@ -151,7 +152,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 		// Sodium blocks the render thread waiting for tasks to complete, so we need to abort if we enter a deadlock
 		unblock: if (!success && !RenderSystem.isOnRenderThread() && callbacks != null && callbacks.tries++ > 99 && callbacks.tries % 10 == 0) {
-			if (System.nanoTime() - callbacks.initTime <= 1_000_000_000) break unblock;
+			if (Util.getMillis() - callbacks.initTime <= 1000) break unblock;
 
 			// This is taking too long
 			if (ThreadManagement.isLongWaiting(RenderSystemAccessor.getRenderThread(), 1000).isLong) {
@@ -260,7 +261,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		private final Set<RenderType> pendingIndex = new HashSet<>();
 		// Should be safe to be non-atomic, only one thread should be using this callback
 		private int tries = 0;
-		private final long initTime = System.nanoTime();
+		private final long initTime = Util.getMillis();
 
 		public UberBufferCallbacks(VisibleSections visibleSections, BakedMeshes bakedMeshes) {
 			this.visibleSections = visibleSections;
