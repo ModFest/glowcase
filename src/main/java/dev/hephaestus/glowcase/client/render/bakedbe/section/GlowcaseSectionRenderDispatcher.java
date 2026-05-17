@@ -9,9 +9,11 @@ import com.mojang.blaze3d.vertex.*;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.VisibleSections;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderSystemAccessor;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DataFlow;
 import dev.hephaestus.glowcase.util.DefaultedMap;
+import dev.hephaestus.glowcase.util.ThreadManagement;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSectionBufferSlice;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -26,6 +28,7 @@ import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -146,6 +149,19 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 			unlock();
 		}
 
+		// Sodium blocks the render thread waiting for tasks to complete, so we need to abort if we enter a deadlock
+		unblock: if (!success && !RenderSystem.isOnRenderThread() && callbacks != null && callbacks.tries++ > 99 && callbacks.tries % 10 == 0) {
+			if (System.nanoTime() - callbacks.initTime <= 1_000_000_000) break unblock;
+
+			// This is taking too long
+			if (ThreadManagement.isLongWaiting(RenderSystemAccessor.getRenderThread(), 1000).isLong) {
+				// The main thread is waiting indefinitely and has waited a long time or is disabled, just return true, this result is getting nowhere
+				callbacks.vertexCallback(renderType);
+				callbacks.indexCallback(renderType);
+				return true;
+			}
+		}
+
 		return success;
 	}
 
@@ -167,6 +183,10 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 	public void lock() {
 		this.copyLock.lock();
+	}
+
+	public boolean lock(long timeout, TimeUnit unit) throws InterruptedException {
+		return this.copyLock.tryLock(timeout, unit);
 	}
 
 	public void unlock() {
@@ -238,6 +258,9 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 		private final BakedMeshes bakedMeshes;
 		private final Set<RenderType> pendingVertex = new HashSet<>();
 		private final Set<RenderType> pendingIndex = new HashSet<>();
+		// Should be safe to be non-atomic, only one thread should be using this callback
+		private int tries = 0;
+		private final long initTime = System.nanoTime();
 
 		public UberBufferCallbacks(VisibleSections visibleSections, BakedMeshes bakedMeshes) {
 			this.visibleSections = visibleSections;
@@ -266,6 +289,7 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 
 		private void checkBuffers(long sectionNode) {
 			if (!pendingVertex.isEmpty() || !pendingIndex.isEmpty()) return;
+			bakedMeshes.finish();
 			visibleSections.setSectionDraws(sectionNode, bakedMeshes);
 		}
 	}

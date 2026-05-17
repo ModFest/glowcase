@@ -7,6 +7,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public class DummyOutlineBufferSource extends OutlineBufferSource {
+	public static final DummyOutlineBufferSource INSTANCE = new DummyOutlineBufferSource();
 	private final VertexConsumer dummyConsumer = new DummyVertexConsumer();
 
 	@Override

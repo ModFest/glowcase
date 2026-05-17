@@ -59,6 +59,10 @@ public record CompiledMesh(MeshData meshData, @Nullable Sorter sorter) implement
 			final int quads = vertices / 4;
 			final CompactVectorArray sortingPoints = new CompactVectorArray(quads);
 
+			if (vertexBuffer.remaining() < vertexStride * vertices) {
+				throw new AssertionError("Vertex buffer is not large enough to contain all vertices");
+			}
+
 			for (
 				int i = 0, firstPosOffset = positionOffset, secondPosOffset = positionOffset + (vertexStride * 2);
 				i < quads;

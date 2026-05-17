@@ -9,6 +9,7 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public class DummyBufferSource extends MultiBufferSource.BufferSource {
+	public static final DummyBufferSource INSTANCE = new DummyBufferSource();
 	private final VertexConsumer dummyConsumer = new DummyVertexConsumer();
 
 	protected DummyBufferSource() {

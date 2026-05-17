@@ -2,13 +2,10 @@ package dev.hephaestus.glowcase.client.render.bakedbe;
 
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.util.collections.ObjectPairArrayList;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
-import it.unimi.dsi.fastutil.objects.ReferenceReferencePair;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.util.*;
@@ -16,17 +13,19 @@ import java.util.*;
 @NullMarked
 public class BakedMeshes implements AutoCloseable, Iterable<BakedMeshes.Entry> {
 	private final ObjectArrayList<Entry> entries = new ObjectArrayList<>();
+	private final Runnable onFinish;
 	private final boolean hasTranslucency;
 	private final boolean isFallback;
 
-	public BakedMeshes(ObjectPairArrayList<RenderType, CompiledMesh> meshes) {
-		this(meshes, false);
+	public BakedMeshes(ObjectPairArrayList<RenderType, CompiledMesh> meshes, Runnable onFinish) {
+		this(meshes, onFinish, false);
 	}
 
-	BakedMeshes(ObjectPairArrayList<RenderType, CompiledMesh> meshes, boolean isFallback) {
-		boolean hasTranslucency = false;
+	BakedMeshes(ObjectPairArrayList<RenderType, CompiledMesh> meshes, Runnable onFinish, boolean isFallback) {
 		this.isFallback = isFallback;
+		this.onFinish = onFinish;
 
+		boolean hasTranslucency = false;
 		for (var pair : meshes) {
 			var renderType = pair.left();
 			// Use blending as an indicator as text doesn't mark sortOnUpload due to shadows being weird
@@ -49,6 +48,10 @@ public class BakedMeshes implements AutoCloseable, Iterable<BakedMeshes.Entry> {
 		return isFallback;
 	}
 
+	public void finish() {
+		onFinish.run();
+	}
+
 	@Override
 	public ObjectListIterator<Entry> iterator() {
 		return entries.listIterator();
@@ -56,6 +59,7 @@ public class BakedMeshes implements AutoCloseable, Iterable<BakedMeshes.Entry> {
 
 	@Override
 	public void close() {
+		finish();
 		for (Entry entry : entries) entry.close();
 	}
 

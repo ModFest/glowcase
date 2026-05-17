@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.render.bakedbe.buffers;
 import com.mojang.blaze3d.vertex.*;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh.Sorter;
+import dev.hephaestus.glowcase.mixinsupport.BufferOOMRecovery;
 import dev.hephaestus.glowcase.util.collections.ObjectPairArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.caffeinemc.mods.sodium.client.util.sorting.VertexSortingExtended;
@@ -20,7 +21,7 @@ import java.util.function.Function;
 import static dev.hephaestus.glowcase.util.SizeConstants.Mi;
 
 @NullMarked
-public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
+public class BakedBEBufferSource extends MultiBufferSource.BufferSource implements AutoCloseable {
 	private static final boolean HAS_SODIUM = FabricLoader.getInstance().isModLoaded("sodium");
 	private static final DummyByteBufferBuilder sharedBuffer = new DummyByteBufferBuilder();
 	protected final Map<RenderType, ByteBufferBuilder> startedBuffers = new Object2ObjectLinkedOpenHashMap<>();
@@ -38,8 +39,7 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 	}
 
 	private BufferBuilder createBuilder(RenderType renderType) {
-		final ByteBufferBuilder buffer = createBuffer(renderType);
-		this.startedBuffers.put(renderType, buffer);
+		final ByteBufferBuilder buffer = this.startedBuffers.computeIfAbsent(renderType, this::createBuffer);
 		return new BufferBuilder(buffer, renderType.mode(), renderType.format());
 	}
 
@@ -127,14 +127,22 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource {
 	@SafeVarargs
 	public final MeshTooComplex abort(@Nullable Exception cause, @Nullable ObjectPairArrayList<RenderType, CompiledMesh>... built) {
 		for (var meshes : built) {
-			if (meshes != null) meshes.forEachRight(CompiledMesh::close);
+			if (meshes != null) {
+				meshes.forEachRight(CompiledMesh::close);
+				meshes.clear();
+			}
 		}
 
-		this.startedBuffers.values().forEach(ByteBufferBuilder::discard);
+		this.startedBuffers.values().forEach(buffer -> ((BufferOOMRecovery) buffer).glowcase$freeUnbuilt());
 		this.startedBuilders.clear();
 
 		if (cause == null) return new MeshTooComplex();
 		if (cause instanceof MeshTooComplex e) return e;
 		return new MeshTooComplex(cause);
+	}
+
+	@Override
+	public void close() {
+		startedBuffers.values().forEach(ByteBufferBuilder::close);
 	}
 }

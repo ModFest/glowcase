@@ -12,9 +12,7 @@ import java.util.SequencedMap;
 
 import static dev.hephaestus.glowcase.util.SizeConstants.Mi;
 
-public class BakedBERenderBuffers {
-	private static final DummyOutlineBufferSource outlineBufferSource = new DummyOutlineBufferSource();
-	private static final DummyBufferSource crumblingBufferSource = new DummyBufferSource();
+public class BakedBERenderBuffers implements AutoCloseable {
 	private final SectionBufferBuilderPack fixedBufferPack = new SectionBufferBuilderPack();
 	private final BakedBEBufferSource bufferSource;
 
@@ -46,11 +44,9 @@ public class BakedBERenderBuffers {
 		return this.bufferSource;
 	}
 
-	public MultiBufferSource.BufferSource crumblingBufferSource() {
-		return crumblingBufferSource;
-	}
-
-	public OutlineBufferSource outlineBufferSource() {
-		return outlineBufferSource;
+	@Override
+	public void close() {
+		fixedBufferPack.close();
+		bufferSource.close();
 	}
 }

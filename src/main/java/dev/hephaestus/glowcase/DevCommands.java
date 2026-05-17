@@ -8,16 +8,19 @@ import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
 import dev.hephaestus.glowcase.util.DataFlow;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.blocks.BlockInput;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -26,27 +29,81 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 
-import static net.minecraft.commands.Commands.*;
-
 class DevCommands {
 	static void registerDevCommands() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			copyFill(dispatcher);
 		});
+
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+			rebake(dispatcher);
+		});
 	}
 
-	private static void copyFill(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(literal("copyfill")
-			.requires(hasPermission(Commands.LEVEL_GAMEMASTERS))
-			.then(literal("render_section")
-				.then(argument("pos", BlockPosArgument.blockPos())
+	private static void rebake(CommandDispatcher<FabricClientCommandSource> dispatcher) {
+		dispatcher.register(ClientCommands.literal("rebake")
+			.then(ClientCommands.literal("render_section")
+				.then(ClientCommands.argument("pos", BlockPosArgument.blockPos())
 					.suggests((context, builder) -> {
 						Vec3 position = context.getSource().getPosition();
 						RenderSectionPos pos = new RenderSectionPos(BlockPos.containing(position));
 						return SharedSuggestionProvider.suggest(List.of(pos.toCommandString()), builder);
 					})
-					.then(argument("source", BlockPosArgument.blockPos())
-						.then(argument("strict", BoolArgumentType.bool())
+					.executes(context -> {
+						var source = context.getSource();
+						var coordinates = context.getArgument("pos", Coordinates.class);
+						Vec3 sourcePos = source.getPosition();
+						BlockPos pos;
+						if (coordinates instanceof WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z)) {
+							pos = BlockPos.containing(x.get(sourcePos.x), y.get(sourcePos.y), z.get(sourcePos.z));
+						} else if (coordinates instanceof LocalCoordinates(double left, double up, double forwards)){
+							pos = BlockPos.containing(Vec3.applyLocalCoordinatesToRotation(source.getRotation(), new Vec3(left, up, forwards)).add(sourcePos.x, sourcePos.y, sourcePos.z));
+						} else {
+							throw new IllegalStateException("Invalid input");
+						}
+
+						RenderSectionPos sectionPos = RenderSectionPos.fromVec3i(pos);
+						source.getLevel().setSectionRangeDirty(sectionPos.getX(), sectionPos.getY(), sectionPos.getZ(), sectionPos.getX(), sectionPos.getY(), sectionPos.getZ());
+
+						return 0;
+					})
+				)
+			).then(ClientCommands.argument("pos", BlockPosArgument.blockPos())
+				.executes(context -> {
+					var source = context.getSource();
+					var coordinates = context.getArgument("pos", Coordinates.class);
+					Vec3 sourcePos = source.getPosition();
+					BlockPos pos;
+					if (coordinates instanceof WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z)) {
+						pos = BlockPos.containing(x.get(sourcePos.x), y.get(sourcePos.y), z.get(sourcePos.z));
+					} else if (coordinates instanceof LocalCoordinates(double left, double up, double forwards)){
+						pos = BlockPos.containing(Vec3.applyLocalCoordinatesToRotation(source.getRotation(), new Vec3(left, up, forwards)).add(sourcePos.x, sourcePos.y, sourcePos.z));
+					} else {
+						throw new IllegalStateException("Invalid input");
+					}
+
+					ClientLevel level = source.getLevel();
+					BlockState state = level.getBlockState(pos);
+					level.sendBlockUpdated(pos, state, state, 0);
+
+					return 0;
+				})
+			)
+		);
+	}
+
+	private static void copyFill(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("copyfill")
+			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+			.then(Commands.literal("render_section")
+				.then(Commands.argument("pos", BlockPosArgument.blockPos())
+					.suggests((context, builder) -> {
+						Vec3 position = context.getSource().getPosition();
+						RenderSectionPos pos = new RenderSectionPos(BlockPos.containing(position));
+						return SharedSuggestionProvider.suggest(List.of(pos.toCommandString()), builder);
+					})
+					.then(Commands.argument("source", BlockPosArgument.blockPos())
+						.then(Commands.argument("strict", BoolArgumentType.bool())
 							.executes(context -> {
 								CommandSourceStack source = context.getSource();
 								BlockPos pos = BlockPosArgument.getBlockPos(context, "pos");
@@ -65,10 +122,10 @@ class DevCommands {
 						)
 					)
 				)
-			).then(argument("from", BlockPosArgument.blockPos())
-				.then(argument("to", BlockPosArgument.blockPos())
-					.then(argument("source", BlockPosArgument.blockPos())
-						.then(argument("strict", BoolArgumentType.bool())
+			).then(Commands.argument("from", BlockPosArgument.blockPos())
+				.then(Commands.argument("to", BlockPosArgument.blockPos())
+					.then(Commands.argument("source", BlockPosArgument.blockPos())
+						.then(Commands.argument("strict", BoolArgumentType.bool())
 							.executes(context -> {
 								CommandSourceStack source = context.getSource();
 								BlockPos sourcePos = BlockPosArgument.getLoadedBlockPos(context, "source");

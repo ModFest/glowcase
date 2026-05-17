@@ -3,9 +3,7 @@ package dev.hephaestus.glowcase.client.render.bakedbe;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import dev.hephaestus.glowcase.client.render.bakedbe.buffers.BakedBEBufferSource;
-import dev.hephaestus.glowcase.client.render.bakedbe.buffers.BakedBERenderBuffers;
-import dev.hephaestus.glowcase.client.render.bakedbe.buffers.MeshTooComplex;
+import dev.hephaestus.glowcase.client.render.bakedbe.buffers.*;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.FeatureRenderDispatcherAccessor;
 import dev.hephaestus.glowcase.util.collections.Pool;
@@ -24,22 +22,18 @@ import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@NullMarked
 @Environment(EnvType.CLIENT)
 public class BakedBERenderDispatcher {
 	private static final int AVAILABLE_CORES = Runtime.getRuntime().availableProcessors();
 	private static final Pool<BakedBERenderDispatcher> RENDER_DISPATCHERS = new Pool<>(BakedBERenderDispatcher::createBakedBERenderDispatcher, AVAILABLE_CORES);
 	private static final Pool<SubmitNodeStorage> NODE_STORAGE_POOL = new Pool<>(SubmitNodeStorage::new, AVAILABLE_CORES);
+	private static final Pool<BakedBERenderBuffers> RENDER_BUFFERS_POOL = new Pool<>(BakedBERenderBuffers::new, BakedBERenderBuffers::close, AVAILABLE_CORES * 4, true);
 
 	private final ModelManager modelManager;
-	private final BakedBEBufferSource bufferSource;
 	private final AtlasManager atlasManager;
-	private final OutlineBufferSource outlineBufferSource;
-	private final MultiBufferSource.BufferSource crumblingBufferSource;
 	private final Font font;
 	private final GameRenderState gameRenderState;
 	private final ShadowFeatureRenderer shadowFeatureRenderer = new ShadowFeatureRenderer();
@@ -52,21 +46,16 @@ public class BakedBERenderDispatcher {
 	private final ItemFeatureRenderer itemFeatureRenderer = new ItemFeatureRenderer();
 	private final CustomFeatureRenderer customFeatureRenderer = new CustomFeatureRenderer();
 	private final BlockFeatureRenderer blockFeatureRenderer = new BlockFeatureRenderer();
+	private BakedBERenderBuffers renderBuffers;
 
 	private BakedBERenderDispatcher(
 		final ModelManager modelManager,
-		final BakedBEBufferSource bufferSource,
 		final AtlasManager atlasManager,
-		final OutlineBufferSource outlineBufferSource,
-		final MultiBufferSource.BufferSource crumblingBufferSource,
 		final Font font,
 		final GameRenderState gameRenderState
 	) {
 		this.modelManager = modelManager;
-		this.bufferSource = bufferSource;
 		this.atlasManager = atlasManager;
-		this.outlineBufferSource = outlineBufferSource;
-		this.crumblingBufferSource = crumblingBufferSource;
 		this.font = font;
 		this.gameRenderState = gameRenderState;
 	}
@@ -88,46 +77,52 @@ public class BakedBERenderDispatcher {
 
 	public void renderSolidFeatures(final SubmitNodeStorage submitNodeStorage) {
 		for (SubmitNodeCollection collection : submitNodeStorage.getSubmitsPerOrder().values()) {
-			this.modelFeatureRenderer.renderSolid(collection, this.bufferSource, this.outlineBufferSource, this.crumblingBufferSource);
-			this.modelPartFeatureRenderer.renderSolid(collection, this.bufferSource, this.outlineBufferSource, this.crumblingBufferSource);
-			this.flameFeatureRenderer.renderSolid(collection, this.bufferSource, this.atlasManager);
-			this.leashFeatureRenderer.renderSolid(collection, this.bufferSource);
-			this.itemFeatureRenderer.renderSolid(collection, this.bufferSource, this.outlineBufferSource);
-			this.blockFeatureRenderer.renderSolid(collection, this.bufferSource, this.modelManager.getBlockStateModelSet(), this.outlineBufferSource, this.gameRenderState.optionsRenderState);
-			this.customFeatureRenderer.renderSolid(collection, this.bufferSource);
+			this.modelFeatureRenderer.renderSolid(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE, DummyBufferSource.INSTANCE);
+			this.modelPartFeatureRenderer.renderSolid(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE, DummyBufferSource.INSTANCE);
+			this.flameFeatureRenderer.renderSolid(collection, this.bufferSource(), this.atlasManager);
+			this.leashFeatureRenderer.renderSolid(collection, this.bufferSource());
+			this.itemFeatureRenderer.renderSolid(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE);
+			this.blockFeatureRenderer.renderSolid(collection, this.bufferSource(), this.modelManager.getBlockStateModelSet(), DummyOutlineBufferSource.INSTANCE, this.gameRenderState.optionsRenderState);
+			this.customFeatureRenderer.renderSolid(collection, this.bufferSource());
 		}
 	}
 
 	public void renderTranslucentFeatures(final SubmitNodeStorage submitNodeStorage) {
 		for (SubmitNodeCollection collection : submitNodeStorage.getSubmitsPerOrder().values()) {
-			this.shadowFeatureRenderer.renderTranslucent(collection, this.bufferSource);
-			this.modelFeatureRenderer.renderTranslucent(collection, this.bufferSource, this.outlineBufferSource, this.crumblingBufferSource);
-			this.modelPartFeatureRenderer.renderTranslucent(collection, this.bufferSource, this.outlineBufferSource, this.crumblingBufferSource);
-			this.nameTagFeatureRenderer.renderTranslucent(collection, this.bufferSource, this.font);
-			this.textFeatureRenderer.renderTranslucent(collection, this.bufferSource);
-			this.itemFeatureRenderer.renderTranslucent(collection, this.bufferSource, this.outlineBufferSource);
+			this.shadowFeatureRenderer.renderTranslucent(collection, this.bufferSource());
+			this.modelFeatureRenderer.renderTranslucent(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE, DummyBufferSource.INSTANCE);
+			this.modelPartFeatureRenderer.renderTranslucent(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE, DummyBufferSource.INSTANCE);
+			this.nameTagFeatureRenderer.renderTranslucent(collection, this.bufferSource(), this.font);
+			this.textFeatureRenderer.renderTranslucent(collection, this.bufferSource());
+			this.itemFeatureRenderer.renderTranslucent(collection, this.bufferSource(), DummyOutlineBufferSource.INSTANCE);
 			this.blockFeatureRenderer
 				.renderTranslucent(
 					collection,
-					this.bufferSource,
+					this.bufferSource(),
 					this.modelManager.getBlockStateModelSet(),
-					this.outlineBufferSource,
-					this.crumblingBufferSource,
+					DummyOutlineBufferSource.INSTANCE,
+					DummyBufferSource.INSTANCE,
 					this.gameRenderState.optionsRenderState
 				);
-			this.customFeatureRenderer.renderTranslucent(collection, this.bufferSource);
+			this.customFeatureRenderer.renderTranslucent(collection, this.bufferSource());
 		}
+	}
+
+	private BakedBEBufferSource bufferSource() {
+		return renderBuffers.bufferSource();
 	}
 
 	public static BakedMeshes buildAllFeatures(final long sectionNode, final SubmitNodeStorage submitNodeStorage, final VertexSorting vertexSorting) {
 		BakedBERenderDispatcher dispatcher = RENDER_DISPATCHERS.acquire();
 
 		try {
+			dispatcher.renderBuffers = RENDER_BUFFERS_POOL.acquire();
 			return dispatcher.buildAll(submitNodeStorage, vertexSorting);
 		} catch (MeshTooComplex e) {
 			ErrorRenderer.logError(e, sectionNode);
 			return dispatcher.new ErrorRenderer().build(vertexSorting);
 		}  finally {
+			dispatcher.renderBuffers = null;
 			RENDER_DISPATCHERS.release(dispatcher);
 			returnNodeStorage(submitNodeStorage);
 		}
@@ -142,26 +137,23 @@ public class BakedBERenderDispatcher {
 			renderTranslucentFeatures(submitNodeStorage);
 
 			profiler.popPush("bake");
-			return new BakedMeshes(bufferSource.buildAllBatches(vertexSorting));
+			final var renderBuffers = this.renderBuffers;
+			return new BakedMeshes(renderBuffers.bufferSource().buildAllBatches(vertexSorting), () -> RENDER_BUFFERS_POOL.release(renderBuffers));
 		} catch (MeshTooComplex | IllegalArgumentException e) {
 			// We only want to catch the buffer capacity exceeded exception from IllegalArgumentException
 			if (e instanceof IllegalArgumentException && !e.getStackTrace()[0].getClassName().equals(ByteBufferBuilder.class.getName())) throw e;
-			throw bufferSource.abort(e);
+			throw bufferSource().abort(e);
 		} finally {
 			profiler.pop();
 		}
 	}
 
 	private static BakedBERenderDispatcher createBakedBERenderDispatcher() {
-		BakedBERenderBuffers renderBuffers = new BakedBERenderBuffers();
 		GameRenderer gameRenderer = Minecraft.getInstance().gameRenderer;
 		FeatureRenderDispatcherAccessor renderDispatcherAccessor = (FeatureRenderDispatcherAccessor) gameRenderer.getFeatureRenderDispatcher();
 		return new BakedBERenderDispatcher(
 			renderDispatcherAccessor.getModelManager(),
-			renderBuffers.bufferSource(),
 			Minecraft.getInstance().getAtlasManager(),
-			renderBuffers.outlineBufferSource(),
-			renderBuffers.crumblingBufferSource(),
 			renderDispatcherAccessor.getFont(),
 			gameRenderer.getGameRenderState()
 		);
@@ -179,14 +171,15 @@ public class BakedBERenderDispatcher {
 			renderCube(BOUNDING_BOX, CUBE_COLOR);
 
 			try {
-				return new BakedMeshes(bufferSource.buildAllBatches(sorting), true);
+				final var renderBuffers = BakedBERenderDispatcher.this.renderBuffers;
+				return new BakedMeshes(bufferSource().buildAllBatches(sorting), () -> RENDER_BUFFERS_POOL.release(renderBuffers), true);
 			} catch (MeshTooComplex e) {
 				throw new IllegalStateException("Failed to create fallback mesh", e);
 			}
 		}
 
 		private void renderCube(AABB aabb, int color) {
-			final VertexConsumer boxBuilder = bufferSource.getBuffer(RenderTypes.debugFilledBox());
+			final VertexConsumer boxBuilder = bufferSource().getBuffer(RenderTypes.debugFilledBox());
 
 			double x0 = aabb.minX;
 			double y0 = aabb.minY;
