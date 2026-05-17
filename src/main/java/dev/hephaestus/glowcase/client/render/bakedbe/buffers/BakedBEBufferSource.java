@@ -133,7 +133,10 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource implemen
 			}
 		}
 
-		this.startedBuffers.values().forEach(buffer -> ((BufferOOMRecovery) buffer).glowcase$freeUnbuilt());
+		this.startedBuffers.values().forEach(buffer -> {
+			buffer.discard();
+			((BufferOOMRecovery) buffer).glowcase$freeUnbuilt();
+		});
 		this.startedBuilders.clear();
 
 		if (cause == null) return new MeshTooComplex();
