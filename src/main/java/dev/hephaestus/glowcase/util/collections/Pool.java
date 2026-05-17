@@ -191,7 +191,11 @@ public class Pool<T> {
 
 			long now = Util.getMillis();
 			if (now >= polledAt + MINUTE) {
-				LOGGER.warn("Resource [class={},id={}] allocated for over a minute! Giving up on alerts.", resourceClassName, resourceId, exception);
+				if (exception != null) {
+					LOGGER.error("Resource [class={},id={}] allocated for over a minute! Giving up on alerts.", resourceClassName, resourceId, exception);
+				} else {
+					LOGGER.error("Resource [class={},id={}] allocated for over a minute! Giving up on alerts.", resourceClassName, resourceId);
+				}
 				nextWarning = -1;
 			} else if (nextWarning <= now) {
 				LOGGER.warn("Resource [class={},id={}] allocated for too long! (over {} seconds)", resourceClassName, resourceId, (now - polledAt) / 1000f);
