@@ -26,7 +26,12 @@ import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.chunk.*;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
+import net.minecraft.client.renderer.chunk.RenderSectionRegion;
+import net.minecraft.client.renderer.chunk.SectionCompiler;
+import net.minecraft.client.renderer.chunk.SectionMesh;
+import net.minecraft.client.renderer.chunk.TranslucencyPointOfView;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.profiling.Profiler;
@@ -103,7 +108,7 @@ public class SectionCompilerMixin {
 				BakedBlockEntityRenderer<E, ?, B> renderer = (BakedBlockEntityRenderer<E, ?, B>) baseRenderer;
 				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(
 					blockEntity,
-					lighter.get().getLightCoords(blockState, level.get(), BlockPos.ZERO)
+					lighter.get().getLightCoords(blockState, level.get(), pos)
 				);
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();

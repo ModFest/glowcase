@@ -11,8 +11,8 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedRendererUtil;
-import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
+import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.client.render.block.entity.BakedBlockEntityRenderer;
 import dev.hephaestus.glowcase.mixinsupport.BakingBlockEntityRenderDispatcher;
@@ -33,6 +33,7 @@ import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -104,7 +105,13 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 				BakedBlockEntityRenderer<E, ?, B> bakedRenderer = (BakedBlockEntityRenderer<E, ?, B>) renderer;
 				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(
 					entity,
-					lightCache.get().get(blockPos)
+					// Sodium's lightCache is in a Sodium-specific format that's ill-suited for here.
+					LevelRenderer.getLightCoords(
+						LevelRenderer.BrightnessGetter.DEFAULT,
+						lightCache.get().getLevel(),
+						blockState,
+						blockPos
+					)
 				);
 				if (renderState != null) {
 					SubmitNodeStorage nodeStorage = nodeStorageRef.get();
