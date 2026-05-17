@@ -156,8 +156,8 @@ public class GlowcaseSectionRenderDispatcher implements Closeable {
 			// This is taking too long
 			if (ThreadManagement.isLongWaiting(RenderSystemAccessor.getRenderThread(), 1000).isLong) {
 				// The main thread is waiting indefinitely and has waited a long time or is disabled, just return true, this result is getting nowhere
-				callbacks.vertexCallback(renderType);
-				callbacks.indexCallback(renderType);
+				callbacks.vertexCallback(renderType).bufferHasBeenUploaded(sectionPos);
+				callbacks.indexCallback(renderType).bufferHasBeenUploaded(sectionPos);
 				return true;
 			}
 		}
