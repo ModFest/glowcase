@@ -5,9 +5,9 @@ import com.llamalad7.mixinextras.expression.Expression;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
+import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.section.GlowcaseSectionRenderDispatcher.UberBufferCallbacks;
-import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.vertex.CompiledMesh;
 import dev.hephaestus.glowcase.mixinsupport.ExtendedResults;
 import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
@@ -42,6 +42,9 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 		ExtendedResults extendedResults = (ExtendedResults) (Object) results;
 		BakedMeshes meshes = extendedResults.glowcase$getBakedMeshes();
 		if (meshes == null || meshes.isEmpty()) {
+			if (meshes != null) {
+				meshes.close();
+			}
 			levelRenderer.releaseSection(this$1.getSectionNode());
 			return;
 		}
