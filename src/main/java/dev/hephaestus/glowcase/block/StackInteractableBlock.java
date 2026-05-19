@@ -63,15 +63,19 @@ public abstract class StackInteractableBlock extends WaterloggableGlowcaseBlock 
 			return InteractionResult.CONSUME;
 		}
 
-		// Set if empty.
-		if (interactable.matchesStack(ItemStack.EMPTY)) {
-			interactable.setFromStack(stack);
+		// Clear if glowcase, opening GUI instead if empty.
+		if (stack.is(Glowcase.ITEM_TAG)) {
+			if (interactable.matchesStack(ItemStack.EMPTY)) {
+				this.openEditScreen(world, pos, player);
+			} else {
+				interactable.unsetFromStack();
+			}
 			return InteractionResult.SUCCESS_SERVER;
 		}
 
-		// Clear if glowcase.
-		if (stack.is(Glowcase.ITEM_TAG)) {
-			interactable.unsetFromStack();
+		// Set if empty.
+		if (interactable.matchesStack(ItemStack.EMPTY)) {
+			interactable.setFromStack(stack);
 			return InteractionResult.SUCCESS_SERVER;
 		}
 
