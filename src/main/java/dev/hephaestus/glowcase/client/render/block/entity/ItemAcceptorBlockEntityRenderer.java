@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.block.ItemAcceptorBlock;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -28,7 +29,7 @@ import org.jspecify.annotations.Nullable;
 
 public record ItemAcceptorBlockEntityRenderer(
 	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemAcceptorBlockEntity, ItemAcceptorBlockEntityRenderer.ItemAcceptorRenderState> {
-	private static final Quaternionf ITEM_LIGHT_ROTATION_3D = Axis.XP.rotationDegrees(-15).mul(Axis.YP.rotationDegrees(15));
+	private static final Quaternionf ITEM_LIGHT_ROTATION_3D = Quaternionsf.rotateDegreesXYZ(-15, 15, 0);
 	private static final Quaternionf ITEM_LIGHT_ROTATION_FLAT = Axis.XP.rotationDegrees(-45);
 
 	public static class ItemAcceptorRenderState extends BlockEntityRenderState {

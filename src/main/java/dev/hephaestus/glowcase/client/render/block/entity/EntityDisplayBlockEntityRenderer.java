@@ -67,7 +67,7 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 
 		matrices.popPose();
 
-		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
+		if (renderEntity == null || BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
 			BlockEntityRenderUtil.renderCenteredPlaceholder(state, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(state.yaw), matrices, submitNodeCollector);
 		}
 	}

@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
@@ -92,7 +93,7 @@ public record SpriteBlockEntityRenderer(
 		matrices.pushPose();
 		matrices.translate(0.5D, 0.5D, 0.5D);
 
-		matrices.mulPose(state.facing.getRotation().mul(Axis.XP.rotationDegrees(-90.0F)));
+		matrices.mulPose(state.facing.getRotation().rotateX(-Mth.HALF_PI));
 		matrices.mulPose(Axis.ZN.rotationDegrees(state.rotation));
 
 		switch (state.zOffset) {

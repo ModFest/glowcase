@@ -1,14 +1,15 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.mojang.math.Transformation;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.ItemProviderBlock;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
+import dev.hephaestus.glowcase.client.util.RenderText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -21,19 +22,44 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Map;
 
 public record ItemProviderBlockEntityRenderer(
 	BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<ItemProviderBlockEntity, ItemProviderBlockEntityRenderer.ItemProviderRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/item_provider_block.png");
+
+	private static final Map<Direction, Transformation> transformCache = Util.makeEnumMap(
+		Direction.class,
+		ItemProviderBlockEntityRenderer::build
+	);
+	private static final float textScale = 0.025F;
+	private static final Matrix4f textTransformCache = new Matrix4f()
+		.rotateZ(Mth.PI)
+		.translate(0, -.6f, -.3f)
+		.scale(textScale, textScale, -textScale); // note: -z is shadow fix
+
+	private static Transformation build(Direction direction) {
+		if (direction == Direction.UP || direction == Direction.DOWN) {
+			return null;
+		}
+
+		final Matrix4f matrix = new Matrix4f();
+		matrix.translate(0.5F, 0.5F, 0.5F);
+		matrix.rotate(direction.getOpposite().getRotation().rotateX(-Mth.HALF_PI));
+		matrix.translate(0.F, 0.F, 0.375F);
+		matrix.scale(0.5F);
+
+		return new Transformation(matrix);
+	}
 
 	public static class ItemProviderRenderState extends BlockEntityRenderState {
 		public ItemStackRenderState itemRenderState = new ItemStackRenderState();
@@ -85,96 +111,83 @@ public record ItemProviderBlockEntityRenderer(
 
 	@Override
 	public void submit(ItemProviderRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		poseStack.pushPose();
-		poseStack.translate(0.5D, 0D, 0.5D);
-
-		float yaw = 0F;
-		float pitch = 0F;
-
-		boolean isBack = false;
-		boolean isBillboard = false;
-
-		switch (state.facing) {
-			case DOWN, UP -> {
-				if (state.isBlockItem) {
-					Vec2 pitchAndYaw = BlockEntityRenderUtil.getTracking(camera.pos, state.blockPos);
-					pitch = pitchAndYaw.x;
-					yaw = pitchAndYaw.y;
-					poseStack.mulPose(Axis.YP.rotation(yaw));
-				} else {
-					pitch = (float) Math.toRadians(camera.xRot);
-					yaw = (float) Math.toRadians(-camera.yRot);
-					poseStack.mulPose(Axis.YP.rotation(yaw));
-					isBillboard = true;
-				}
-			}
-			default -> {
-				poseStack.mulPose(state.facing.getRotation().mul(Axis.XP.rotationDegrees(-90.0F)));
-				poseStack.translate(0D, Math.sin(pitch) * -0.4, -0.4D);
-				isBack = true;
+		if (state.shouldRenderPlaceholder) {
+			if (state.facing.getAxis() != Direction.Axis.Y) {
+				BlockEntityRenderUtil.renderFacingPlaceholder(
+					state,
+					state.facing,
+					ITEM_TEXTURE,
+					1.0F,
+					poseStack,
+					submitNodeCollector
+				);
+			} else if (state.isBlockItem) {
+				BlockEntityRenderUtil.renderTrackingPlaceholder(
+					state,
+					ITEM_TEXTURE,
+					1.0F,
+					poseStack,
+					submitNodeCollector,
+					camera.pos
+				);
+			} else {
+				BlockEntityRenderUtil.renderBillboardPlaceholder(
+					state,
+					ITEM_TEXTURE,
+					1.0F,
+					poseStack,
+					submitNodeCollector,
+					camera
+				);
 			}
 		}
 
-		poseStack.translate(0, 0.5, 0);
-		poseStack.scale(0.5F, 0.5F, 0.5F);
-		poseStack.mulPose(Axis.XP.rotation(pitch));
+		final boolean displayText = BlockEntityRenderUtil.isBeingLookedAt(state.blockPos);
+
+		if (state.isInvisible && !displayText) {
+			return;
+		}
+
+		poseStack.pushPose();
+
+		final Transformation transform = transformCache.get(state.facing);
+		if (transform == null) {
+			poseStack.translate(0.5D, 0.5D, 0.5D);
+			poseStack.scale(0.5F, 0.5F, 0.5F);
+			if (state.isBlockItem) {
+				poseStack.mulPose(Quaternionsf.rotateYX(BlockEntityRenderUtil.getTracking(camera.pos, state.blockPos)));
+			} else {
+				poseStack.mulPose(Quaternionsf.rotateDegreesYXZ(-camera.yRot, camera.xRot, 0));
+			}
+		} else {
+			poseStack.mulPose(transform);
+		}
 
 		if (!state.isInvisible) {
-			poseStack.pushPose();
-			if (state.facing.getAxis() != Direction.Axis.Y) {
-				poseStack.mulPose(Axis.YP.rotationDegrees(180f));
-			}
-
 			state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
-
-			poseStack.popPose();
 		}
 
-		HitResult hitResult = Minecraft.getInstance().hitResult;
-		if (hitResult instanceof BlockHitResult && ((BlockHitResult) hitResult).getBlockPos().equals(state.blockPos)) {
-			poseStack.pushPose();
-			if (isBack) { // Dunno, poseStack are hard
-				poseStack.mulPose(Axis.XP.rotationDegrees(180));
-			} else {
-				poseStack.mulPose(Axis.ZP.rotationDegrees(180));
-			}
-
-			poseStack.translate(0, -0.6, -0.3);
-			float scale = 0.025F;
-			poseStack.scale(scale, scale, scale);
+		if (displayText) {
+			// Freely just clobber the matrix, we're not reusing it.
+			poseStack.mulPose(textTransformCache);
 
 			Component name = state.name;
 			int color = ARGB.opaque(name.getStyle().getColor() == null ? 0xFFFFFF : name.getStyle().getColor().getValue());
 
-			poseStack.pushPose();
-			poseStack.translate(-context.font().width(name) / 2F, -4, 0);
-			// Shadow fix - consider a helper function for this?
-			poseStack.scale(1, 1, -1);
-			submitNodeCollector.submitText(poseStack, 0, 0, state.name.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
-
-			poseStack.popPose();
+			RenderText.brightCenterText(submitNodeCollector, poseStack, context.font(), 0, -4, name, color);
 
 			if (!state.itemRenderState.isEmpty()) {
-				poseStack.pushPose();
-				poseStack.translate(-context.font().width(state.countText) + 16, state.canGive ? 32 : 24, 0);
-				poseStack.scale(1, 1, -1);
-				submitNodeCollector.submitText(poseStack, 0, 0, state.countText.getVisualOrderText(), true, Font.DisplayMode.NORMAL, LightCoordsUtil.FULL_BRIGHT, color, 0, 0);
-				poseStack.popPose();
+				RenderText.brightText(
+					submitNodeCollector,
+					poseStack,
+					-context.font().width(state.countText) + 16,
+					state.canGive ? 32 : 24,
+					state.countText,
+					color
+				);
 			}
-			poseStack.popPose();
 		}
 
 		poseStack.popPose();
-
-
-		if (state.shouldRenderPlaceholder) {
-			if (isBack) {
-				BlockEntityRenderUtil.renderFacingPlaceholder(state, state.facing, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector);
-			} else if (isBillboard) {
-				BlockEntityRenderUtil.renderBillboardPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera);
-			} else {
-				BlockEntityRenderUtil.renderTrackingPlaceholder(state, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, camera.pos);
-			}
-		}
 	}
 }

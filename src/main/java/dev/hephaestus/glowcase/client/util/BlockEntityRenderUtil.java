@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class BlockEntityRenderUtil {
+public final class BlockEntityRenderUtil {
 	private static final Vector3f[] placeholderVertices = new Vector3f[]{
 		new Vector3f(-0.5F, -0.5F, 0.0F),
 		new Vector3f(0.5F, -0.5F, 0.0F),
@@ -42,26 +42,19 @@ public class BlockEntityRenderUtil {
 	}
 
 	public static void renderBillboardPlaceholder(BlockEntityRenderState entity, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		poseStack.pushPose();
-		poseStack.translate(0.5, 0.5, 0.5);
-		poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - camera.yRot));
-		poseStack.mulPose(Axis.XP.rotationDegrees(-camera.xRot));
-		poseStack.scale(scale, scale, scale);
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), (pose, buffer) -> renderPlaceholderFace(pose, buffer, entity.blockPos));
-		poseStack.popPose();
+		renderPlaceholder(entity, texture, scale, camera.orientation, poseStack, submitNodeCollector, 0);
 	}
 
 	public static void renderTrackingPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Vec3 camera) {
-		poseStack.pushPose();
-		poseStack.translate(0.5, 0.5, 0.5);
-		Vec2 tracking = getTracking(camera, state.blockPos);
-		float pitch = tracking.x;
-		float yaw = tracking.y;
-		poseStack.mulPose(Axis.YP.rotation((float) (Math.PI + yaw)));
-		poseStack.mulPose(Axis.XP.rotation(-pitch));
-		poseStack.scale(scale, scale, scale);
-		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(texture), (pose, buffer) -> renderPlaceholderFace(pose, buffer, state.blockPos));
-		poseStack.popPose();
+		renderPlaceholder(
+			state,
+			texture,
+			scale,
+			getTrackingQuaternion(camera, state.blockPos),
+			poseStack,
+			submitNodeCollector,
+			0
+		);
 	}
 
 	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
@@ -83,7 +76,19 @@ public class BlockEntityRenderUtil {
 
 	public static void renderFacingPlaceholder(BlockEntityRenderState entity, Direction facing, Identifier texture,
 											   float scale, PoseStack matrices, SubmitNodeCollector submitNodeCollector) {
-		renderPlaceholder(entity, texture, scale, facing.getRotation().mul(Axis.XP.rotationDegrees(-90.0F)), matrices, submitNodeCollector, -0.4F);
+		renderPlaceholder(
+			entity,
+			texture,
+			scale,
+			facing.getRotation().rotateX(-Mth.HALF_PI),
+			matrices,
+			submitNodeCollector,
+			-0.4F
+		);
+	}
+
+	public static boolean isBeingLookedAt(final BlockPos pos) {
+		return Minecraft.getInstance().hitResult instanceof BlockHitResult result && result.getBlockPos().equals(pos);
 	}
 
 	public static boolean shouldRenderPlaceholder(BlockPos pos) {
@@ -91,7 +96,8 @@ public class BlockEntityRenderUtil {
 	}
 
 	public static boolean shouldRenderPlaceholder(BlockPos pos, boolean disappearWhenFaced) {
-		return Minecraft.getInstance().player != null && Minecraft.getInstance().player.isHolding(stack -> stack.is(Glowcase.ITEM_TAG)) && (!disappearWhenFaced || !(Minecraft.getInstance().hitResult instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)));
+		return Minecraft.getInstance().player != null && Minecraft.getInstance().player.isHolding(stack -> stack.is(
+			Glowcase.ITEM_TAG)) && (!disappearWhenFaced || !isBeingLookedAt(pos));
 	}
 
 	public static Vec2 getTracking(Vec3 camera, BlockPos pos) {
@@ -104,6 +110,12 @@ public class BlockEntityRenderUtil {
 		float yaw = (float) (-Mth.atan2(f, d) + Math.PI / 2);
 
 		return new Vec2(pitch, yaw);
+	}
+
+	public static Quaternionf getTrackingQuaternion(Vec3 camera, BlockPos pos) {
+		final Vec2 vec = getTracking(camera, pos);
+
+		return Quaternionsf.rotateYXZ(Mth.PI + vec.y, -vec.x, 0.f);
 	}
 
 	private static void renderPlaceholderFace(PoseStack.Pose entry, VertexConsumer vertexConsumer, BlockPos pos) {

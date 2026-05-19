@@ -9,6 +9,7 @@ import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.GlowcaseRenderTypes;
 import dev.hephaestus.glowcase.client.ScreenImageCache;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -121,12 +122,10 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 		matrices.translate(.5f, .5f, .5f);
 
 		float rotation = state.rotationInDegrees();
-		matrices.mulPose(Axis.YP.rotationDegrees(rotation));
-		matrices.mulPose(Axis.YP.rotationDegrees(180));
+		matrices.mulPose(Axis.YP.rotationDegrees(rotation + 180));
 		matrices.translate(state.offset.x(), state.offset.y(), state.offset.z());
 
-		matrices.mulPose(Axis.YP.rotationDegrees(state.yaw));
-		matrices.mulPose(Axis.XP.rotationDegrees(state.pitch));
+		matrices.mulPose(Quaternionsf.rotateDegreesYXZ(state.yaw, state.pitch, 0));
 
 		renderScreen(state, matrices, submitNodeCollector);
 
