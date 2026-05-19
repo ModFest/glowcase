@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase;
 
+import dev.hephaestus.glowcase.client.GlowcaseClientNetworking;
 import dev.hephaestus.glowcase.item.ScrollableItem;
 import dev.hephaestus.glowcase.packet.C2SEditConfigLinkBlock;
 import dev.hephaestus.glowcase.packet.C2SEditEntityDisplayBlock;
@@ -21,7 +22,6 @@ import dev.hephaestus.glowcase.packet.C2SSlotScrolled;
 import dev.hephaestus.glowcase.packet.C2SUnlockEditor;
 import dev.hephaestus.glowcase.packet.S2CCloseEditor;
 import dev.hephaestus.glowcase.packet.S2COpenEditor;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,7 +29,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public class GlowcaseNetworking {
+public final class GlowcaseNetworking {
+	/**
+	 * @see GlowcaseClientNetworking#init()
+	 */
 	public static void init() {
 		PayloadTypeRegistry.serverboundPlay().register(C2SEditHyperlinkBlock.ID, C2SEditHyperlinkBlock.PACKET_CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(C2SEditConfigLinkBlock.ID, C2SEditConfigLinkBlock.PACKET_CODEC);
@@ -71,9 +74,6 @@ public class GlowcaseNetworking {
 
 		PayloadTypeRegistry.clientboundPlay().register(S2COpenEditor.ID, S2COpenEditor.PACKET_CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(S2CCloseEditor.ID, S2CCloseEditor.PACKET_CODEC);
-
-		ClientPlayNetworking.registerGlobalReceiver(S2COpenEditor.ID, S2COpenEditor::receive);
-		ClientPlayNetworking.registerGlobalReceiver(S2CCloseEditor.ID, S2CCloseEditor::receive);
 	}
 
 	/**

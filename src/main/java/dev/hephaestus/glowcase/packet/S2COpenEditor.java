@@ -3,6 +3,8 @@ package dev.hephaestus.glowcase.packet;
 import com.mojang.logging.LogUtils;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.GlowcaseBlock;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -24,6 +26,21 @@ import org.slf4j.Logger;
  **/
 public record S2COpenEditor(ResourceKey<Level> dimension, BlockPos pos) implements CustomPacketPayload {
 	private static final Logger logger = LogUtils.getLogger();
+/*
+	private static final MethodHandle yeahIGotLevels;
+
+	static {
+		MethodHandle $yeahIGotLevels = MethodHandles.dropArguments(MethodHandles.throwException(Level.class, AssertionError.class), 0, Object.class);
+		try {
+			final Class<?> minecraft = Class.forName("net.minecraft.client.Minecraft");
+
+			$yeahIGotLevels = MethodHandles.lookup().unreflectGetter(minecraft.getField("level"));
+		} catch (Throwable t) {
+			System.err.println(":3");
+			t.printStackTrace();
+		}
+		yeahIGotLevels = $yeahIGotLevels;
+	}*/
 
 	public static final Type<S2COpenEditor> ID = new Type<>(Glowcase.id("open_editor"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, S2COpenEditor> PACKET_CODEC = StreamCodec.composite(
@@ -41,6 +58,7 @@ public record S2COpenEditor(ResourceKey<Level> dimension, BlockPos pos) implemen
 		return ID;
 	}
 
+	@Environment(EnvType.CLIENT)
 	public void receive(ClientPlayNetworking.Context context) {
 		final Minecraft client = context.client();
 		final Level level = client.level;

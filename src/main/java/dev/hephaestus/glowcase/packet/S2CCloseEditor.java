@@ -2,6 +2,8 @@ package dev.hephaestus.glowcase.packet;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.BlockEditor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -28,6 +30,7 @@ public record S2CCloseEditor(ResourceKey<Level> dimension, BlockPos pos) impleme
 		return ID;
 	}
 
+	@Environment(EnvType.CLIENT)
 	public void receive(ClientPlayNetworking.Context context) {
 		final Minecraft client = context.client();
 		if (
