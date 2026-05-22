@@ -48,8 +48,6 @@
 		"client.bakedbe.sodium.BufferSourceSodiumInjectionsAccessor",
 		"client.bakedbe.sodium.ChunkBuilderMeshingTaskMixin",
 		"client.bakedbe.sodium.ChunkBuilderSortingTaskMixin",
-		"client.bakedbe.sodium.DirectTriggersMixin",
-		"client.bakedbe.sodium.DynamicTopoDataMixin",
 		"client.bakedbe.sodium.EntityRendererMixin",
 		"client.bakedbe.sodium.LevelRendererMixin",
 		"client.bakedbe.sodium.PoseAccessor",
@@ -57,7 +55,6 @@
 		"client.bakedbe.sodium.RenderSectionMixin",
 		"client.bakedbe.sodium.SectionCollectorMixin",
 		"client.bakedbe.sodium.SodiumWorldRendererAccessor",
-		"client.bakedbe.sodium.TranslucentDataMixin",
 		"client.sound.SoundEngineMixin",
 		"client.sound.SoundManagerMixin"
 	],
