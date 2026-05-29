@@ -2,7 +2,6 @@ package dev.hephaestus.glowcase.block.entity;
 
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.util.StringRepresentable;
@@ -12,6 +11,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements InfiniteInventory, StackInteractable {
 	protected ItemStack stack = ItemStack.EMPTY;
@@ -108,7 +113,7 @@ public class ItemProviderBlockEntity extends GlowcaseBlockEntity implements Infi
 
 		if (itemStack.isEmpty()) {
 			ItemStack stackToGive = getStack().copy();
-			if (player.isShiftKeyDown()) {
+			if (this.givesItem == GivesItem.ALWAYS && player.isShiftKeyDown()) {
 				stackToGive.setCount(stackToGive.getMaxStackSize());
 			}
 
