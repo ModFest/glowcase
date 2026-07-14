@@ -53,7 +53,7 @@
 		"client.bakedbe.sodium.PoseAccessor",
 		"client.bakedbe.sodium.RenderSectionManagerMixin",
 		"client.bakedbe.sodium.RenderSectionMixin",
-		"client.bakedbe.sodium.SectionCollectorMixin",
+      "client.bakedbe.sodium.VisibleChunkCollectorMixin",
 		"client.bakedbe.sodium.SodiumWorldRendererAccessor",
 		"client.sound.SoundEngineMixin",
 		"client.sound.SoundManagerMixin"

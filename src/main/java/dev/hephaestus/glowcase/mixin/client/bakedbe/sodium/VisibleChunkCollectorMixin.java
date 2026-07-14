@@ -3,10 +3,10 @@ package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.VisibleSections;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
 import net.caffeinemc.mods.sodium.client.render.chunk.lists.RenderListProvider;
-import net.caffeinemc.mods.sodium.client.render.chunk.lists.SectionCollector;
 import net.caffeinemc.mods.sodium.client.render.chunk.lists.SortedRenderLists;
+import net.caffeinemc.mods.sodium.client.render.chunk.lists.VisibleChunkCollector;
+import net.caffeinemc.mods.sodium.client.render.chunk.region.RenderRegion;
 import net.caffeinemc.mods.sodium.client.render.viewport.Viewport;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -20,16 +20,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SuppressWarnings("JavadocDeclaration")
 @Environment(EnvType.CLIENT)
-@Mixin(SectionCollector.class)
-public abstract class SectionCollectorMixin implements RenderListProvider {
+@Mixin(VisibleChunkCollector.class)
+public abstract class VisibleChunkCollectorMixin implements RenderListProvider {
 	// We can't tell how big this will be, so we'll just use the last size
 	private final @Unique LongArrayList sortedSections = new LongArrayList(GlowcaseLevelRenderer.getInstance().visibleSections().indexSize());
 
-	@Inject(at = @At("RETURN"), method = "visit(Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;I)V")
-	private void addSectionPos(RenderSection section, int flags, CallbackInfo ci) {
-		sortedSections.add(section.getPosition().asLong());
+	@Inject(at = @At("RETURN"), method = "visit")
+	private void addSectionPos(int x, int y, int z, CallbackInfo ci) {
+		sortedSections.add(RenderRegion.key(x, y, z));
 	}
-
 
 	/**
 	 * @author Luna (Awakened Redstone)
