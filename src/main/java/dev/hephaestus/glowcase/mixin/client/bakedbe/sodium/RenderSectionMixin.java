@@ -1,7 +1,9 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
+import dev.hephaestus.glowcase.client.sodium.BakedBESortingTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
+import net.caffeinemc.mods.sodium.client.render.chunk.compile.BuilderTaskOutput;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.SectionPos;
@@ -22,5 +24,12 @@ public class RenderSectionMixin {
 	@Inject(at = @At("RETURN"), method = "clearRenderState")
 	private void onSectionReleased(CallbackInfoReturnable<Boolean> cir) {
 		GlowcaseLevelRenderer.getInstance().releaseSection(SectionPos.asLong(chunkX, chunkY, chunkZ));
+	}
+
+	@Inject(method = "addBuildOutput", at = @At("HEAD"), cancellable = true)
+	private void fixInstanceofByBlocking(BuilderTaskOutput output, CallbackInfoReturnable<Boolean> cir) {
+		if (output instanceof BakedBESortingTask.Output) {
+			cir.setReturnValue(false);
+		}
 	}
 }
