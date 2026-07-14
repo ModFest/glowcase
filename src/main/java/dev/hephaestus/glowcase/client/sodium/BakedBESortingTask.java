@@ -37,7 +37,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 		super(section, time, absoluteCameraPos);
 		this.levelRenderer = GlowcaseLevelRenderer.getInstance();
 		this.sectionInfo = sectionInfo;
-		this.sectionNode = render.getPosition().asLong();
+		this.sectionNode = this.section.getPosition().asLong();
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 		ByteBufferBuilder bufferBuilder = indexBufferPool.acquire();
 
 		int size = 0;
-		for (GlowcaseRenderSectionInfo.DrawEntry entry : sectionInfo) {
+		for (GlowcaseRenderSectionInfo.DrawEntry entry : this.sectionInfo) {
 			final var sorter = entry.sorter();
 			if (sorter == null) continue;
 
@@ -71,7 +71,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 					return null;
 				}
 
-				success = renderDispatcher.allocateIndexBuffers(sectionNode, entry.renderType(), indexBuffer.byteBuffer());
+				success = renderDispatcher.allocateIndexBuffers(this.sectionNode, entry.renderType(), indexBuffer.byteBuffer());
 
 				if (!success && !RenderSystem.isOnRenderThread()) {
 					Thread.onSpinWait();
@@ -82,7 +82,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 			indexBuffer.close();
 		}
 
-		sectionInfo.setTranslucencyPointOfView(absoluteCameraPos.get(new Vector3f()), sectionNode);
+		this.sectionInfo.setTranslucencyPointOfView(this.absoluteCameraPos.get(new Vector3f()), this.sectionNode);
 
 		// Only clear after. There is no need to do it every iteration, it has 4GiB of capacity.
 		// If this runs out, there is a much bigger problem to be solved.
@@ -90,15 +90,15 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 		indexBufferPool.release(bufferBuilder);
 		profiler.pop();
 
-		return new Output(render, submitTime, size);
+		return new Output(this.section, this.submitTime, size);
 	}
 
 	@Override
 	public long estimateTaskSizeWith(MeshTaskSizeEstimator estimator) {
-		if (isGone()) return 0;
+		if (this.isGone()) return 0;
 
 		int size = 0;
-		for (GlowcaseRenderSectionInfo.DrawEntry entry : sectionInfo) {
+		for (GlowcaseRenderSectionInfo.DrawEntry entry : this.sectionInfo) {
 			size += TranslucentData.quadCountToIndexBytes(entry.indexCount());
 		}
 
@@ -106,7 +106,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 	}
 
 	private boolean isGone() {
-		return !levelRenderer.visibleSections().isVisible(sectionNode);
+		return !this.levelRenderer.visibleSections().isVisible(this.sectionNode);
 	}
 
 	public static BakedBESortingTask create(RenderSection section, int frame, Vector3dc absoluteCameraPos) {
@@ -125,7 +125,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 
 		@Override
 		protected long calculateResultSize() {
-			return size;
+			return this.size;
 		}
 	}
 }
