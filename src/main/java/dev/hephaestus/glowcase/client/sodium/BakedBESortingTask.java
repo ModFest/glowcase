@@ -44,7 +44,7 @@ public class BakedBESortingTask extends ChunkBuilderTask<BakedBESortingTask.Outp
 	public Output execute(ChunkBuildContext context, CancellationToken cancellationToken) {
 		if (cancellationToken.isCancelled() || isGone()) return null;
 
-		GlowcaseSectionRenderDispatcher renderDispatcher = levelRenderer.getSectionRenderDispatcher();
+		GlowcaseSectionRenderDispatcher renderDispatcher = this.levelRenderer.getSectionRenderDispatcher();
 		if (renderDispatcher == null) return null;
 
 		ProfilerFiller profiler = Profiler.get();
