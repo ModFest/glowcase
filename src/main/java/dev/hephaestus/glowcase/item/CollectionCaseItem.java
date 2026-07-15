@@ -67,7 +67,7 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 	@Override
 	public void scroll(ItemStack caseStack, Player player, int amount) {
 		CollectionComponent collection = caseStack.get(Glowcase.COLLECTION_COMPONENT.get());
-		if (collection != null && collection.collected() > 1) {
+		if (collection != null) {
 			if (amount > 0) {
 				for (int i = 0; i < amount; i++) {
 					collection = collection.selectPrevious(!player.isCreative());
