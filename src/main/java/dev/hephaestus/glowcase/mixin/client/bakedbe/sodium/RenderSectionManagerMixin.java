@@ -9,7 +9,6 @@ import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
 import dev.hephaestus.glowcase.client.sodium.BakedBESortingTask;
 import dev.hephaestus.glowcase.mixinsupport.sodium.RenderSectionManagerExtension;
-import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import net.caffeinemc.mods.sodium.client.render.chunk.ChunkUpdateTypes;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSection;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSectionManager;
@@ -19,6 +18,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.compile.estimation.MeshTas
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.estimation.UploadDurationEstimator;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderSortingTask;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
+import net.caffeinemc.mods.sodium.client.render.chunk.storage.SectionStorage;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.joml.Vector3dc;
@@ -42,20 +42,21 @@ public abstract class RenderSectionManagerMixin implements RenderSectionManagerE
 	@Shadow private @Final JobDurationEstimator jobDurationEstimator;
 	@Shadow private @Final MeshTaskSizeEstimator meshTaskSizeEstimator;
 	@Shadow private @Final UploadDurationEstimator jobUploadDurationEstimator;
-	@Shadow private @Final Long2ReferenceMap<RenderSection> sectionByPosition;
+	@Shadow private @Final SectionStorage renderSections;
 	@Shadow private @Nullable Vector3dc cameraPosition;
 	@Shadow private int frame;
 
 	@Shadow protected abstract boolean shouldPrioritizeTask(RenderSection section, float distance);
 	@Shadow protected abstract boolean upgradePendingUpdate(RenderSection section, int updateType);
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;successfully(Ljava/lang/Object;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;"), method = "submitSectionTask")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;successfully(Ljava/lang/Object;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobResult;"), method = "submitSectionTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobCollector;Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;ILnet/caffeinemc/mods/sodium/client/render/chunk/compile/estimation/UploadResourceBudget;Z)V")
 	private void clearEmptySection(CallbackInfo ci, @Local(argsOnly = true, name = "section") RenderSection section) {
 		GlowcaseLevelRenderer.getInstance().updateAndCompile(section.getPosition().asLong(), null, null);
 	}
 
+	@Override
 	public void glowcase$scheduleBakedBESort(long sectionPos) {
-		RenderSection section = this.sectionByPosition.get(sectionPos);
+		RenderSection section = this.renderSections.getConsistent(sectionPos); // TODO: check
 
 		if (section != null) {
 			int pendingUpdate = BAKED_BE_SORT;
@@ -67,7 +68,7 @@ public abstract class RenderSectionManagerMixin implements RenderSectionManagerE
 		}
 	}
 
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager;createSortTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;I)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/tasks/ChunkBuilderSortingTask;"), method = "submitSectionTask")
+	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager;createSortTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;I)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/tasks/ChunkBuilderSortingTask;"), method = "submitSectionTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobCollector;Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;ILnet/caffeinemc/mods/sodium/client/render/chunk/compile/estimation/UploadResourceBudget;Z)V")
 	private ChunkBuilderSortingTask checkIfBakedBEResort(
 		RenderSectionManager instance,
 		RenderSection render,
@@ -80,7 +81,7 @@ public abstract class RenderSectionManagerMixin implements RenderSectionManagerE
 
 	@Definition(id = "createSortTask", method = "Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager;createSortTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;I)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/tasks/ChunkBuilderSortingTask;")
 	@Expression("? = ?.createSortTask(?, ?)")
-	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), method = "submitSectionTask")
+	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), method = "submitSectionTask(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkJobCollector;Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSection;ILnet/caffeinemc/mods/sodium/client/render/chunk/compile/estimation/UploadResourceBudget;Z)V")
 	private void createBakedBESortTask(
 		CallbackInfo ci,
 		@Local(argsOnly = true, name = "type") int type,
@@ -89,11 +90,11 @@ public abstract class RenderSectionManagerMixin implements RenderSectionManagerE
 	) {
 		if (task.get() != null || (type & BAKED_BE_SORT) == 0) return;
 
-		task.set(createBakedBESortTask(section, this.frame));
+		task.set(glowcase$createBakedBESortTask(section, this.frame));
 	}
 
 	@Unique
-	public BakedBESortingTask createBakedBESortTask(RenderSection render, int frame) {
+	public BakedBESortingTask glowcase$createBakedBESortTask(RenderSection render, int frame) {
 		var task = BakedBESortingTask.create(render, frame, this.cameraPosition);
 		if (task != null) {
 			task.calculateEstimations(this.jobDurationEstimator, this.meshTaskSizeEstimator, this.jobUploadDurationEstimator);

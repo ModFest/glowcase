@@ -1,8 +1,6 @@
 package dev.hephaestus.glowcase.mixin.client.bakedbe.sodium;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.Share;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexSorting;
@@ -32,17 +30,16 @@ public abstract class ChunkBuilderSortingTaskMixin extends ChunkBuilderTask<Chun
 		super(render, time, absoluteCameraPos);
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/DynamicSorter;writeIndexBuffer(Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/CombinedCameraPos;Z)V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkSortOutput;")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/DynamicSorter;writeIndexBuffer(Lnet/caffeinemc/mods/sodium/client/render/chunk/translucent_sorting/data/CombinedCameraPos;)V"), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkSortOutput;", cancellable = true)
 	private void handleResorting(
 		ChunkBuildContext context,
 		CancellationToken cancellationToken,
 		CallbackInfoReturnable<ChunkSortOutput> cir,
-		@Local(name = "profiler") ProfilerFiller profiler,
-		@Share("resort") LocalRef<Boolean> shouldResort
+		@Local(name = "profiler") ProfilerFiller profiler
 	) {
 		GlowcaseLevelRenderer levelRenderer = GlowcaseLevelRenderer.getInstance();
 		var visibleSections = levelRenderer.visibleSections();
-		long sectionNode = render.getPosition().asLong();
+		long sectionNode = this.section.getPosition().asLong();
 		if (!visibleSections.isVisible(sectionNode)) return;
 		profiler.push("baked_be");
 
@@ -64,6 +61,7 @@ public abstract class ChunkBuilderSortingTaskMixin extends ChunkBuilderTask<Chun
 
 			while (!success) {
 				if (cancellationToken.isCancelled()) {
+					// In theory, this would never be reached - SkyNotTheLimit
 					indexBuffer.close();
 					bufferBuilder.clear();
 					BakedBESortingTask.indexBufferPool.release(bufferBuilder);

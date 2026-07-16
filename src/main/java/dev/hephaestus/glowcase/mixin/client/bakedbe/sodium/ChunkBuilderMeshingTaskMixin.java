@@ -136,14 +136,14 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 		}
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;setOcclusionData(Lnet/minecraft/client/renderer/chunk/VisibilitySet;)V", shift = At.Shift.AFTER), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/data/BuiltSectionInfo$Builder;setOcclusionData([Lnet/minecraft/client/renderer/chunk/VisibilitySet;)V", shift = At.Shift.AFTER), method = "execute(Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lnet/caffeinemc/mods/sodium/client/util/task/CancellationToken;)Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;")
 	private void queueCompilation(
 		CallbackInfoReturnable<SectionCompiler.Results> cir,
 		@Share("nodeStorage") LocalRef<SubmitNodeStorage> nodeStorageRef,
 		@Share("vertexSorting") LocalRef<VertexSorting> vertexSortingRef,
 		@Share("bakedMeshes") LocalRef<BakedMeshes> bakedMeshes
 	) {
-		bakedMeshes.set(GlowcaseLevelRenderer.getInstance().updateAndCompile(this.render.getPosition().asLong(), nodeStorageRef.get(), vertexSortingRef.get()));
+		bakedMeshes.set(GlowcaseLevelRenderer.getInstance().updateAndCompile(this.section.getPosition().asLong(), nodeStorageRef.get(), vertexSortingRef.get()));
 	}
 
 	@Expression("return null")
@@ -164,7 +164,7 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 	) {
 		GlowcaseLevelRenderer levelRenderer = GlowcaseLevelRenderer.getInstance();
 		BakedMeshes meshes = bakedMeshesRef.get();
-		long sectionNode = render.getPosition().asLong();
+		long sectionNode = this.section.getPosition().asLong();
 		if (meshes == null) {
 			levelRenderer.releaseSection(sectionNode);
 			return;

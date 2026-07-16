@@ -13,8 +13,8 @@ placeholder = "3.0.0-beta.2+26.1"
 #polydex = "1.8.1+1.21.11"
 # emi = "1.1.19+1.21.1"
 rrv = "8.1.1+26.1.2"
-modmenu = "18.0.0-alpha.6"
-sodium = "0.8.9+mc26.1.1"
+modmenu = "18.0.0"
+sodium = "0.9.1+mc26.1.2"
 
 [plugins]
 loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }

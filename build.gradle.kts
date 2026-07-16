@@ -71,7 +71,7 @@ dependencies {
 	localRuntime(libs.modmenu)
 
 	compileOnly(libs.sodium)
-	// localRuntime(libs.sodium)
+	localRuntime(libs.sodium)
 }
 
 loom {
