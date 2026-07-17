@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Main color picker widget, including a preview box, saturation & value box, hue slider, optional alpha slider, and color presets.<br><br>
@@ -41,15 +42,12 @@ public class ColorPickerWidget extends AbstractButton {
 	private static final int DEFAULT_HEIGHT = 116;
 	private static final int DEFAULT_ALPHA_HEIGHT = 146;
 	private static final Identifier BACKGROUND_TEXTURE = Identifier.withDefaultNamespace("textures/gui/inworld_menu_list_background.png");
+
 	// Different alpha textures have different tile sizes to better match their background
 	private static final Identifier ALPHA_PREVIEW_TEXTURE = Glowcase.id("color_picker/alpha_preview");
 	private static final Identifier ALPHA_SLIDER_TEXTURE = Glowcase.id("color_picker/alpha_slider");
 	private static final Identifier ALPHA_THUMB_TEXTURE = Glowcase.id("color_picker/alpha_thumb");
 	private static final Identifier ALPHA_PRESET_TEXTURE = Glowcase.id("color_picker/alpha_preset");
-	private static final Identifier CONFIRM_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept");
-	private static final Identifier CONFIRM_HIGHLIGHTED_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept_highlighted");
-	private static final Identifier CANCEL_TEXTURE = Identifier.withDefaultNamespace("pending_invite/reject");
-	private static final Identifier CANCEL_HIGHLIGHTED_TEXTURE = Identifier.withDefaultNamespace("pending_invite/reject_highlighted");
 
 	public final ColorPickerIncludedScreen screen;
 	@Nullable
@@ -58,6 +56,8 @@ public class ColorPickerWidget extends AbstractButton {
 	public ColorSetter pickedColorListener = null;
 	@Nullable
 	public PickerPresetListener presetListener = null;
+	@Nullable
+	public Consumer<Integer> confirmListener = null;
 	public boolean showAlpha = false;
 
 	public final List<PickerArea> clickableAreas;
@@ -68,6 +68,7 @@ public class ColorPickerWidget extends AbstractButton {
 	public PickerArea presetsArea;
 	public List<PickerPreset> formattingPresetAreas;
 	public List<PickerPreset> alphaPresetAreas;
+	public List<PickerButton> buttonAreas;
 
 	@Nullable
 	public PickerArea currentClickedArea = null; // Used for allowing mouse drags beyond an area's boundaries
@@ -90,14 +91,14 @@ public class ColorPickerWidget extends AbstractButton {
 		this.presetsArea = new PickerArea(this, false);
 		this.formattingPresetAreas = PickerPreset.createFormattingPresets(this);
 		this.alphaPresetAreas = PickerPreset.createAlphaPresets(this);
+		this.buttonAreas = PickerButton.createButtons(this);
 		this.updateAreas();
 
-//		this.areas = List.of(this.previewArea, this.satValueArea, this.hueArea, this.alphaArea, this.presetsArea);
 		this.clickableAreas = List.of(this.satValueArea, this.hueArea, this.alphaArea);
 		this.hide(); // Start hidden
 	}
 
-	// Preset width & height: 16
+	// Preset & button width & height: 16
 	// Presets per row: 10 (2 rows by default, 3 if alpha is shown)
 	// Hue & Alpha slider heights: 10
 	// Preview & Sat/value picker: Whatever height is left
@@ -135,6 +136,14 @@ public class ColorPickerWidget extends AbstractButton {
 				 preset.set(x, y, 16, 16);
 			}
 		}
+
+		for (int i = 0; i < this.buttonAreas.size(); i++) {
+			// First button is confirm, second is cancel, so start from far right and shift left
+			PickerButton button = this.buttonAreas.get(i);
+			int x = this.getX() + this.getWidth() - (18 * (i + 1));
+			int y = this.presetsArea.getY() + (18 * (this.showAlpha ? 2 : 1));
+			button.set(x, y, 16, 16);
+		}
 	}
 
 	// Position the thumbs based on the current color
@@ -152,67 +161,78 @@ public class ColorPickerWidget extends AbstractButton {
 		graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE, this.getX(), this.getY(), 0, 0, this.getWidth(), this.getHeight(), 32, 32);
 
 		// Render areas
-//		extractPreviewArea(this.previewArea, graphics, this.getColor());
-		extractPreviewArea(this.previewArea, graphics);
-		extractSatValueArea(this.satValueArea, graphics);
-		extractHueArea(this.hueArea, graphics);
-		if (showAlpha) extractAlphaArea(this.alphaArea, graphics);
+		this.extractPreviewArea(this.previewArea, graphics);
+		this.extractSatValueArea(this.satValueArea, graphics, mouseX, mouseY);
+		this.extractHueArea(this.hueArea, graphics, mouseX, mouseY);
+		if (showAlpha) this.extractAlphaArea(this.alphaArea, graphics, mouseX, mouseY);
 		for (PickerPreset preset : this.formattingPresetAreas) {
-			extractPresetArea(preset, graphics, false);
+			this.extractPresetArea(preset, graphics, false, mouseX, mouseY);
 		}
 		if (showAlpha) {
 			for (PickerPreset preset : this.alphaPresetAreas) {
-				extractPresetArea(preset, graphics, true);
+				this.extractPresetArea(preset, graphics, true, mouseX, mouseY);
 			}
 		}
-//		extractPreviewArea(this.presetsArea, graphics, CommonColors.WHITE);
+		for (PickerButton button : buttonAreas) {
+			this.extractButtonArea(button, graphics, mouseX, mouseY);
+		}
 
 		// Render thumbs (to ensure they are above everything despite overlaps)
-		extractThumb(graphics, this.hueArea.getThumbX(), this.hueArea.getY() + 5, 6, 12, this.getHueColor());
-		if (showAlpha) extractThumb(graphics, this.alphaArea.getThumbX(), this.alphaArea.getY() + 5, 6, 12, this.getColor(), true);
-		extractThumb(graphics, this.satValueArea.getThumbX(), this.satValueArea.getThumbY(), 8, 8, this.getColorNoAlpha());
+		this.extractThumb(graphics, this.hueArea.getThumbX(), this.hueArea.getY() + 5, 6, 12, this.getHueColor());
+		if (showAlpha) this.extractThumb(graphics, this.alphaArea.getThumbX(), this.alphaArea.getY() + 5, 6, 12, this.getColor(), true);
+		this.extractThumb(graphics, this.satValueArea.getThumbX(), this.satValueArea.getThumbY(), 8, 8, this.getColorNoAlpha());
 	}
 
 	public void extractPreviewArea(PickerArea area, GuiGraphicsExtractor graphics) {
 		// TODO - Precise tile of the background for my perfectionism here
 		// Alpha background texture (if needed)
 		if (this.showAlpha) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ALPHA_PREVIEW_TEXTURE, area.getX(), area.getY(), area.getWidth(), area.getHeight());
-
 		// Current color
 		graphics.fill(area.getX(), area.getY(), area.getX2(), area.getY2(), this.getColor());
 	}
 
-	public void extractSatValueArea(PickerArea area, GuiGraphicsExtractor graphics) {
+	public void extractSatValueArea(PickerArea area, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		// White to current hue, left to right
 		GuiGraphicsUtil.extractHorizontalGradient(graphics, area.getX(), area.getY(), area.getX2(), area.getY2(), ColorUtil.WHITE, this.getHueColor());
-
 		// Transparent to black, top to bottom
 		graphics.fillGradient(area.getX(), area.getY(), area.getX2(), area.getY2(), ColorUtil.TRANSPARENT, ColorUtil.BLACK);
+		// Outline
+		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
 	}
 
-	public void extractHueArea(PickerArea area, GuiGraphicsExtractor graphics) {
+	public void extractHueArea(PickerArea area, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		// Hue gradient, starting and ending on red
 		GuiGraphicsUtil.extractHueGradient(graphics, area.getX(), area.getY(), area.getX2(), area.getY2());
+		// Outline
+		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
 	}
 
-	public void extractAlphaArea(PickerArea area, GuiGraphicsExtractor graphics) {
+	public void extractAlphaArea(PickerArea area, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		// Alpha background texture
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ALPHA_SLIDER_TEXTURE, area.getX(), area.getY(), area.getWidth(), area.getHeight());
-
 		// Transparent to current color, left to right
 		GuiGraphicsUtil.extractHorizontalGradient(graphics, area.getX(), area.getY(), area.getX2(), area.getY2(), ColorUtil.TRANSPARENT, this.getColorNoAlpha());
+		// Outline
+		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
 	}
 
-	public void extractPresetArea(PickerPreset preset, GuiGraphicsExtractor graphics, boolean alphaPreset) {
+	public void extractPresetArea(PickerPreset preset, GuiGraphicsExtractor graphics, boolean alphaPreset, int mouseX, int mouseY) {
 		// Alpha background texture (if needed)
 		if (alphaPreset) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ALPHA_PRESET_TEXTURE, preset.getX(), preset.getY(), preset.getWidth(), preset.getHeight());
 		graphics.fill(preset.getX(), preset.getY(), preset.getX2(), preset.getY2(), preset.getPresetColor());
-
+		// Alpha preset tooltip
 		if (alphaPreset) {
-			// FIXME - Please figure out a better way of doing this than whatever on earth this is
-			String hex = ColorUtil.toAlphaHex(preset.getPresetColor());
-			graphics.text(Minecraft.getInstance().font, String.valueOf(hex.charAt(1)) + String.valueOf(hex.charAt(2)), preset.getX(), preset.getY() + 8, ColorUtil.WHITE);
+			// I'll be honest I have no clue how this works, I just got lucky
+			String hex = String.format("%1$02X", ARGB.alpha(preset.getPresetColor()));
+			graphics.text(Minecraft.getInstance().font, hex, preset.getX() + 1, preset.getY() + 7, ColorUtil.WHITE);
 		}
+		// Outline
+		if (preset.shouldOutline(mouseX, mouseY)) graphics.outline(preset.getX(), preset.getY(), preset.getWidth(), preset.getHeight(), ColorUtil.WHITE);
+	}
+
+	public void extractButtonArea(PickerButton button, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+		// TODO - PLEASE precise texture this it'll annoy me so much
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, button.getTexture(mouseX, mouseY), button.getX(), button.getY(), button.getWidth(), button.getHeight());
 	}
 
 	public void extractThumb(GuiGraphicsExtractor graphics, int thumbX, int thumbY, int thumbWidth, int thumbHeight, int thumbColor) {
@@ -235,20 +255,26 @@ public class ColorPickerWidget extends AbstractButton {
 
 	// endregion
 
+	public void target(AbstractWidget widget, int initColor, boolean showAlpha, ColorSetter pickedColorListener) {
+		this.target(widget, initColor, showAlpha, false, pickedColorListener);
+	}
+
 	/**
 	 * Position & set up the Color Picker based on a widget and its needs. Positioning accounts for screen size, ensuring the color picker never goes off-screen.
-	 * @param widget The Widget to position the Color Picker too
-	 * @param initColor The initial color the Color Picker should be, and should revert to if canceled/undone
-	 * @param showAlpha Whether the alpha should be editable, and the alpha slider visible
-	 * @param pickedColorSetterListener What to do with the picked color, as an integer
+	 * @param widget The Widget to position the Color Picker too.
+	 * @param initColor The initial color the Color Picker should be, and should revert to if canceled/undone.
+	 * @param showAlpha Whether the alpha should be editable, and the alpha slider visible.
+	 * @param rightAligned If the Color Picker Widget should align itself to the right side of the widget instead of the left side  .
+	 * @param pickedColorListener What to do with the picked color, as an integer.
 	 */
-	public void target(AbstractWidget widget, int initColor, boolean showAlpha, ColorSetter pickedColorSetterListener) {
+	public void target(AbstractWidget widget, int initColor, boolean showAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
 		this.visible = true;
 		this.active = true;
 		this.targetElement = widget;
 
-		// TODO - right-aligned option
+		// Ensure at least 2 pixels of padding between screen edges
 		int x = Math.min(Minecraft.getInstance().screen.width - this.getWidth() - 2, widget.getX());
+		if (rightAligned) x = Math.max(2, widget.getX() + widget.getWidth() - this.getWidth() + 2);
 		int y = widget.getY() + widget.getHeight();
 		this.setX(x);
 		this.setY(y);
@@ -259,7 +285,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.showAlpha = showAlpha;
 		this.setHeight(this.showAlpha ? DEFAULT_ALPHA_HEIGHT : DEFAULT_HEIGHT);
 
-		this.pickedColorListener = pickedColorSetterListener;
+		this.pickedColorListener = pickedColorListener;
 		this.presetListener = preset -> { // Default preset behaviour, just set the picker color
 			if (preset.isAlphaPreset()) {
 				this.alpha = preset.getAlpha();
@@ -268,6 +294,7 @@ public class ColorPickerWidget extends AbstractButton {
 				this.setColor(preset.getPresetColor(), false);
 			}
 		};
+		this.confirmListener = null;
 
 		this.updateAreas();
 		this.updateAreaThumbs();
@@ -275,6 +302,10 @@ public class ColorPickerWidget extends AbstractButton {
 
 	public void setPresetListener(PickerPresetListener presetListener) {
 		this.presetListener = presetListener;
+	}
+
+	public void setConfirmListener(Consumer<Integer> confirmListener) {
+		this.confirmListener = confirmListener;
 	}
 
 	public void setColor(int color) {
@@ -305,6 +336,11 @@ public class ColorPickerWidget extends AbstractButton {
 		this.prevAlpha = HSVA[3];
 	}
 
+	public void confirm() {
+		if (this.confirmListener != null) this.confirmListener.accept(this.getColor());
+		this.hide();
+	}
+
 	public void cancel() {
 		int prevColor = ColorUtil.HSVAtoARGB(this.prevHue, this.prevSaturation, this.prevValue, this.showAlpha ? this.prevAlpha : 1f);
 		this.setColor(prevColor);
@@ -319,6 +355,7 @@ public class ColorPickerWidget extends AbstractButton {
 
 		this.pickedColorListener = null;
 		this.presetListener = null;
+		this.confirmListener = null;
 	}
 
 	@Override
@@ -372,6 +409,13 @@ public class ColorPickerWidget extends AbstractButton {
 			if (preset.mouseClicked(x, y)) {
 				this.currentClickedArea = preset;
 				this.onColorPicked();
+				return;
+			}
+		}
+
+		for (PickerButton button : buttonAreas) {
+			if (button.mouseClicked(x, y)) {
+				this.currentClickedArea = button;
 				return;
 			}
 		}

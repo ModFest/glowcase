@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -42,7 +43,7 @@ public interface ColorPickerIncludedScreen {
 		if (colorPickerWidget.isActive()) {
 			Screen self = (Screen) this;
 			switch (keyCode) {
-				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> colorPickerWidget.hide();
+				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> colorPickerWidget.confirm();
 				case GLFW.GLFW_KEY_ESCAPE -> colorPickerWidget.cancel();
 				default -> {
 					GuiEventListener pickerTarget = colorPickerWidget.targetElement;
@@ -70,4 +71,8 @@ public interface ColorPickerIncludedScreen {
 	// TODO - break this into FormattableScreen
 	void insertHexTag(String hex);
 	void insertFormattingTag(ChatFormatting formatting);
+	default void insertHexColor(int color) {
+		String hex = ColorUtil.toHex(color);
+		this.insertHexTag(hex);
+	}
 }

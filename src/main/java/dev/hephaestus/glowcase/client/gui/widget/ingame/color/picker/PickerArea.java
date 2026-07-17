@@ -76,6 +76,11 @@ public class PickerArea {
 			&& (mouseX > this.getX() && mouseX < this.getX2());
 	}
 
+	public boolean shouldOutline(int mouseX, int mouseY) {
+		// Outline if mouse down, or if the mouse over AND no other area has the mouse down
+		return this.hasMouseDown() || (this.isMouseOver(mouseX, mouseY) && this.getColorPicker().currentClickedArea == null);
+	}
+
 	private float calcLerp(double mousePos, int minPos, int maxPos) {
 		if (mousePos < minPos) return 0f;
 		if (mousePos > maxPos) return 1f;
