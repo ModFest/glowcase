@@ -2,11 +2,10 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
-import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
@@ -15,9 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -27,13 +24,10 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import java.awt.*;
-import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
 
