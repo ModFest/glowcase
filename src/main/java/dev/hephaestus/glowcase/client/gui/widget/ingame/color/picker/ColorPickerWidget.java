@@ -468,13 +468,15 @@ public class ColorPickerWidget extends AbstractButton {
 		return ColorUtil.HSVtoRGB(this.hue, 1f, 1f);
 	}
 
-	// region Unused
 	@Override
-	public void onPress(@NonNull InputWithModifiers input) {}
+	public void onPress(@NonNull InputWithModifiers input) {
+		// NO-OP
+	}
 
 	@Override
-	protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {}
-	// endregion
+	protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
+		// NO-OP
+	}
 
 	public static class Builder {
 		private final ColorPickerIncludedScreen screen;

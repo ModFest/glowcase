@@ -81,7 +81,6 @@ public interface ColorPickerIncludedScreen {
 		this.getColorPickerWidget().hide();
 	}
 
-	// TODO - break this into FormattableScreen
 	default void insertHexTag(String hex) {}
 	default void insertFormattingTag(ChatFormatting formatting) {}
 	default void insertHexColor(int color) {
