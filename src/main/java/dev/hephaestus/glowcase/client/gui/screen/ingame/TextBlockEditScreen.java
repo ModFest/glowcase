@@ -1,7 +1,8 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
@@ -37,14 +38,15 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private final TextBlockEntity textBlockEntity;
 
 	private List<EditBox> textWidgets;
-	private List<EditBox> colorListeners;
+//	private List<EditBox> colorListeners;
 
 	private TextFieldHelper selectionManager;
-	private EditBox colorEntryWidget;
+	private HexColorEditBox colorEntryWidget;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	private Color colorEntryPreColorPicker; //used for color picker cancel button
+//	private ColorPickerWidget colorPickerWidget;
+//	private Color colorEntryPreColorPicker; // used for color picker cancel button
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -69,24 +71,42 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203, innerPadding, 113, 20);
 		addFormattingButtons(middle - 90 + 6, innerPadding, 0, 20, 2);
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20, Component.empty());
-		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
-		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
-		this.colorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
-				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.RGB_MASK);
+		this.colorPickerWidget = ColorPickerWidget.builder(this).build();
 
-				this.textBlockEntity.color = color;
-				// make sure it doesn't update from the color picker updating the text
-				if (this.colorEntryWidget.isFocused()) {
-					this.colorPickerWidget.setColor(new Color(color));
+//		this.colorEntryWidget = new HexColorEditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20,
+//			true, this.colorPickerWidget, () -> this.textBlockEntity.color, color -> this.textBlockEntity.color = color
+//		);
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54, innerPadding,
+				() -> this.textBlockEntity.color, color -> {
+					this.textBlockEntity.color = color;
+					this.textBlockEntity.rebake(true);
 				}
-				this.textBlockEntity.rebake(true);
-			});
-		});
+			)
+			.setEditableAlpha(true)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
+		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
 
-		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
-		this.colorPickerWidget.toggle(false); //start deactivated
+
+//		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20, Component.empty());
+//		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
+//		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
+//		this.colorEntryWidget.setResponder(string -> {
+//			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
+//				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.RGB_MASK);
+//
+//				this.textBlockEntity.color = color;
+//				// make sure it doesn't update from the color picker updating the text
+//				if (this.colorEntryWidget.isFocused()) {
+//					this.colorPickerWidget.setColor(new Color(color));
+//				}
+//				this.textBlockEntity.rebake(true);
+//			});
+//		});
+
+
+//		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
+//		this.colorPickerWidget.toggle(false); //start deactivated
 
 		var moreOptionsButton = Button.builder(
 				Component.translatable("gui.glowcase.more"),
@@ -101,9 +121,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			this.colorEntryWidget
 		);
 
-		this.colorListeners = List.of(
-			this.colorEntryWidget
-		);
+//		this.colorListeners = List.of(
+//			this.colorEntryWidget
+//		);
 
 		this.addRenderableWidget(colorPickerWidget);
 		this.addRenderableWidget(this.colorEntryWidget);
@@ -216,31 +236,35 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public boolean keyPressed(KeyEvent event) {
 		var keyCode = event.key();
 
-		if (this.colorPickerWidget.active) {
-			switch (keyCode) {
-				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> this.colorPickerWidget.confirmColor();
-				case GLFW.GLFW_KEY_ESCAPE -> this.colorPickerWidget.cancel();
-				default -> {
-					final GuiEventListener listener = this.colorPickerWidget.targetElement;
-					if (listener != null) {
-						this.setFocused(listener);
-						return listener.keyPressed(event);
-					}
-				}
-			}
-
-			this.toggleColorPicker(false);
-			this.setFocused(null);
-
+		if (this.keyPressedColorPicker(event)) {
 			return true;
 		}
+
+//		if (this.colorPickerWidget.active) {
+//			switch (keyCode) {
+//				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> this.colorPickerWidget.confirmColor();
+//				case GLFW.GLFW_KEY_ESCAPE -> this.colorPickerWidget.cancel();
+//				default -> {
+//					final GuiEventListener listener = this.colorPickerWidget.targetElement;
+//					if (listener != null) {
+//						this.setFocused(listener);
+//						return listener.keyPressed(event);
+//					}
+//				}
+//			}
+//
+////			this.toggleColorPickerWidget(false);
+//			this.setFocused(null);
+//
+//			return true;
+//		}
 
 		if (this.getFocused() != null) {
 			if (this.getFocused().keyPressed(event)) {
 				return true;
 			}
 
-			this.toggleColorPicker(false);
+//			this.toggleColorPickerWidget(false);
 			this.setFocused(null);
 
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
@@ -280,7 +304,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				return true;
 			} else {
 
-				//formatting hotkeys
+				// Formatting hotkeys
 				if (event.hasControlDown()) {
 					if (keyCode == GLFW.GLFW_KEY_B) {
 						insertTag(TagRegistry.SAFE.getTag("bold"), true);
@@ -292,9 +316,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 						insertTag(TagRegistry.SAFE.getTag("underline"), true);
 						return true;
 					} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
-						//There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
-						//apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
-						//Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
+						// There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
+						// apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
+						// Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
 						insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
 						return true;
 					} else if (keyCode == GLFW.GLFW_KEY_O) {
@@ -345,28 +369,28 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	private void colorListenerClicked(EditBox textWidget) {
-		this.colorPickerWidget.setPosition(Math.min(textWidget.getX(), width - colorPickerWidget.getWidth()), textWidget.getY() + textWidget.getHeight());
-		this.colorPickerWidget.setTargetElement(textWidget);
-		this.colorPickerWidget.setOnAccept(picker -> {
-			textWidget.setValue(ColorUtil.toAlphaHex(picker.getCurrentColor().getRGB()));
-		});
-		this.colorPickerWidget.setOnCancel(picker -> {
-			picker.setColor(this.colorEntryPreColorPicker);
-			textWidget.setValue(ColorUtil.toAlphaHex(this.colorEntryPreColorPicker.getRGB()));
-		});
-		this.colorPickerWidget.setChangeListener(color -> {
-			final int newColor = ColorUtil.transferAlpha(this.colorEntryPreColorPicker.getRGB(), color.getRGB());
-			textWidget.setValue(ColorUtil.toAlphaHex(newColor));
-		});
-		this.colorPickerWidget.setPresetListener((color, formatting) -> {
-			this.colorPickerWidget.setColor(color);
-		});
-		ColorUtil.parse(textWidget.getValue(), ColorUtil.WHITE).ifSuccess(color -> {
-			final Color pickerColor = new Color(color);
-			this.colorEntryPreColorPicker = pickerColor;
-			this.colorPickerWidget.setColor(pickerColor);
-		}).ifError(textColorError -> this.colorEntryPreColorPicker = this.colorPickerWidget.getCurrentColor());
-		toggleColorPicker(true);
+//		this.colorPickerWidget.setPosition(Math.min(textWidget.getX(), width - colorPickerWidget.getWidth()), textWidget.getY() + textWidget.getHeight());
+//		this.colorPickerWidget.setTargetElement(textWidget);
+//		this.colorPickerWidget.setOnAccept(picker -> {
+//			textWidget.setValue(ColorUtil.toAlphaHex(picker.getCurrentColor().getRGB()));
+//		});
+//		this.colorPickerWidget.setOnCancel(picker -> {
+//			picker.setColor(this.colorEntryPreColorPicker);
+//			textWidget.setValue(ColorUtil.toAlphaHex(this.colorEntryPreColorPicker.getRGB()));
+//		});
+//		this.colorPickerWidget.setChangeListener(color -> {
+//			final int newColor = ColorUtil.transferAlpha(this.colorEntryPreColorPicker.getRGB(), color.getRGB());
+//			textWidget.setValue(ColorUtil.toAlphaHex(newColor));
+//		});
+//		this.colorPickerWidget.setPresetListener((color, formatting) -> {
+//			this.colorPickerWidget.setColor(color);
+//		});
+//		ColorUtil.parse(textWidget.getValue(), ColorUtil.WHITE).ifSuccess(color -> {
+//			final Color pickerColor = new Color(color);
+//			this.colorEntryPreColorPicker = pickerColor;
+//			this.colorPickerWidget.setColor(pickerColor);
+//		}).ifError(textColorError -> this.colorEntryPreColorPicker = this.colorPickerWidget.getCurrentColor());
+//		toggleColorPickerWidget(true);
 	}
 
 	@Override
@@ -380,27 +404,31 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				continue;
 			}
 			this.setFocused(text);
-			if (this.colorListeners.contains(text)) {
-				this.colorListenerClicked(text);
-			}
-			if (this.colorPickerWidget.targetElement != text) {
-				text.setFocused(false);
-			}
+//			if (this.colorListeners.contains(text)) {
+//				this.colorListenerClicked(text);
+//			}
+//			if (this.colorPickerWidget.targetElement != text) {
+//				text.setFocused(false);
+//			}
 			break;
 		}
 
-		if (colorPickerWidget.active && colorPickerWidget.visible) {
-			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
-				colorPickerWidget.mouseClicked(event, doubleClick);
-				this.setFocused(colorPickerWidget);
-				this.setDragging(true);
-				return true;
-			} else {
-				if (!this.colorPickerWidget.targetElement.isMouseOver(mouseX, mouseY)) {
-					toggleColorPicker(false);
-				}
-			}
+		if (mouseClickedColorPicker(event, doubleClick)) {
+			return true;
 		}
+
+//		if (colorPickerWidget.active && colorPickerWidget.visible) {
+//			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
+//				colorPickerWidget.mouseClicked(event, doubleClick);
+//				this.setFocused(colorPickerWidget);
+//				this.setDragging(true);
+//				return true;
+//			} else {
+//				if (!this.colorPickerWidget.targetElement.isMouseOver(mouseX, mouseY)) {
+//					toggleColorPickerWidget(false);
+//				}
+//			}
+//		}
 		if (mouseY > topOffset) {
 			this.currentRow = Mth.clamp((int) (mouseY - topOffset) / 12, 0, this.textBlockEntity.lines.size() - 1);
 			this.setFocused(null);
@@ -455,14 +483,14 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	@Override
-	public ColorPickerWidget colorPickerWidget() {
+	public ColorPickerWidget getColorPickerWidget() {
 		return this.colorPickerWidget;
 	}
 
-	@Override
-	public void toggleColorPicker(boolean active) {
-		this.colorPickerWidget.toggle(active);
-	}
+//	@Override
+//	public void toggleColorPickerWidget(boolean active) {
+//		this.colorPickerWidget.toggle(active);
+//	}
 
 	@Override
 	TextFieldHelper getSelectionManager() {

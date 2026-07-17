@@ -1,6 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.ChatFormatting;
@@ -47,24 +47,24 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 		buttonX += buttonSize + buttonPadding; // + 4? (only works on padding of 2)
 		this.colorText = Button.builder(Component.literal("\uD83D\uDD8C"), action -> {
-			ColorPickerWidget colorPickerWidget = colorPickerWidget();
-			colorPickerWidget.setPosition(216, 10);
-			colorPickerWidget.setTargetElement(this.colorText);
-			colorPickerWidget.setOnAccept(picker -> {
-				picker.insertColor(picker.color);
-				picker.toggle(false);
-			});
-			colorPickerWidget.setOnCancel(picker -> picker.toggle(false));
-			colorPickerWidget.setPresetListener((color, formatting) -> {
-				if(formatting != null) {
-					insertFormattingTag(formatting);
-				} else {
-					insertHexTag(ColorPickerWidget.getHexCode(color));
-				}
-				this.toggleColorPicker(false);
-			});
-			colorPickerWidget.setChangeListener(null);
-			toggleColorPicker(!colorPickerWidget.active);
+//			ColorPickerWidget colorPickerWidget = getColorPickerWidget();
+//			colorPickerWidget.setPosition(216, 10);
+//			colorPickerWidget.setTargetElement(this.colorText);
+//			colorPickerWidget.setOnAccept(picker -> {
+//				picker.insertColor(picker.color);
+//				picker.toggle(false);
+//			});
+//			colorPickerWidget.setOnCancel(picker -> picker.toggle(false));
+//			colorPickerWidget.setPresetListener((color, formatting) -> {
+//				if(formatting != null) {
+//					insertFormattingTag(formatting);
+//				} else {
+//					insertHexTag(ColorPickerWidget.getHexCode(color));
+//				}
+//				this.toggleColorPickerWidget(false);
+//			});
+//			colorPickerWidget.setChangeListener(null);
+//			toggleColorPickerWidget(!colorPickerWidget.active);
 		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
 
 		widgets = new Button[]{
