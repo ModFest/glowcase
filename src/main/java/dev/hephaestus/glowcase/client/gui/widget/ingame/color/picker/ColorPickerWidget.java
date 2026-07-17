@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker;
 
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.ColorPickerIncludedScreen;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.functional.ColorSetter;
@@ -196,14 +197,20 @@ public class ColorPickerWidget extends AbstractButton {
 		// Transparent to black, top to bottom
 		graphics.fillGradient(area.getX(), area.getY(), area.getX2(), area.getY2(), ColorUtil.TRANSPARENT, ColorUtil.BLACK);
 		// Outline
-		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+		if (area.shouldOutline(mouseX, mouseY)) {
+			graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+			graphics.requestCursor(CursorTypes.POINTING_HAND);
+		}
 	}
 
 	public void extractHueArea(PickerArea area, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		// Hue gradient, starting and ending on red
 		GuiGraphicsUtil.extractHueGradient(graphics, area.getX(), area.getY(), area.getX2(), area.getY2());
 		// Outline
-		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+		if (area.shouldOutline(mouseX, mouseY)) {
+			graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+			graphics.requestCursor(CursorTypes.POINTING_HAND);
+		}
 	}
 
 	public void extractAlphaArea(PickerArea area, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -212,7 +219,10 @@ public class ColorPickerWidget extends AbstractButton {
 		// Transparent to current color, left to right
 		GuiGraphicsUtil.extractHorizontalGradient(graphics, area.getX(), area.getY(), area.getX2(), area.getY2(), ColorUtil.TRANSPARENT, this.getColorNoAlpha());
 		// Outline
-		if (area.shouldOutline(mouseX, mouseY)) graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+		if (area.shouldOutline(mouseX, mouseY)) {
+			graphics.outline(area.getX(), area.getY(), area.getWidth(), area.getHeight(), ColorUtil.WHITE);
+			graphics.requestCursor(CursorTypes.POINTING_HAND);
+		}
 	}
 
 	public void extractPresetArea(PickerPreset preset, GuiGraphicsExtractor graphics, boolean alphaPreset, int mouseX, int mouseY) {
@@ -226,12 +236,15 @@ public class ColorPickerWidget extends AbstractButton {
 			graphics.text(Minecraft.getInstance().font, hex, preset.getX() + 1, preset.getY() + 7, ColorUtil.WHITE);
 		}
 		// Outline
-		if (preset.shouldOutline(mouseX, mouseY)) graphics.outline(preset.getX(), preset.getY(), preset.getWidth(), preset.getHeight(), ColorUtil.WHITE);
+		if (preset.shouldOutline(mouseX, mouseY)) {
+			graphics.outline(preset.getX(), preset.getY(), preset.getWidth(), preset.getHeight(), ColorUtil.WHITE);
+			graphics.requestCursor(CursorTypes.POINTING_HAND);
+		}
 	}
 
 	public void extractButtonArea(PickerButton button, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-//		graphics.fill(button.getX(), button.getY(), button.getX2(), button.getY2(), ColorUtil.RED);
 		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, button.getTexture(mouseX, mouseY), button.getX() - button.getPadX(), button.getY() - button.getPadY(), button.getWidth() + button.getPadScale(), button.getHeight() + button.getPadScale());
+		if (button.isMouseOver(mouseX, mouseY)) graphics.requestCursor(CursorTypes.POINTING_HAND);
 	}
 
 	public void extractThumb(GuiGraphicsExtractor graphics, int thumbX, int thumbY, int thumbWidth, int thumbHeight, int thumbColor) {
@@ -250,6 +263,11 @@ public class ColorPickerWidget extends AbstractButton {
 		if (alphaBackground) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ALPHA_THUMB_TEXTURE, x, y, thumbWidth, thumbHeight);
 		graphics.fill(x, y, x2, y2, thumbColor);
 		graphics.outline(x, y, thumbWidth, thumbHeight, ColorUtil.WHITE);
+	}
+
+	@Override
+	protected void handleCursor(GuiGraphicsExtractor graphics) {
+		// NO-OP
 	}
 
 	// endregion
