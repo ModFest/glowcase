@@ -71,7 +71,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203, innerPadding, 113, 20);
 		addFormattingButtons(middle - 90 + 6, innerPadding, 0, 20, 2);
 
-		this.colorPickerWidget = ColorPickerWidget.builder(this).build();
+		this.colorPickerWidget = this.createColorPickerWidget();
 
 //		this.colorEntryWidget = new HexColorEditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20,
 //			true, this.colorPickerWidget, () -> this.textBlockEntity.color, color -> this.textBlockEntity.color = color
@@ -125,7 +125,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 //			this.colorEntryWidget
 //		);
 
-		this.addRenderableWidget(colorPickerWidget);
+//		this.addRenderableWidget(colorPickerWidget);
 		this.addRenderableWidget(this.colorEntryWidget);
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(moreOptionsButton);
@@ -218,7 +218,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		graphics.pose().popMatrix();
 
-		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
+//		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override
@@ -236,9 +237,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public boolean keyPressed(KeyEvent event) {
 		var keyCode = event.key();
 
-		if (this.keyPressedColorPicker(event)) {
-			return true;
-		}
+		if (this.keyPressedColorPicker(event)) return true;
 
 //		if (this.colorPickerWidget.active) {
 //			switch (keyCode) {
@@ -413,9 +412,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			break;
 		}
 
-		if (mouseClickedColorPicker(event, doubleClick)) {
-			return true;
-		}
+		if (mouseClickedColorPicker(event, doubleClick)) return true;
 
 //		if (colorPickerWidget.active && colorPickerWidget.visible) {
 //			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {

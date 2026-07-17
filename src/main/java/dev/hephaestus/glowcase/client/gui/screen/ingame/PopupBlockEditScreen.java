@@ -3,6 +3,8 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.Minecraft;
@@ -21,13 +23,15 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
-public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
+public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> implements ColorPickerIncludedScreen {
 	private TextFieldHelper selectionManager;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private EditBox titleEntryWidget;
 	private Button changeAlignment;
-	private EditBox colorEntryWidget;
+	private HexColorEditBox colorEntryWidget;
+
+	private ColorPickerWidget colorPickerWidget;
 
 	public PopupBlockEditScreen(PopupBlockEntity blockEntity) {
 		super(blockEntity);
@@ -76,14 +80,21 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 			));
 		}).bounds(120 + innerPadding, 20 + innerPadding, 160, 20).build();
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, 280 + innerPadding * 2, 20 + innerPadding, 50, 20, Component.empty());
-		this.colorEntryWidget.setValue("#" + Integer.toHexString(this.blockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
-				this.blockEntity.renderDirty = true;
-			});
-		});
+		this.colorPickerWidget = createColorPickerWidget();
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 280 + innerPadding, 20 + innerPadding,
+				() -> this.blockEntity.color, color -> { this.blockEntity.color = color; this.blockEntity.renderDirty = true; }
+			)
+			.setWidth(50)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
+//		this.colorEntryWidget = new EditBox(this.minecraft.font, 280 + innerPadding * 2, 20 + innerPadding, 50, 20, Component.empty());
+//		this.colorEntryWidget.setValue("#" + Integer.toHexString(this.blockEntity.color & 0x00FFFFFF));
+//		this.colorEntryWidget.setResponder(string -> {
+//			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
+//				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
+//				this.blockEntity.renderDirty = true;
+//			});
+//		});
 
 		this.addRenderableWidget(this.titleEntryWidget);
 		this.addRenderableWidget(this.changeAlignment);
@@ -169,6 +180,7 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 		}
 
 		graphics.pose().popMatrix();
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}
 
 	@Override
@@ -186,6 +198,7 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int keyCode = event.key();
+		if (this.keyPressedColorPicker(event)) return true;
 		if (this.titleEntryWidget.canConsumeInput()) {
 			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
 				this.onClose();
@@ -296,6 +309,7 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 		double mouseX = event.x();
 		double mouseY = event.y();
 		int topOffset = (int) (40 + 2 * this.width / 100F);
+		if (this.mouseClickedColorPicker(event, doubleClick)) return true;
 		if (!this.titleEntryWidget.mouseClicked(event, doubleClick)) {
 			this.titleEntryWidget.setFocused(false);
 		}
@@ -353,5 +367,10 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 		} else {
 			return super.mouseClicked(event, doubleClick);
 		}
+	}
+
+	@Override
+	public ColorPickerWidget getColorPickerWidget() {
+		return this.colorPickerWidget;
 	}
 }

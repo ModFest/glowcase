@@ -3,8 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -13,10 +12,28 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * Main interface for any Screen wishing to implement a {@link ColorPickerWidget}.<br><br>
- * Each ColorPickerIncludedScreen has *one* Color Picker widget which gets shared among all things using it.
+ * Each ColorPickerIncludedScreen has *one* Color Picker widget which gets shared among all things using it.<br>
+ * Steps for adding a Color Picker to a screen:
+ * <ol type="0">
+ *     <li>Implement this interface, and return a private ColorPickerWidget in {@link ColorPickerIncludedScreen#getColorPickerWidget()}.</li>
+ *     <li>Initialize your ColorPickerWidget in {@link Screen#init()} via {@link ColorPickerWidget#builder(ColorPickerIncludedScreen)}. You do *not* need to add it as a renderableWidget.</li>
+ *     <li>Include {@link ColorPickerIncludedScreen#extractColorPicker(GuiGraphicsExtractor, int, int, float)} at the very bottom of {@link Screen#extractRenderState(GuiGraphicsExtractor, int, int, float)} to ensure it renders atop of everything else.</li>
+ *     <li>Include {@link ColorPickerIncludedScreen#mouseClickedColorPicker(MouseButtonEvent, boolean)} at the very top of {@link Screen#mouseClicked(MouseButtonEvent, boolean)}, return true if color picker was clicked, otherwise continue with method.</li>
+ *     <li>Include {@link ColorPickerIncludedScreen#keyPressedColorPicker(KeyEvent)} at the very top of {@link Screen#keyPressed(KeyEvent)}, return true if color picker key pressed, otherwise continue with method.</li>
+ *     <li>Booyah!</li>
+ * </ol>
+ * @author Superkat32
  */
 public interface ColorPickerIncludedScreen {
 	ColorPickerWidget getColorPickerWidget();
+
+	default ColorPickerWidget createColorPickerWidget() {
+		return ColorPickerWidget.builder(this).build();
+	}
+
+	default void extractColorPicker(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		this.getColorPickerWidget().extractRenderState(graphics, mouseX, mouseY, delta);
+	}
 
 	default boolean mouseClickedColorPicker(MouseButtonEvent event, boolean doubleClick) {
 		double mouseX = event.x();
@@ -60,17 +77,13 @@ public interface ColorPickerIncludedScreen {
 		return false;
 	}
 
-//	default void setColorPickerTarget(GuiEventListener element) {
-//		this.getColorPickerWidget().target(element);
-//	}
-
 	default void hideColorPickerWidget() {
 		this.getColorPickerWidget().hide();
 	}
 
 	// TODO - break this into FormattableScreen
-	void insertHexTag(String hex);
-	void insertFormattingTag(ChatFormatting formatting);
+	default void insertHexTag(String hex) {}
+	default void insertFormattingTag(ChatFormatting formatting) {}
 	default void insertHexColor(int color) {
 		String hex = ColorUtil.toHex(color);
 		this.insertHexTag(hex);
