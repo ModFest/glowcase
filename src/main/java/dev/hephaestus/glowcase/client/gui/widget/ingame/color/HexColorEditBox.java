@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An EditBox Widget built for HEX colors, with automatic color (as an integer) getter & setter, and built-in {@link ColorPickerWidget} support.<br><br>
+ * An EditBox Widget built for HEX colors, with automatic color (as an integer) getter & setter, and built-in {@link ColorPickerWidget} support.
  * @author Superkat32
  */
 public class HexColorEditBox extends GlowcaseEditBox {
@@ -20,7 +20,6 @@ public class HexColorEditBox extends GlowcaseEditBox {
 	public final ColorPickerWidget colorPickerWidget;
 	public final ColorGetter colorGetter;
 	public final ColorSetter colorSetter;
-	public int fallbackColor;
 	public int color;
 	public boolean editableAlpha;
 
@@ -30,14 +29,13 @@ public class HexColorEditBox extends GlowcaseEditBox {
 
 	public HexColorEditBox(
 		Font textRenderer, int x, int y, int width, int height,
-		boolean editableAlpha, int fallbackColor, @Nullable ColorPickerWidget colorPickerWidget,
+		boolean editableAlpha, @Nullable ColorPickerWidget colorPickerWidget,
 		ColorGetter colorGetter, ColorSetter colorSetter
 	) {
 		super(textRenderer, x, y, width, height, Component.empty());
 		this.colorPickerWidget = colorPickerWidget;
 		this.colorGetter = colorGetter;
 		this.colorSetter = colorSetter;
-		this.fallbackColor = fallbackColor;
 		this.color = colorGetter.get();
 		this.editableAlpha = editableAlpha;
 
@@ -46,18 +44,13 @@ public class HexColorEditBox extends GlowcaseEditBox {
 		});
 
 		this.setTextFromColor();
-
-//		if (this.colorPickerWidget != null) {
-//			this.colorPickerWidget.target(this);
-//			this.colorPickerWidget.setup(this.color, true, this::setColor);
-//		}
 	}
 
 	@Override
 	public void onClick(MouseButtonEvent event, boolean doubleClick) {
 		super.onClick(event, doubleClick);
 		if (this.colorPickerWidget != null) {
-			this.colorPickerWidget.target(this, this.color, true, this::setColor);
+			this.colorPickerWidget.target(this, this.color, this.editableAlpha, this::setColor);
 		}
 	}
 
@@ -102,7 +95,6 @@ public class HexColorEditBox extends GlowcaseEditBox {
 		private int width = DEFAULT_WIDTH;
 		private int height = 20;
 		private boolean editableAlpha = false;
-		private int fallbackColor;
 		private ColorPickerWidget colorPickerWidget = null;
 
 		public Builder(Font textRenderer, int x, int y, ColorGetter colorGetter, ColorSetter colorSetter) {
@@ -111,8 +103,6 @@ public class HexColorEditBox extends GlowcaseEditBox {
 			this.textRenderer = textRenderer;
 			this.x = x;
 			this.y = y;
-
-			this.fallbackColor = colorGetter.get();
 		}
 
 		public Builder setWidth(int width) {
@@ -131,11 +121,6 @@ public class HexColorEditBox extends GlowcaseEditBox {
 			return this;
 		}
 
-		public Builder setFallbackColor(int fallbackColor) {
-			this.fallbackColor = fallbackColor;
-			return this;
-		}
-
 		public Builder setColorPickerWidget(ColorPickerWidget colorPickerWidget) {
 			this.colorPickerWidget = colorPickerWidget;
 			return this;
@@ -144,7 +129,7 @@ public class HexColorEditBox extends GlowcaseEditBox {
 		public HexColorEditBox build() {
 			return new HexColorEditBox(
 				this.textRenderer, this.x, this.y, this.width, this.height,
-				this.editableAlpha, this.fallbackColor, this.colorPickerWidget,
+				this.editableAlpha, this.colorPickerWidget,
 				this.colorGetter, this.colorSetter
 			);
 		}

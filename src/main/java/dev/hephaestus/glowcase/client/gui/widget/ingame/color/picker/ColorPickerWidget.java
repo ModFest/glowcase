@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -75,7 +76,7 @@ public class ColorPickerWidget extends AbstractButton {
 	public PickerArea currentClickedArea = null; // Used for allowing mouse drags beyond an area's boundaries
 
 	public float hue, saturation, value, alpha;
-	public float prevHue, prevSaturation, prevValue, prevAlpha;
+	public float prevHue, prevSaturation, prevValue, prevAlpha; // Used for cancelling, *not* interpolation
 
 	public static ColorPickerWidget.Builder builder(ColorPickerIncludedScreen screen) {
 		return new Builder(screen);
@@ -285,14 +286,16 @@ public class ColorPickerWidget extends AbstractButton {
 	 * @param pickedColorListener What to do with the picked color, as an integer.
 	 */
 	public void target(AbstractWidget widget, int initColor, boolean showAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
+		Screen screen = Minecraft.getInstance().screen;
 		this.visible = true;
 		this.active = true;
 		this.targetElement = widget;
 
 		// Ensure at least 2 pixels of padding between screen edges
-		int x = Math.min(Minecraft.getInstance().screen.width - this.getWidth() - 2, widget.getX());
+		int x = Math.min(screen.width - this.getWidth() - 2, widget.getX());
 		if (rightAligned) x = Math.max(2, widget.getX() + widget.getWidth() - this.getWidth() + 2);
-		int y = widget.getY() + widget.getHeight();
+		int y = widget.getY() + widget.getHeight(); // Beneath widget
+		if (y + this.getHeight() > screen.height - 2) y = widget.getY() - this.getHeight(); // Above widget
 		this.setX(x);
 		this.setY(y);
 

@@ -2,6 +2,8 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.TextBlockEditScreen.TextScale;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import net.minecraft.client.Minecraft;
@@ -16,6 +18,8 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -23,9 +27,10 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
-public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> {
+public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> implements ColorPickerIncludedScreen {
 	private final Screen returnScreen;
 
+	private ColorPickerWidget colorPickerWidget;
 	public final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 	public TextOptionList options;
 
@@ -98,32 +103,55 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> {
 			)
 		);
 
+		// Note: Color picker position is messed up on this screen, but it still works otherwise
+		this.colorPickerWidget = createColorPickerWidget();
 		this.options.addHeaders(Component.translatable("gui.glowcase.color"), Component.translatable("gui.glowcase.background_color"));
-		var colorEditBox = new EditBox(
-			this.font,
-			Button.DEFAULT_WIDTH,
-			Button.DEFAULT_HEIGHT,
-			Component.translatable("gui.glowcase.color")
-		);
-		colorEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.color));
-		colorEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.color)
-			.ifSuccess(newColor -> {
-				blockEntity.color = newColor;
-				blockEntity.rebake(true);
-			}));
+		HexColorEditBox colorEditBox = HexColorEditBox.builder(this.minecraft.font, 0, 0,
+				() -> this.blockEntity.color, color -> {
+					this.blockEntity.color = color;
+					this.blockEntity.rebake(true);
+				}
+			)
+			.setEditableAlpha(true)
+			.setWidth(Button.DEFAULT_WIDTH)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
 
-		var backgroundEditBox = new EditBox(
-			this.font,
-			Button.DEFAULT_WIDTH,
-			Button.DEFAULT_HEIGHT,
-			Component.translatable("gui.glowcase.background_color")
-		);
-		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.backgroundColor));
-		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.backgroundColor)
-			.ifSuccess(newColor -> {
-				blockEntity.backgroundColor = newColor;
-				blockEntity.rebake(true);
-			}));
+//		var colorEditBox = new EditBox(
+//			this.font,
+//			Button.DEFAULT_WIDTH,
+//			Button.DEFAULT_HEIGHT,
+//			Component.translatable("gui.glowcase.color")
+//		);
+//		colorEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.color));
+//		colorEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.color)
+//			.ifSuccess(newColor -> {
+//				blockEntity.color = newColor;
+//				blockEntity.rebake(true);
+//			}));
+
+		HexColorEditBox backgroundEditBox = HexColorEditBox.builder(this.minecraft.font, 0, 0,
+				() -> this.blockEntity.backgroundColor, color -> {
+					this.blockEntity.backgroundColor = color;
+					this.blockEntity.rebake(true);
+				}
+			)
+			.setWidth(Button.DEFAULT_WIDTH)
+			.setEditableAlpha(true)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
+//		var backgroundEditBox = new EditBox(
+//			this.font,
+//			Button.DEFAULT_WIDTH,
+//			Button.DEFAULT_HEIGHT,
+//			Component.translatable("gui.glowcase.background_color")
+//		);
+//		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.backgroundColor));
+//		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.backgroundColor)
+//			.ifSuccess(newColor -> {
+//				blockEntity.backgroundColor = newColor;
+//				blockEntity.rebake(true);
+//			}));
 
 		this.options.add(colorEditBox, backgroundEditBox);
 
@@ -157,6 +185,29 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> {
 	public void onClose() {
 		super.onClose();
 		this.minecraft.setScreen(this.returnScreen);
+	}
+
+	@Override
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
+	}
+
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (this.mouseClickedColorPicker(event, doubleClick)) return true;
+		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (this.keyPressedColorPicker(event)) return true;
+		return super.keyPressed(event);
+	}
+
+	@Override
+	public ColorPickerWidget getColorPickerWidget() {
+		return this.colorPickerWidget;
 	}
 
 	@NullMarked
