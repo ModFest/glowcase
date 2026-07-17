@@ -2,7 +2,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import dev.hephaestus.glowcase.packet.C2SEditNoteItem;
@@ -67,7 +67,7 @@ public class NoteEditScreen extends TextEditorScreen {
 	private boolean finalizing = false;
 	private List<FormattedText> signing_text;
 
-	private ColorPickerWidget colorPickerWidget;
+//	private ColorPickerWidget colorPickerWidget;
 	private Button doneButton;
 	private Button signButton;
 	private Button changeAlignment;
@@ -187,10 +187,10 @@ public class NoteEditScreen extends TextEditorScreen {
 		}).bounds(width / 2 + BG_WIDTH / 2 - (BG_WIDTH / 2 - 3), height / 2 + BG_HEIGHT / 2 + offset, BG_WIDTH / 2 - 3, 20).build();
 
 
-		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
-		this.colorPickerWidget.toggle(false); //start deactivated
+//		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
+//		this.colorPickerWidget.toggle(false); //start deactivated
 
-		this.addRenderableWidget(colorPickerWidget);
+//		this.addRenderableWidget(colorPickerWidget);
 
 		addRenderableWidget(changeAlignment);
 		addRenderableWidget(doneButton);
@@ -347,12 +347,13 @@ public class NoteEditScreen extends TextEditorScreen {
 		boolean result;
 
 		int keyCode = event.key();
-		if (this.colorPickerWidget.active && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
-			if (keyCode == GLFW.GLFW_KEY_ENTER) {
-				this.colorPickerWidget.confirmColor();
-			} else {
-				this.colorPickerWidget.cancel();
-			}
+//		if (this.colorPickerWidget.active && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
+		if (false) {
+//			if (keyCode == GLFW.GLFW_KEY_ENTER) {
+//				this.colorPickerWidget.confirmColor();
+//			} else {
+//				this.colorPickerWidget.cancel();
+//			}
 			result = true;
 		} else {
 			setFocused(null);
@@ -444,18 +445,18 @@ public class NoteEditScreen extends TextEditorScreen {
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		double mouseX = event.x();
 		double mouseY = event.y();
-		if (colorPickerWidget.active && colorPickerWidget.visible) {
-			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
-				colorPickerWidget.mouseClicked(event, doubleClick);
-				this.setFocused(colorPickerWidget);
-				this.setDragging(true);
-				return true;
-			} else {
-				if (!this.colorPickerWidget.targetElement.isMouseOver(mouseX, mouseY)) {
-					toggleColorPicker(false);
-				}
-			}
-		}
+//		if (colorPickerWidget.active && colorPickerWidget.visible) {
+//			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
+//				colorPickerWidget.mouseClicked(event, doubleClick);
+//				this.setFocused(colorPickerWidget);
+//				this.setDragging(true);
+//				return true;
+//			} else {
+////				if (!this.colorPickerWidget.targetElement.isMouseOver(mouseX, mouseY)) {
+////					toggleColorPicker(false);
+////				}
+//			}
+//		}
 
 		boolean withinX = (mouseX >= width / 2f - BG_WIDTH / 2f && mouseX <= width / 2f + BG_WIDTH / 2f);
 		boolean withinY = (mouseY >= height / 2f - BG_HEIGHT / 2f && mouseY <= height / 2f + BG_HEIGHT / 2f);
@@ -597,14 +598,15 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	public ColorPickerWidget colorPickerWidget() {
-		return colorPickerWidget;
+	public ColorPickerWidget getColorPickerWidget() {
+//		return colorPickerWidget;
+		return null;
 	}
 
-	@Override
-	public void toggleColorPicker(boolean active) {
-		colorPickerWidget.toggle(active);
-	}
+//	@Override
+//	public void toggleColorPickerWidget(boolean active) {
+////		colorPickerWidget.toggle(active);
+//	}
 
 	@Override
 	TextFieldHelper getSelectionManager() {

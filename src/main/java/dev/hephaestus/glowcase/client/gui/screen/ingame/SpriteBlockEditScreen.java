@@ -4,6 +4,7 @@ import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -29,7 +30,7 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 	private Button spriteWidgetHelpButton;
 	private Button rotationWidget;
 	private Button zOffsetToggle;
-	private EditBox colorEntryWidget;
+	private HexColorEditBox colorEntryWidget;
 	private EditBox scaleEntryWidget;
 
 	private List<FormattedCharSequence> spriteHelpTooltipText;
@@ -73,13 +74,19 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 90, height / 2 + 5, 180, 20).build();
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 35, 180, 20, Component.empty());
-		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
-			});
-		});
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, width / 2 - 90, height / 2 + 35,
+				() -> this.blockEntity.color, color -> this.blockEntity.color = color
+			)
+			.setWidth(180)
+			.build();
+
+//		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 35, 180, 20, Component.empty());
+//		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
+//		this.colorEntryWidget.setResponder(string -> {
+//			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
+//				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
+//			});
+//		});
 
 		this.scaleEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 65, 180, 20, Component.empty());
 		this.scaleEntryWidget.setValue(String.valueOf(this.blockEntity.scale));

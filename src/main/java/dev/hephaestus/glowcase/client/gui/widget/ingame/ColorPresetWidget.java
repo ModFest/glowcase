@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -9,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.function.BiConsumer;
 
 public class ColorPresetWidget extends AbstractButton {
 	public final ColorPickerWidget colorPickerWidget;
@@ -63,17 +63,17 @@ public class ColorPresetWidget extends AbstractButton {
 
 	@Override
 	public void onPress(InputWithModifiers input) {
-		BiConsumer<Color, ChatFormatting> presetListener = this.colorPickerWidget.getPresetListener();
-		if (presetListener != null) {
-			presetListener.accept(this.color, this.formatting != null && this.formatting.isColor() ? this.formatting : null);
-		} else {
-			if (this.formatting != null && formatting.isColor()) {
-				this.colorPickerWidget.color = this.color;
-				this.colorPickerWidget.toggle(false);
-			} else {
-				this.colorPickerWidget.setColor(this.color);
-			}
-		}
+//		BiConsumer<Color, ChatFormatting> presetListener = this.colorPickerWidget.getPresetListener();
+//		if (presetListener != null) {
+//			presetListener.accept(this.color, this.formatting != null && this.formatting.isColor() ? this.formatting : null);
+//		} else {
+//			if (this.formatting != null && formatting.isColor()) {
+//				this.colorPickerWidget.color = this.color;
+//				this.colorPickerWidget.toggle(false);
+//			} else {
+//				this.colorPickerWidget.setColor(this.color);
+//			}
+//		}
 
 	}
 
