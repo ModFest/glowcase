@@ -85,6 +85,8 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
+		super.appendHoverText(stack, context, displayComponent, textConsumer, type);
+
 		CollectionComponent collection = stack.get(Glowcase.COLLECTION_COMPONENT.get());
 		textConsumer.accept(Component.translatable("item.glowcase.collection_case.tooltip.0").withStyle(ChatFormatting.GRAY));
 		if (type.isCreative()) textConsumer.accept(Component.translatable("item.glowcase.collection_case.tooltip.creative.0").withStyle(ChatFormatting.DARK_GRAY));
