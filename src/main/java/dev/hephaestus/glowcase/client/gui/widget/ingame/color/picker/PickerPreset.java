@@ -69,13 +69,6 @@ public class PickerPreset extends PickerArea {
 		return presetFormatting;
 	}
 
-//	public int getFormattingColorOrDefault() {
-//		if (this.presetFormatting != null && this.presetFormatting.isColor() && this.presetFormatting.getColor() != null) {
-//			return ARGB.color(1f, this.presetFormatting.getColor());
-//		}
-//		return this.getPresetColor();
-//	}
-
 	public boolean isAlphaPreset() {
 		return isAlphaPreset;
 	}

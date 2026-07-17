@@ -87,14 +87,6 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> im
 			.setWidth(50)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
-//		this.colorEntryWidget = new EditBox(this.minecraft.font, 280 + innerPadding * 2, 20 + innerPadding, 50, 20, Component.empty());
-//		this.colorEntryWidget.setValue("#" + Integer.toHexString(this.blockEntity.color & 0x00FFFFFF));
-//		this.colorEntryWidget.setResponder(string -> {
-//			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-//				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
-//				this.blockEntity.renderDirty = true;
-//			});
-//		});
 
 		this.addRenderableWidget(this.titleEntryWidget);
 		this.addRenderableWidget(this.changeAlignment);
