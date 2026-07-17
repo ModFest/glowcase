@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.ChatFormatting;
@@ -47,6 +48,13 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 		buttonX += buttonSize + buttonPadding; // + 4? (only works on padding of 2)
 		this.colorText = Button.builder(Component.literal("\uD83D\uDD8C"), action -> {
+			ColorPickerWidget colorPickerWidget = this.getColorPickerWidget();
+			colorPickerWidget.target(this.colorText, ColorUtil.RED, false, true, pickedColor -> {});
+			colorPickerWidget.setConfirmListener(this::insertHexColor);
+			colorPickerWidget.setPresetListener(preset -> {
+				if (preset.getPresetFormatting() != null) this.insertFormattingTag(preset.getPresetFormatting());
+				colorPickerWidget.hide();
+			});
 //			ColorPickerWidget colorPickerWidget = getColorPickerWidget();
 //			colorPickerWidget.setPosition(216, 10);
 //			colorPickerWidget.setTargetElement(this.colorText);
