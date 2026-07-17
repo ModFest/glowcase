@@ -117,19 +117,6 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> i
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
 
-//		var colorEditBox = new EditBox(
-//			this.font,
-//			Button.DEFAULT_WIDTH,
-//			Button.DEFAULT_HEIGHT,
-//			Component.translatable("gui.glowcase.color")
-//		);
-//		colorEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.color));
-//		colorEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.color)
-//			.ifSuccess(newColor -> {
-//				blockEntity.color = newColor;
-//				blockEntity.rebake(true);
-//			}));
-
 		HexColorEditBox backgroundEditBox = HexColorEditBox.builder(this.minecraft.font, 0, 0,
 				() -> this.blockEntity.backgroundColor, color -> {
 					this.blockEntity.backgroundColor = color;
@@ -140,18 +127,6 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> i
 			.setEditableAlpha(true)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
-//		var backgroundEditBox = new EditBox(
-//			this.font,
-//			Button.DEFAULT_WIDTH,
-//			Button.DEFAULT_HEIGHT,
-//			Component.translatable("gui.glowcase.background_color")
-//		);
-//		backgroundEditBox.setValue(ColorUtil.toAlphaHex(this.blockEntity.backgroundColor));
-//		backgroundEditBox.setResponder(string -> ColorUtil.parse(string, blockEntity.backgroundColor)
-//			.ifSuccess(newColor -> {
-//				blockEntity.backgroundColor = newColor;
-//				blockEntity.rebake(true);
-//			}));
 
 		this.options.add(colorEditBox, backgroundEditBox);
 

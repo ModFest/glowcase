@@ -135,12 +135,6 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 			.setWidth(50)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
-//		this.colorWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
-//		this.colorWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
-//		this.colorWidget.setResponder(string -> {
-//			TextColor.parseColor(this.colorWidget.getValue())
-//				.ifSuccess(color -> this.blockEntity.color = color.getValue() | 0xFF000000);
-//		});
 
 		this.widthWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
 		this.widthWidget.setValue(String.valueOf(this.blockEntity.width));
