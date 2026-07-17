@@ -1,6 +1,8 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
@@ -13,7 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -23,11 +27,13 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -41,6 +47,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 	private TextFieldHelper selectionManager;
 	private HexColorEditBox colorEntryWidget;
+	private HexColorEditBox backgroundColorEntryWidget;
+
 	private int currentRow;
 	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
@@ -65,12 +73,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		int middle = width / 2;
 
-		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203, innerPadding, 113, 20);
-		addFormattingButtons(middle - 90 + 6, innerPadding, 0, 20, 2);
+		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203 - 5, innerPadding, 113, 20);
+		addFormattingButtons(middle - 90 + 6 - 5, innerPadding, 0, 20, 2);
 
 		this.colorPickerWidget = this.createColorPickerWidget();
 
-		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54, innerPadding,
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 - 5, innerPadding,
 				() -> this.textBlockEntity.color, color -> {
 					this.textBlockEntity.color = color;
 					this.textBlockEntity.rebake(true);
@@ -79,22 +87,34 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.setEditableAlpha(true)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
-		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
+		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color_argb")));
 
-		var moreOptionsButton = Button.builder(
-				Component.translatable("gui.glowcase.more"),
-				button -> {
-					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-					Minecraft.getInstance().setScreen(optionsScreen);
-				})
-			.bounds(middle + 124, innerPadding, 80, 20)
+		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 + 64 + 6 - 5, innerPadding,
+				() -> this.textBlockEntity.backgroundColor, color -> {
+				this.textBlockEntity.backgroundColor = color;
+				this.textBlockEntity.rebake(true);
+				}
+			)
+			.setEditableAlpha(true)
+			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
+		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));
+
+		Button moreOptionsButton = IconButtonWidget.builder(Glowcase.id("properties"), button -> {
+			TextBlockOptionsScreen optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+			Minecraft.getInstance().setScreen(optionsScreen);
+		})
+			.dimensions(middle + 124 + 64 + 6 - 5, innerPadding, 20, 20, 16, 16)
+			.build();
+		moreOptionsButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.extra_properties")));
 
 		this.textWidgets = List.of(
-			this.colorEntryWidget
+			this.colorEntryWidget,
+			this.backgroundColorEntryWidget
 		);
 
 		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(this.backgroundColorEntryWidget);
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(moreOptionsButton);
 	}
@@ -129,6 +149,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}
 	}
 
+	// FIXME - Text shadow to false is not represented in editor
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);

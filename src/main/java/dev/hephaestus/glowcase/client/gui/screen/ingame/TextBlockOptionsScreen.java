@@ -105,7 +105,7 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> i
 
 		// Note: Color picker position is messed up on this screen, but it still works otherwise
 		this.colorPickerWidget = createColorPickerWidget();
-		this.options.addHeaders(Component.translatable("gui.glowcase.color"), Component.translatable("gui.glowcase.background_color"));
+		this.options.addHeaders(Component.translatable("gui.glowcase.color_argb"), Component.translatable("gui.glowcase.background_color_argb"));
 		HexColorEditBox colorEditBox = HexColorEditBox.builder(this.minecraft.font, 0, 0,
 				() -> this.blockEntity.color, color -> {
 					this.blockEntity.color = color;
