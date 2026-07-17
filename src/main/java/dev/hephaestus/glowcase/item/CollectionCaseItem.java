@@ -3,7 +3,6 @@ package dev.hephaestus.glowcase.item;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.item.component.CollectionComponent;
 import dev.hephaestus.glowcase.util.CollectableStack;
-import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -31,11 +30,11 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 				if (!retrievedStack.isEmpty() && collection.isSelectedCollected()) { // Retrieve Collectable
 					otherStackSetter.accept(retrievedStack);
 					caseStack.set(Glowcase.COLLECTION_COMPONENT.get(), collection.retrieveSelectedStack(player.isCreative()));
-					playRetrieveSound(player);
+					if (player.isLocalPlayer()) playRetrieveSound(player);
 					return true;
 				} else if (player.isCreative() && tooltipVisible && collection.hasSelection()) { // Remove Collectable
 					caseStack.set(Glowcase.COLLECTION_COMPONENT.get(), collection.withoutSelectedStack());
-					playRemoveSound(player);
+					if (player.isLocalPlayer()) playRemoveSound(player);
 					return true;
 				}
 			} else { // Insertion Actions
@@ -43,11 +42,11 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 				if (collectionIndex != -1) { // Collect Collectable
 					otherStack.shrink(collection.collectables().get(collectionIndex).getStack().getCount());
 					caseStack.set(Glowcase.COLLECTION_COMPONENT.get(), collection.collectStack(collectionIndex));
-					playCollectSound(player);
+					if (player.isLocalPlayer()) playCollectSound(player);
 					return true;
 				} else if (player.isCreative()) { // Add Collectable
 					caseStack.set(Glowcase.COLLECTION_COMPONENT.get(), collection.withStackAfterSelection(otherStack));
-					playAddSound(player);
+					if (player.isLocalPlayer()) playAddSound(player);
 					return true;
 				}
 			}
@@ -80,14 +79,14 @@ public class CollectionCaseItem extends Item implements ScrollableItem {
 				}
 				caseStack.set(Glowcase.COLLECTION_COMPONENT.get(), collection);
 			}
-			playScrollSound(player);
+			if (player.isLocalPlayer()) playScrollSound(player);
 		}
 	}
 
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
 		super.appendHoverText(stack, context, displayComponent, textConsumer, type);
-		
+
 		CollectionComponent collection = stack.get(Glowcase.COLLECTION_COMPONENT.get());
 		textConsumer.accept(Component.translatable("item.glowcase.collection_case.tooltip.0").withStyle(ChatFormatting.GRAY));
 		if (type.isCreative()) textConsumer.accept(Component.translatable("item.glowcase.collection_case.tooltip.creative.0").withStyle(ChatFormatting.DARK_GRAY));
