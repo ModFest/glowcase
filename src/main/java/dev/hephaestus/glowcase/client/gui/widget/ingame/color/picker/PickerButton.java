@@ -13,18 +13,23 @@ public class PickerButton extends PickerArea {
 	private final Identifier texture;
 	private final Identifier hoverTexture;
 	private final Runnable clickListener;
+	// Padding on the texture rendering because the icons aren't (and physically can't be) centered on the pixel grid
+	private final int padX, padY, padScale;
 
 	public static List<PickerButton> createButtons(ColorPickerWidget colorPickerWidget) {
 		return List.of(
-			new PickerButton(colorPickerWidget, CONFIRM_TEXTURE, CONFIRM_HIGHLIGHTED_TEXTURE, colorPickerWidget::confirm),
-			new PickerButton(colorPickerWidget, CANCEL_TEXTURE, CANCEL_HIGHLIGHTED_TEXTURE, colorPickerWidget::cancel)
+			new PickerButton(colorPickerWidget, CONFIRM_TEXTURE, CONFIRM_HIGHLIGHTED_TEXTURE, 1, 1, 2, colorPickerWidget::confirm),
+			new PickerButton(colorPickerWidget, CANCEL_TEXTURE, CANCEL_HIGHLIGHTED_TEXTURE, 2, 1, 3, colorPickerWidget::cancel)
 		);
 	}
 
-	public PickerButton(ColorPickerWidget colorPicker, Identifier texture, Identifier hoverTexture, Runnable clickListener) {
+	public PickerButton(ColorPickerWidget colorPicker, Identifier texture, Identifier hoverTexture, int padX, int padY, int padScale, Runnable clickListener) {
 		super(colorPicker, true, null, null);
 		this.texture = texture;
 		this.hoverTexture = hoverTexture;
+		this.padX = padX;
+		this.padY = padY;
+		this.padScale = padScale;
 		this.clickListener = clickListener;
 	}
 
@@ -39,5 +44,17 @@ public class PickerButton extends PickerArea {
 
 	public Identifier getTexture(int mouseX, int mouseY) {
 		return this.isMouseOver(mouseX, mouseY) ? this.hoverTexture : this.texture;
+	}
+
+	public int getPadX() {
+		return padX;
+	}
+
+	public int getPadY() {
+		return padY;
+	}
+
+	public int getPadScale() {
+		return padScale;
 	}
 }

@@ -99,7 +99,7 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	// Preset & button width & height: 16
-	// Presets per row: 10 (2 rows by default, 3 if alpha is shown)
+	// Presets per row: 10 (2 rows by default, 3 rows if alpha is shown)
 	// Hue & Alpha slider heights: 10
 	// Preview & Sat/value picker: Whatever height is left
 	// Preview width: 1/3 of picker padded width
@@ -184,9 +184,8 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	public void extractPreviewArea(PickerArea area, GuiGraphicsExtractor graphics) {
-		// TODO - Precise tile of the background for my perfectionism here
 		// Alpha background texture (if needed)
-		if (this.showAlpha) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, ALPHA_PREVIEW_TEXTURE, area.getX(), area.getY(), area.getWidth(), area.getHeight());
+		if (this.showAlpha) GuiGraphicsUtil.drawPreciseTile(graphics, ALPHA_PREVIEW_TEXTURE, area.getX(), area.getY(), area.getX2(), area.getY2(), 8, 7);
 		// Current color
 		graphics.fill(area.getX(), area.getY(), area.getX2(), area.getY2(), this.getColor());
 	}
@@ -231,8 +230,8 @@ public class ColorPickerWidget extends AbstractButton {
 	}
 
 	public void extractButtonArea(PickerButton button, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-		// TODO - PLEASE precise texture this it'll annoy me so much
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, button.getTexture(mouseX, mouseY), button.getX(), button.getY(), button.getWidth(), button.getHeight());
+//		graphics.fill(button.getX(), button.getY(), button.getX2(), button.getY2(), ColorUtil.RED);
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, button.getTexture(mouseX, mouseY), button.getX() - button.getPadX(), button.getY() - button.getPadY(), button.getWidth() + button.getPadScale(), button.getHeight() + button.getPadScale());
 	}
 
 	public void extractThumb(GuiGraphicsExtractor graphics, int thumbX, int thumbY, int thumbWidth, int thumbHeight, int thumbColor) {
