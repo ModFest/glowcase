@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
@@ -16,11 +17,13 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 	private Button colorText;
 	private Button[] widgets = new Button[0];
 
+	abstract GlowcaseMultilineEditBox getGlowcaseMultilineEditBox();
+
 	abstract TextFieldHelper getSelectionManager();
 
 	protected void addFormattingButtons(int x, int y, int innerPadding, int buttonSize, int buttonPadding) {
-		int buttonX = x + innerPadding * 2; //adding numbers to this variable because I personally find that more readable, that's all
-		int buttonY = y + innerPadding; //reduce the times this is calculated
+		int buttonX = x + innerPadding * 2; // Adding numbers to this variable because I personally find that more readable, that's all
+		int buttonY = y + innerPadding; // Reduce the times this is calculated
 		Button boldText = Button.builder(Component.literal("B").withStyle(ChatFormatting.BOLD), action -> {
 			insertTag(TagRegistry.SAFE.getTag("bold"), true);
 		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
@@ -41,7 +44,7 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
 
 		buttonX += buttonSize + buttonPadding;
-		//not using the actual obfuscated formatting here because the movement can be annoying
+		// Don't use actual obfuscated text as the movement is distracting
 		Button obfuscateText = Button.builder(Component.literal("@"), action -> {
 			insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
 		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
@@ -55,24 +58,6 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 				if (preset.getPresetFormatting() != null) this.insertFormattingTag(preset.getPresetFormatting());
 				colorPickerWidget.hide();
 			});
-//			ColorPickerWidget colorPickerWidget = getColorPickerWidget();
-//			colorPickerWidget.setPosition(216, 10);
-//			colorPickerWidget.setTargetElement(this.colorText);
-//			colorPickerWidget.setOnAccept(picker -> {
-//				picker.insertColor(picker.color);
-//				picker.toggle(false);
-//			});
-//			colorPickerWidget.setOnCancel(picker -> picker.toggle(false));
-//			colorPickerWidget.setPresetListener((color, formatting) -> {
-//				if(formatting != null) {
-//					insertFormattingTag(formatting);
-//				} else {
-//					insertHexTag(ColorPickerWidget.getHexCode(color));
-//				}
-//				this.toggleColorPickerWidget(false);
-//			});
-//			colorPickerWidget.setChangeListener(null);
-//			toggleColorPickerWidget(!colorPickerWidget.active);
 		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
 
 		widgets = new Button[]{
@@ -93,8 +78,13 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 	}
 
 	public void insertTag(TextTag tag, boolean findShortest) {
+		if (this.glowcaseMultilineEditBox != null) {
+			this.glowcaseMultilineEditBox.insertTag(tag, findShortest);
+			return;
+		}
+
 		if(tag == null) return;
-		//find the alias with the least amount of characters
+		// Find the alias with the least amount of characters
 		String name = tag.name();
 		if(findShortest && tag.aliases().length > 1) {
 			String shortest = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
@@ -107,7 +97,7 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		int selectedEnd = selectionManager.getSelectionPos();
 		if(selectedStart != selectedEnd) {
 			int selectedAmount = Math.abs(selectedEnd - selectedStart);
-			//text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
+			// Text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
 			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
 			selectionManager.insertText("<" + name + ">");
 			selectionManager.moveBy(selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
@@ -127,7 +117,7 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		int selectedEnd = selectionManager.getSelectionPos();
 		if(selectedStart != selectedEnd) {
 			int selectedAmount = Math.abs(selectedEnd - selectedStart);
-			//text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
+			// Text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
 			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
 			selectionManager.insertText("<" + hex + ">");
 			selectionManager.moveBy(selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);

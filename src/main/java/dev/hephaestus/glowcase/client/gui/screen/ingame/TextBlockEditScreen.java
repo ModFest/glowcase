@@ -6,28 +6,31 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
-import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Whence;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -39,6 +42,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 	private List<EditBox> textWidgets;
 
+//	private MultiLineEditBox textEditBox;
+	private GlowcaseMultilineEditBox glowcaseEditBox;
 	private TextFieldHelper selectionManager;
 	private HexColorEditBox colorEntryWidget;
 	private HexColorEditBox backgroundColorEntryWidget;
@@ -54,6 +59,45 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	@Override
 	public void init() {
 		super.init();
+
+//		this.textEditBox = MultiLineEditBox.builder()
+//			.setTextColor(this.textBlockEntity.color)
+//			.setShowBackground(false)
+//			.setX(18)
+//			.setY(24)
+//			.build(this.font, this.width - 36, this.height - 24, CommonComponents.EMPTY);
+//		this.textEditBox.setValueListener(value -> {
+//			int lineCount = 0;
+//			String[] lines = value.split("\n");
+//			for (String line : lines) {
+//				if (lineCount == this.textBlockEntity.lines.size()) {
+//					this.textBlockEntity.addRawLine(lineCount, line);
+//				} else {
+//					this.textBlockEntity.setRawLine(lineCount, line);
+//				}
+//				lineCount++;
+//			}
+//		});
+
+		this.glowcaseEditBox = GlowcaseMultilineEditBox.builder(
+			this.font, this.textBlockEntity.lines, 2, 24, this.width - 4, this.height - 24,
+			parsedLines -> {
+				this.textBlockEntity.lines = new ArrayList<>(parsedLines);
+				this.textBlockEntity.rebake(true);
+			}
+		).build();
+		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
+		this.setFocused(this.glowcaseEditBox); // Start ready to type
+		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
+
+//		this.textAreaBox = new GlowcaseTextAreaBox(
+//			18, 24, this.width - 36, this.height - 24, CommonComponents.EMPTY, false, true, this.font
+//		);
+//		this.textAreaBox.textField.setValue("test123456\ntest123\ntest");
+//		this.textAreaBox.textAlignment = this.textBlockEntity.textAlignment;
+//		this.textBlockEntity.addRawLine(0, "<bold>test</bold>");
+//		this.textBlockEntity.addRawLine(1, "<bold>test2</bold>");
+//		this.textAreaBox.lines = this.textBlockEntity.lines;
 
 		this.selectionManager = new TextFieldHelper(
 			() -> this.textBlockEntity.getRawLine(this.currentRow),
@@ -108,6 +152,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 
 		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(this.glowcaseMultilineEditBox);
 		this.addRenderableWidget(this.backgroundColorEntryWidget);
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(moreOptionsButton);
@@ -148,58 +193,58 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, editorOffset + 2 * this.width / 100F);
-		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
-
-			int lineWidth = this.font.width(text);
-			switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
-				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
-					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
-				case RIGHT ->
-					graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
-			}
-		}
-
-		int caretStart = this.selectionManager.getCursorPos();
-		int caretEnd = this.selectionManager.getSelectionPos();
-
-		if (caretStart >= 0) {
-			this.checkRow();
-			String line = this.textBlockEntity.getRawLine(this.currentRow);
-			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
-
-			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
-			int startX = this.minecraft.font.width(preSelection);
-
-			float push = switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> this.width / 10F;
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
-				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
-			};
-
-			startX += (int) push;
-
-
-			int caretStartY = this.currentRow * 12;
-			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
-				if (selectionStart < line.length()) {
-					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
-				} else {
-					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
-				}
-			}
-
-			if (caretStart != caretEnd) {
-				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
-			}
-		}
-
-		graphics.pose().popMatrix();
+//		graphics.pose().pushMatrix();
+//		graphics.pose().translate(0, editorOffset + 2 * this.width / 100F);
+//		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
+//			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
+//
+//			int lineWidth = this.font.width(text);
+//			switch (this.textBlockEntity.textAlignment) {
+//				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
+//				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
+//					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
+//				case RIGHT ->
+//					graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
+//			}
+//		}
+//
+//		int caretStart = this.selectionManager.getCursorPos();
+//		int caretEnd = this.selectionManager.getSelectionPos();
+//
+//		if (caretStart >= 0) {
+//			this.checkRow();
+//			String line = this.textBlockEntity.getRawLine(this.currentRow);
+//			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
+//			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
+//
+//			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
+//			int startX = this.minecraft.font.width(preSelection);
+//
+//			float push = switch (this.textBlockEntity.textAlignment) {
+//				case LEFT -> this.width / 10F;
+//				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
+//				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
+//			};
+//
+//			startX += (int) push;
+//
+//
+//			int caretStartY = this.currentRow * 12;
+//			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
+//				if (selectionStart < line.length()) {
+//					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
+//				} else {
+//					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
+//				}
+//			}
+//
+//			if (caretStart != caretEnd) {
+//				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
+//				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
+//			}
+//		}
+//
+//		graphics.pose().popMatrix();
 
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}
@@ -212,7 +257,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			}
 		}
 
-		return this.selectionManager.charTyped(event);
+		return super.charTyped(event);
+//		return this.selectionManager.charTyped(event);
 	}
 
 	@Override
@@ -221,103 +267,105 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		if (this.keyPressedColorPicker(event)) return true;
 
-		if (this.getFocused() != null) {
-			if (this.getFocused().keyPressed(event)) {
-				return true;
-			}
+//		if (this.getFocused() != null) {
+//			if (this.getFocused().keyPressed(event)) {
+//				return true;
+//			}
+//
+//			this.setFocused(null);
+//
+//			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+//				return true;
+//			}
+//		}
 
-			this.setFocused(null);
+		return super.keyPressed(event);
 
-			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-				return true;
-			}
-		}
-
-		{
-			setFocused(null);
-			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-				this.textBlockEntity.addRawLine(this.currentRow + 1,
-					this.textBlockEntity.getRawLine(this.currentRow).substring(
-						Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
-					));
-				this.textBlockEntity.setRawLine(this.currentRow,
-					this.textBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
-					));
-				this.textBlockEntity.rebake(true);
-				++this.currentRow;
-				this.selectionManager.setCursorToStart();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_UP) {
-				this.currentRow = Math.max(this.currentRow - 1, 0);
-				this.selectionManager.setCursorToEnd();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
-				this.currentRow = Math.min(this.currentRow + 1, (this.textBlockEntity.lines.size() - 1));
-				this.selectionManager.setCursorToEnd();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.textBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
-				--this.currentRow;
-				this.selectionManager.setCursorToEnd();
-				deleteLine();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.textBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.textBlockEntity.getRawLine(this.currentRow).length()) {
-				deleteLine();
-				return true;
-			} else {
-
-				// Formatting hotkeys
-				if (event.hasControlDown()) {
-					if (keyCode == GLFW.GLFW_KEY_B) {
-						insertTag(TagRegistry.SAFE.getTag("bold"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_I) {
-						insertTag(TagRegistry.SAFE.getTag("italic"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_U) {
-						insertTag(TagRegistry.SAFE.getTag("underline"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
-						// There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
-						// apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
-						// Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
-						insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_O) {
-						insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
-						return true;
-					}
-				}
-
-				try {
-					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
-					int selectionOffset = this.textBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
-
-					// Find line feed characters and create proper newlines
-					for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-						int lineFeedIndex = this.textBlockEntity.getRawLine(i).indexOf("\n");
-
-						if (lineFeedIndex >= 0) {
-							this.textBlockEntity.addRawLine(i + 1,
-								this.textBlockEntity.getRawLine(i).substring(
-									Mth.clamp(lineFeedIndex + 1, 0, this.textBlockEntity.getRawLine(i).length())
-								));
-							this.textBlockEntity.setRawLine(i,
-								this.textBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.textBlockEntity.getRawLine(i).length())
-								));
-							this.textBlockEntity.rebake(true);
-							++this.currentRow;
-							this.selectionManager.setCursorToEnd();
-							this.selectionManager.moveByChars(-selectionOffset);
-						}
-					}
-					return val;
-				} catch (StringIndexOutOfBoundsException e) {
-					e.printStackTrace();
-					Minecraft.getInstance().setScreen(null);
-					return false;
-				}
-			}
-		}
+//		{
+//			setFocused(null);
+//			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+//				this.textBlockEntity.addRawLine(this.currentRow + 1,
+//					this.textBlockEntity.getRawLine(this.currentRow).substring(
+//						Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
+//					));
+//				this.textBlockEntity.setRawLine(this.currentRow,
+//					this.textBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
+//					));
+//				this.textBlockEntity.rebake(true);
+//				++this.currentRow;
+//				this.selectionManager.setCursorToStart();
+//				return true;
+//			} else if (keyCode == GLFW.GLFW_KEY_UP) {
+//				this.currentRow = Math.max(this.currentRow - 1, 0);
+//				this.selectionManager.setCursorToEnd();
+//				return true;
+//			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
+//				this.currentRow = Math.min(this.currentRow + 1, (this.textBlockEntity.lines.size() - 1));
+//				this.selectionManager.setCursorToEnd();
+//				return true;
+//			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.textBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
+//				--this.currentRow;
+//				this.selectionManager.setCursorToEnd();
+//				deleteLine();
+//				return true;
+//			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.textBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.textBlockEntity.getRawLine(this.currentRow).length()) {
+//				deleteLine();
+//				return true;
+//			} else {
+//
+//				// Formatting hotkeys
+//				if (event.hasControlDown()) {
+//					if (keyCode == GLFW.GLFW_KEY_B) {
+//						insertTag(TagRegistry.SAFE.getTag("bold"), true);
+//						return true;
+//					} else if (keyCode == GLFW.GLFW_KEY_I) {
+//						insertTag(TagRegistry.SAFE.getTag("italic"), true);
+//						return true;
+//					} else if (keyCode == GLFW.GLFW_KEY_U) {
+//						insertTag(TagRegistry.SAFE.getTag("underline"), true);
+//						return true;
+//					} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
+//						// There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
+//						// apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
+//						// Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
+//						insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
+//						return true;
+//					} else if (keyCode == GLFW.GLFW_KEY_O) {
+//						insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
+//						return true;
+//					}
+//				}
+//
+//				try {
+//					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
+//					int selectionOffset = this.textBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
+//
+//					// Find line feed characters and create proper newlines
+//					for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
+//						int lineFeedIndex = this.textBlockEntity.getRawLine(i).indexOf("\n");
+//
+//						if (lineFeedIndex >= 0) {
+//							this.textBlockEntity.addRawLine(i + 1,
+//								this.textBlockEntity.getRawLine(i).substring(
+//									Mth.clamp(lineFeedIndex + 1, 0, this.textBlockEntity.getRawLine(i).length())
+//								));
+//							this.textBlockEntity.setRawLine(i,
+//								this.textBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.textBlockEntity.getRawLine(i).length())
+//								));
+//							this.textBlockEntity.rebake(true);
+//							++this.currentRow;
+//							this.selectionManager.setCursorToEnd();
+//							this.selectionManager.moveByChars(-selectionOffset);
+//						}
+//					}
+//					return val;
+//				} catch (StringIndexOutOfBoundsException e) {
+//					e.printStackTrace();
+//					Minecraft.getInstance().setScreen(null);
+//					return false;
+//				}
+//			}
+//		}
 	}
 
 	private void deleteLine() {
@@ -344,63 +392,69 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}
 
 		if (mouseClickedColorPicker(event, doubleClick)) return true;
+		return super.mouseClicked(event, doubleClick);
 
-		if (mouseY > topOffset) {
-			this.currentRow = Mth.clamp((int) (mouseY - topOffset) / 12, 0, this.textBlockEntity.lines.size() - 1);
-			this.setFocused(null);
-			String baseContents = this.textBlockEntity.getRawLine(currentRow);
-			int baseContentsWidth = this.font.width(baseContents);
-			int contentsStart;
-			int contentsEnd;
-			switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> {
-					contentsStart = this.width / 10;
-					contentsEnd = contentsStart + baseContentsWidth;
-				}
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> {
-					int midpoint = this.width / 2;
-					int textMidpoint = baseContentsWidth / 2;
-					contentsStart = midpoint - textMidpoint;
-					contentsEnd = midpoint + textMidpoint;
-				}
-				case RIGHT -> {
-					contentsEnd = this.width - this.width / 10;
-					contentsStart = contentsEnd - baseContentsWidth;
-				}
-				//even though this is exhaustive, javac won't treat contentsStart and contentsEnd as initialized
-				//why? who knows! just throw bc this should be impossible
-				default -> throw new IllegalStateException(":HOW:");
-			}
-
-			if (mouseX <= contentsStart) {
-				this.selectionManager.setCursorToStart();
-			} else if (mouseX >= contentsEnd) {
-				this.selectionManager.setCursorToEnd();
-			} else {
-				int lastWidth = 0;
-				for (int i = 1; i < baseContents.length(); i++) {
-					String testContents = baseContents.substring(0, i);
-					int width = this.font.width(testContents);
-					int midpointWidth = (width + lastWidth) / 2;
-					if (mouseX < contentsStart + midpointWidth) {
-						this.selectionManager.setCursorPos(i - 1, false);
-						break;
-					} else if (mouseX <= contentsStart + width) {
-						this.selectionManager.setCursorPos(i, false);
-						break;
-					}
-					lastWidth = width;
-				}
-			}
-			return true;
-		} else {
-			return super.mouseClicked(event, doubleClick);
-		}
+//		if (mouseY > topOffset) {
+//			this.currentRow = Mth.clamp((int) (mouseY - topOffset) / 12, 0, this.textBlockEntity.lines.size() - 1);
+//			this.setFocused(null);
+//			String baseContents = this.textBlockEntity.getRawLine(currentRow);
+//			int baseContentsWidth = this.font.width(baseContents);
+//			int contentsStart;
+//			int contentsEnd;
+//			switch (this.textBlockEntity.textAlignment) {
+//				case LEFT -> {
+//					contentsStart = this.width / 10;
+//					contentsEnd = contentsStart + baseContentsWidth;
+//				}
+//				case CENTER, CENTER_LEFT, CENTER_RIGHT -> {
+//					int midpoint = this.width / 2;
+//					int textMidpoint = baseContentsWidth / 2;
+//					contentsStart = midpoint - textMidpoint;
+//					contentsEnd = midpoint + textMidpoint;
+//				}
+//				case RIGHT -> {
+//					contentsEnd = this.width - this.width / 10;
+//					contentsStart = contentsEnd - baseContentsWidth;
+//				}
+//				//even though this is exhaustive, javac won't treat contentsStart and contentsEnd as initialized
+//				//why? who knows! just throw bc this should be impossible
+//				default -> throw new IllegalStateException(":HOW:");
+//			}
+//
+//			if (mouseX <= contentsStart) {
+//				this.selectionManager.setCursorToStart();
+//			} else if (mouseX >= contentsEnd) {
+//				this.selectionManager.setCursorToEnd();
+//			} else {
+//				int lastWidth = 0;
+//				for (int i = 1; i < baseContents.length(); i++) {
+//					String testContents = baseContents.substring(0, i);
+//					int width = this.font.width(testContents);
+//					int midpointWidth = (width + lastWidth) / 2;
+//					if (mouseX < contentsStart + midpointWidth) {
+//						this.selectionManager.setCursorPos(i - 1, false);
+//						break;
+//					} else if (mouseX <= contentsStart + width) {
+//						this.selectionManager.setCursorPos(i, false);
+//						break;
+//					}
+//					lastWidth = width;
+//				}
+//			}
+//			return true;
+//		} else {
+//			return super.mouseClicked(event, doubleClick);
+//		}
 	}
 
 	@Override
 	public ColorPickerWidget getColorPickerWidget() {
 		return this.colorPickerWidget;
+	}
+
+	@Override
+	GlowcaseMultilineEditBox getGlowcaseMultilineEditBox() {
+		return this.glowcaseEditBox;
 	}
 
 	@Override
