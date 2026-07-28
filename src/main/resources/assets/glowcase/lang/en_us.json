@@ -103,6 +103,7 @@
 	"gui.glowcase.yaw": "Yaw",
 	"gui.glowcase.color_argb": "Color (ARGB)",
 	"gui.glowcase.color": "Color (RGB)",
+	"gui.glowcase.text_color": "Text Color (ARGB)",
 	"gui.glowcase.background_color_argb": "Background Color (ARGB)",
 	"gui.glowcase.background_color": "Background Color (RGB)",
 	"gui.glowcase.repeat_delay": "Repeat Delay",
@@ -188,5 +189,5 @@
 	"gui.glowcase.strikethrough": "Strikethrough (Ctrl+S or Ctrl+5)",
 	"gui.glowcase.underline": "Underline (Ctrl+U)",
 	"gui.glowcase.obfuscate": "Obfuscate (Ctrl+O)",
-	"gui.glowcase.color_text": "Color Text"
+	"gui.glowcase.color_text": "Color Text (Via QuickText Tags)"
 }

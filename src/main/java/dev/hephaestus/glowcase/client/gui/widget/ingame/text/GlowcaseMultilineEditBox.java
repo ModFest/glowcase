@@ -41,6 +41,10 @@ import java.util.function.Consumer;
 // - Update listener
 // - LINE HEIGHT IS 12, NOT 9!!!
 // - View-only mode for Popup Block?
+
+// TODO - Allow disable vertical overflow
+// TODO - Allow disable horizontal overflow using the parsed width? (Allow overflow of raw for editing)
+// FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
 public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public static final NodeParser PARSER = TagParser.DEFAULT;
 
@@ -49,6 +53,8 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public final Font font;
 	public int sideAlignmentPadding;
 	public int lineHeight;
+	public int maxLines;
+	public boolean parsedHorizontalBounds;
 
 	public int textColor = ColorUtil.WHITE;
 	public boolean textShadow = true;
@@ -60,17 +66,21 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		return new Builder(font, lines, x, y, width, height, parsedUpdateListener);
 	}
 
-	public GlowcaseMultilineEditBox(Font font, List<Component> parsedLines, int x, int y, int width, int height, int sideAlignmentPadding, int lineHeight, boolean showBackground, boolean showDecorations, Consumer<List<Component>> parsedUpdateListener) {
+	public GlowcaseMultilineEditBox(Font font, List<Component> parsedLines, int x, int y, int width, int height, int sideAlignmentPadding, int lineHeight, int maxLines, boolean parsedHorizontalBounds, boolean showBackground, boolean showDecorations, Consumer<List<Component>> parsedUpdateListener) {
 		super(font, x, y, width, height, CommonComponents.EMPTY, CommonComponents.EMPTY, ColorUtil.WHITE, true, -3092272, showBackground, showDecorations);
 		this.font = font;
 		this.parsedLines = parsedLines;
 		this.sideAlignmentPadding = sideAlignmentPadding;
 		this.lineHeight = lineHeight;
+		this.maxLines = maxLines;
+		this.parsedHorizontalBounds = parsedHorizontalBounds;
 		this.parsedUpdateListener = parsedUpdateListener;
 
 		this.focusedTime = Util.getMillis();
+
+		this.textField.setLineLimit(this.maxLines);
 		this.setValueFromLines();
-		super.setValueListener(this::parseContents);
+		this.setValueListener(this::parseContents);
 	}
 
 	public void updateSettings(int textColor, boolean textShadow, TextBlockEntity.TextAlignment textAlignment) {
@@ -111,6 +121,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.setValue(valueBuilder.toString());
 	}
 
+	// TODO - Beyond edges indicators (from note screen)
 	@Override
 	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		// Debug - View edit regions depending on text alignment (red is center, green is left & right alignments)
@@ -344,6 +355,8 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 
 		private int sideAlignmentPadding;
 		private int lineHeight = 12;
+		private int maxLines = Integer.MAX_VALUE;
+		private boolean parsedHorizontalBounds = false;
 		private boolean showBackground = false;
 		private boolean showDecorations = true;
 
@@ -369,6 +382,16 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			return this;
 		}
 
+		public Builder setMaxLines(int maxLines) {
+			this.maxLines = maxLines;
+			return this;
+		}
+
+		public Builder parsedHorizontalBounds(boolean parsedHorizontalBounds) {
+			this.parsedHorizontalBounds = parsedHorizontalBounds;
+			return this;
+		}
+
 		public Builder showBackground(boolean showBackground) {
 			this.showBackground = showBackground;
 			return this;
@@ -383,7 +406,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			return new GlowcaseMultilineEditBox(
 				this.font, this.lines,
 				this.x, this.y, this.width, this.height,
-				this.sideAlignmentPadding, this.lineHeight,
+				this.sideAlignmentPadding, this.lineHeight, this.maxLines, this.parsedHorizontalBounds,
 				this.showBackground, this.showDecorations,
 				this.parsedUpdateListener
 			);
