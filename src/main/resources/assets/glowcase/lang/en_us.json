@@ -182,5 +182,11 @@
 	"gui.glowcase.text_alignment": "Text Alignment",
 	"gui.glowcase.text_shadow": "Text Shadow",
 	"gui.glowcase.more": "More...",
-	"gui.glowcase.extra_properties": "Extra Properties"
+	"gui.glowcase.extra_properties": "Extra Properties",
+	"gui.glowcase.bold": "Bold (Ctrl+B)",
+	"gui.glowcase.italic": "Italic (Ctrl+I)",
+	"gui.glowcase.strikethrough": "Strikethrough (Ctrl+S or Ctrl+5)",
+	"gui.glowcase.underline": "Underline (Ctrl+U)",
+	"gui.glowcase.obfuscate": "Obfuscate (Ctrl+O)",
+	"gui.glowcase.color_text": "Color Text"
 }

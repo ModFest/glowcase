@@ -1,5 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
@@ -7,131 +9,85 @@ import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
-public abstract class TextEditorScreen extends EditorScreen implements ColorPickerIncludedScreen {
-	private Button colorText;
-	private Button[] widgets = new Button[0];
+public abstract class TextEditorScreen extends EditorScreen implements ColorPickerIncludedScreen, TagFormatIncludedScreen {
+	public static final Identifier COLOR_TEXT_ICON = Glowcase.id("color_text");
+
+	protected Button colorTextButton;
+	protected List<Button> formattingButtons;
 
 	abstract GlowcaseMultilineEditBox getGlowcaseMultilineEditBox();
 
-	abstract TextFieldHelper getSelectionManager();
+	protected void initFormattingButtons(int x, int y, int innerPadding) {
+		this.initFormattingButtons(x, y, innerPadding, 20, 2);
+	}
 
-	protected void addFormattingButtons(int x, int y, int innerPadding, int buttonSize, int buttonPadding) {
-		int buttonX = x + innerPadding * 2; // Adding numbers to this variable because I personally find that more readable, that's all
-		int buttonY = y + innerPadding; // Reduce the times this is calculated
-		Button boldText = Button.builder(Component.literal("B").withStyle(ChatFormatting.BOLD), action -> {
-			insertTag(TagRegistry.SAFE.getTag("bold"), true);
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+	protected void initFormattingButtons(int x, int y, int innerPadding, int buttonSize, int buttonPadding) {
+		int buttonX = x + innerPadding * 2;
+		int buttonY = y + innerPadding;
+		int shiftX = buttonSize + buttonPadding;
 
-		buttonX += buttonSize + buttonPadding;
-		Button italicizeText = Button.builder(Component.literal("I").withStyle(ChatFormatting.ITALIC), action -> {
-			insertTag(TagRegistry.SAFE.getTag("italic"), true);
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+		Button boldText = Button.builder(Component.literal("B").withStyle(ChatFormatting.BOLD), button -> this.insertBoldTag())
+			.bounds(buttonX, buttonY, buttonSize, buttonSize)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.bold")))
+			.build();
 
-		buttonX += buttonSize + buttonPadding;
-		Button strikeText = Button.builder(Component.literal("S").withStyle(ChatFormatting.STRIKETHROUGH), action -> {
-			insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+		Button italicText = Button.builder(Component.literal("I").withStyle(ChatFormatting.ITALIC), button -> this.insertItalicTag())
+			.bounds(buttonX + shiftX, buttonY, buttonSize, buttonSize)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.italic")))
+			.build();
 
-		buttonX += buttonSize + buttonPadding;
-		Button underlineText = Button.builder(Component.literal("U").withStyle(ChatFormatting.UNDERLINE), action -> {
-			insertTag(TagRegistry.SAFE.getTag("underline"), true);
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+		Button strikeText = Button.builder(Component.literal("S").withStyle(ChatFormatting.STRIKETHROUGH), button -> this.insertStrikethroughTag())
+			.bounds(buttonX + shiftX * 2, buttonY, buttonSize, buttonSize)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.strikethrough")))
+			.build();
 
-		buttonX += buttonSize + buttonPadding;
-		// Don't use actual obfuscated text as the movement is distracting
-		Button obfuscateText = Button.builder(Component.literal("@"), action -> {
-			insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+		Button underlineText = Button.builder(Component.literal("U").withStyle(ChatFormatting.UNDERLINE), button -> this.insertUnderlineTag())
+			.bounds(buttonX + shiftX * 3, buttonY, buttonSize, buttonSize)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.underline")))
+			.build();
 
-		buttonX += buttonSize + buttonPadding; // + 4? (only works on padding of 2)
-		this.colorText = Button.builder(Component.literal("\uD83D\uDD8C"), action -> {
+		// Don't use actual obfuscated text as its movement is distracting
+		Button obfuscateText = Button.builder(Component.literal("@"), button -> this.insertObfuscatedTag())
+			.bounds(buttonX + shiftX * 4, buttonY, buttonSize, buttonSize)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.obfuscate")))
+			.build();
+
+		// TODO - Possibly better icon that fits nicely with the others (pixel resolution)
+		this.colorTextButton = IconButtonWidget.builder(COLOR_TEXT_ICON, button -> {
 			ColorPickerWidget colorPickerWidget = this.getColorPickerWidget();
-			colorPickerWidget.target(this.colorText, ColorUtil.RED, false, true, pickedColor -> {});
-			colorPickerWidget.setConfirmListener(this::insertHexColor);
+			colorPickerWidget.target(this.colorTextButton, ColorUtil.RED, false, true, pickedColor -> {});
+			colorPickerWidget.setConfirmListener(this::insertColorHexTag);
 			colorPickerWidget.setPresetListener(preset -> {
 				if (preset.getPresetFormatting() != null) this.insertFormattingTag(preset.getPresetFormatting());
 				colorPickerWidget.hide();
 			});
-		}).bounds(buttonX, buttonY, buttonSize, buttonSize).build();
+		}).dimensions(buttonX + shiftX * 5, buttonY, buttonSize, buttonSize, 10, 10).build();
+		this.colorTextButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color_text")));
 
-		widgets = new Button[]{
-			boldText, italicizeText, strikeText, underlineText, obfuscateText, colorText
-		};
-
-		this.addRenderableWidget(boldText);
-		this.addRenderableWidget(italicizeText);
-		this.addRenderableWidget(strikeText);
-		this.addRenderableWidget(underlineText);
-		this.addRenderableWidget(obfuscateText);
-		this.addRenderableWidget(colorText);
+		this.formattingButtons = List.of(boldText, italicText, strikeText, underlineText, obfuscateText, this.colorTextButton);
+		for (Button formattingButton : formattingButtons) {
+			this.addRenderableWidget(formattingButton);
+		}
 	}
 
-	public void toggleWidgets(boolean active) {
-		for (Button widget : widgets)
-			widget.active = active;
-	}
-
-	public void insertTag(TextTag tag, boolean findShortest) {
-		if (this.glowcaseMultilineEditBox != null) {
-			this.glowcaseMultilineEditBox.insertTag(tag, findShortest);
-			return;
-		}
-
-		if(tag == null) return;
-		// Find the alias with the least amount of characters
-		String name = tag.name();
-		if(findShortest && tag.aliases().length > 1) {
-			String shortest = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
-			name = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
-		}
-
-		TextFieldHelper selectionManager = getSelectionManager();
-
-		int selectedStart = selectionManager.getCursorPos();
-		int selectedEnd = selectionManager.getSelectionPos();
-		if(selectedStart != selectedEnd) {
-			int selectedAmount = Math.abs(selectedEnd - selectedStart);
-			// Text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
-			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.insertText("<" + name + ">");
-			selectionManager.moveBy(selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.insertText("</" + name + ">");
-			selectionManager.moveBy(-name.length() - 3, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.setSelectionRange(selectedStart + name.length() + 2, selectedEnd + name.length() + 2);
-		} else {
-			selectionManager.insertText("<" + name + "></" + name + ">");
-			selectionManager.moveBy(-name.length() - 3, false, TextFieldHelper.CursorStep.CHARACTER);
+	protected void toggleFormattingButtons(boolean active) {
+		for (Button formattingButton : formattingButtons) {
+			formattingButton.active = active;
 		}
 	}
 
 	@Override
-	public void insertHexTag(String hex) {
-		TextFieldHelper selectionManager = getSelectionManager();
-		int selectedStart = selectionManager.getCursorPos();
-		int selectedEnd = selectionManager.getSelectionPos();
-		if(selectedStart != selectedEnd) {
-			int selectedAmount = Math.abs(selectedEnd - selectedStart);
-			// Text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
-			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.insertText("<" + hex + ">");
-			selectionManager.moveBy(selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.insertText("</" + hex + ">");
-			selectionManager.moveBy(-hex.length() - 3, false, TextFieldHelper.CursorStep.CHARACTER);
-			selectionManager.setSelectionRange(selectedStart + hex.length() + 2, selectedEnd + hex.length() + 2);
-		} else {
-			selectionManager.insertText("<" + hex + "></" + hex + ">");
-			selectionManager.moveBy(-hex.length() - 3, false, TextFieldHelper.CursorStep.CHARACTER);
-		}
-	}
-
-	@Override
-	public void insertFormattingTag(ChatFormatting formatting) {
-		insertTag(TagRegistry.SAFE.getTag(formatting.getName()), false);
+	public void insertTag(String tagName) {
+		this.getGlowcaseMultilineEditBox().insertTag(tagName);
 	}
 }

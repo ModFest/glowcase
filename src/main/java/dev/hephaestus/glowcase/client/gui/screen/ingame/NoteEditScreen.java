@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import dev.hephaestus.glowcase.packet.C2SEditNoteItem;
@@ -62,6 +63,7 @@ public class NoteEditScreen extends TextEditorScreen {
 	private TextFieldHelper selectionManager;
 	private int currentRow;
 	private long ticksSinceOpened = 0;
+	private GlowcaseMultilineEditBox glowcaseEditBox;
 
 	private boolean signing = false;
 	private boolean finalizing = false;
@@ -164,7 +166,7 @@ public class NoteEditScreen extends TextEditorScreen {
 				signButton.setMessage(Component.translatable("book.finalizeButton"));
 				signButton.active = false;
 				changeAlignment.active = false;
-				toggleWidgets(false);
+				this.toggleFormattingButtons(false);
 
 				title = "";
 				author = "";
@@ -181,7 +183,7 @@ public class NoteEditScreen extends TextEditorScreen {
 				signButton.setMessage(Component.translatable("book.signButton"));
 				signButton.active = true;
 				changeAlignment.active = true;
-				toggleWidgets(true);
+				this.toggleFormattingButtons(true);
 			} else
 				onClose();
 		}).bounds(width / 2 + BG_WIDTH / 2 - (BG_WIDTH / 2 - 3), height / 2 + BG_HEIGHT / 2 + offset, BG_WIDTH / 2 - 3, 20).build();
@@ -193,7 +195,7 @@ public class NoteEditScreen extends TextEditorScreen {
 		addRenderableWidget(doneButton);
 		addRenderableWidget(signButton);
 
-		addFormattingButtons(width / 2 - BG_WIDTH / 2 + BG_WIDTH / 12 * 6 - 5 - 7, height / 2 - BG_HEIGHT / 2 - offset - 20 - 4, width / 100, 20, 2);
+		initFormattingButtons(width / 2 - BG_WIDTH / 2 + BG_WIDTH / 12 * 6 - 5 - 7, height / 2 - BG_HEIGHT / 2 - offset - 20 - 4, width / 100);
 	}
 
 	@Override
@@ -584,7 +586,7 @@ public class NoteEditScreen extends TextEditorScreen {
 	}
 
 	@Override
-	TextFieldHelper getSelectionManager() {
-		return selectionManager;
+	GlowcaseMultilineEditBox getGlowcaseMultilineEditBox() {
+		return this.glowcaseEditBox;
 	}
 }

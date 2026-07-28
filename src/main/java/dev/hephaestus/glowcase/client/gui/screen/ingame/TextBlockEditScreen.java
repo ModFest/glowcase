@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-//TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor<TextBlockEntity> {
 	private static final int innerPadding = 4;
 	private static final int editorOffset = 20;
@@ -42,14 +41,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 	private List<EditBox> textWidgets;
 
-//	private MultiLineEditBox textEditBox;
 	private GlowcaseMultilineEditBox glowcaseEditBox;
-	private TextFieldHelper selectionManager;
+//	private TextFieldHelper selectionManager;
 	private HexColorEditBox colorEntryWidget;
 	private HexColorEditBox backgroundColorEntryWidget;
 
-	private int currentRow;
-	private long ticksSinceOpened = 0;
+//	private int currentRow;
 	private ColorPickerWidget colorPickerWidget;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
@@ -60,25 +57,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public void init() {
 		super.init();
 
-//		this.textEditBox = MultiLineEditBox.builder()
-//			.setTextColor(this.textBlockEntity.color)
-//			.setShowBackground(false)
-//			.setX(18)
-//			.setY(24)
-//			.build(this.font, this.width - 36, this.height - 24, CommonComponents.EMPTY);
-//		this.textEditBox.setValueListener(value -> {
-//			int lineCount = 0;
-//			String[] lines = value.split("\n");
-//			for (String line : lines) {
-//				if (lineCount == this.textBlockEntity.lines.size()) {
-//					this.textBlockEntity.addRawLine(lineCount, line);
-//				} else {
-//					this.textBlockEntity.setRawLine(lineCount, line);
-//				}
-//				lineCount++;
-//			}
-//		});
-
 		this.glowcaseEditBox = GlowcaseMultilineEditBox.builder(
 			this.font, this.textBlockEntity.lines, 2, 24, this.width - 4, this.height - 24,
 			parsedLines -> {
@@ -87,32 +65,13 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			}
 		).build();
 		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
-		this.setFocused(this.glowcaseEditBox); // Start ready to type
+		this.setFocused(this.glowcaseEditBox); // Start ready for typing
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
-
-//		this.textAreaBox = new GlowcaseTextAreaBox(
-//			18, 24, this.width - 36, this.height - 24, CommonComponents.EMPTY, false, true, this.font
-//		);
-//		this.textAreaBox.textField.setValue("test123456\ntest123\ntest");
-//		this.textAreaBox.textAlignment = this.textBlockEntity.textAlignment;
-//		this.textBlockEntity.addRawLine(0, "<bold>test</bold>");
-//		this.textBlockEntity.addRawLine(1, "<bold>test2</bold>");
-//		this.textAreaBox.lines = this.textBlockEntity.lines;
-
-		this.selectionManager = new TextFieldHelper(
-			() -> this.textBlockEntity.getRawLine(this.currentRow),
-			(string) -> {
-				textBlockEntity.setRawLine(this.currentRow, string);
-				this.textBlockEntity.rebake(true);
-			},
-			TextFieldHelper.createClipboardGetter(this.minecraft),
-			TextFieldHelper.createClipboardSetter(this.minecraft),
-			(_) -> true);
 
 		int middle = width / 2;
 
 		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203 - 5, innerPadding, 113, 20);
-		addFormattingButtons(middle - 90 + 6 - 5, innerPadding, 0, 20, 2);
+		initFormattingButtons(middle - 90 + 6 - 5, innerPadding, 0);
 
 		this.colorPickerWidget = this.createColorPickerWidget();
 
@@ -152,15 +111,10 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 
 		this.addRenderableWidget(this.colorEntryWidget);
-		this.addRenderableWidget(this.glowcaseMultilineEditBox);
+		this.addRenderableWidget(this.glowcaseEditBox);
 		this.addRenderableWidget(this.backgroundColorEntryWidget);
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(moreOptionsButton);
-	}
-
-	@Override
-	public void tick() {
-		++this.ticksSinceOpened;
 	}
 
 	@Override
@@ -173,79 +127,25 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		return C2SEditTextBlock.of(textBlockEntity);
 	}
 
-	private boolean isFocusedTextActive() {
-		final GuiEventListener focused = this.getFocused();
-		if (focused instanceof EditBox text) {
-			return text.canConsumeInput();
-		}
-		return false;
-	}
+//	private boolean isFocusedTextActive() {
+//		final GuiEventListener focused = this.getFocused();
+//		if (focused instanceof EditBox text) {
+//			return text.canConsumeInput();
+//		}
+//		return false;
+//	}
 
-	private void checkRow() {
-		final int size = this.textBlockEntity.lines.size();
-		if (this.currentRow >= size) {
-			this.currentRow = size - 1;
-		}
-	}
+//	private void checkRow() {
+//		final int size = this.textBlockEntity.lines.size();
+//		if (this.currentRow >= size) {
+//			this.currentRow = size - 1;
+//		}
+//	}
 
 	// FIXME - Text shadow to false is not represented in editor
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
-
-//		graphics.pose().pushMatrix();
-//		graphics.pose().translate(0, editorOffset + 2 * this.width / 100F);
-//		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-//			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
-//
-//			int lineWidth = this.font.width(text);
-//			switch (this.textBlockEntity.textAlignment) {
-//				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
-//				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
-//					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
-//				case RIGHT ->
-//					graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
-//			}
-//		}
-//
-//		int caretStart = this.selectionManager.getCursorPos();
-//		int caretEnd = this.selectionManager.getSelectionPos();
-//
-//		if (caretStart >= 0) {
-//			this.checkRow();
-//			String line = this.textBlockEntity.getRawLine(this.currentRow);
-//			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-//			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
-//
-//			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
-//			int startX = this.minecraft.font.width(preSelection);
-//
-//			float push = switch (this.textBlockEntity.textAlignment) {
-//				case LEFT -> this.width / 10F;
-//				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
-//				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
-//			};
-//
-//			startX += (int) push;
-//
-//
-//			int caretStartY = this.currentRow * 12;
-//			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
-//				if (selectionStart < line.length()) {
-//					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
-//				} else {
-//					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
-//				}
-//			}
-//
-//			if (caretStart != caretEnd) {
-//				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-//				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
-//			}
-//		}
-//
-//		graphics.pose().popMatrix();
-
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}
 
@@ -263,22 +163,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
-		var keyCode = event.key();
-
 		if (this.keyPressedColorPicker(event)) return true;
-
-//		if (this.getFocused() != null) {
-//			if (this.getFocused().keyPressed(event)) {
-//				return true;
-//			}
-//
-//			this.setFocused(null);
-//
-//			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-//				return true;
-//			}
-//		}
-
 		return super.keyPressed(event);
 
 //		{
@@ -368,14 +253,14 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 //		}
 	}
 
-	private void deleteLine() {
-		this.textBlockEntity.setRawLine(this.currentRow,
-			this.textBlockEntity.getRawLine(this.currentRow) + this.textBlockEntity.getRawLine(this.currentRow + 1)
-		);
-
-		this.textBlockEntity.lines.remove(this.currentRow + 1);
-		this.textBlockEntity.rebake(true);
-	}
+//	private void deleteLine() {
+//		this.textBlockEntity.setRawLine(this.currentRow,
+//			this.textBlockEntity.getRawLine(this.currentRow) + this.textBlockEntity.getRawLine(this.currentRow + 1)
+//		);
+//
+//		this.textBlockEntity.lines.remove(this.currentRow + 1);
+//		this.textBlockEntity.rebake(true);
+//	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -457,10 +342,10 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		return this.glowcaseEditBox;
 	}
 
-	@Override
-	TextFieldHelper getSelectionManager() {
-		return this.selectionManager;
-	}
+//	@Override
+//	TextFieldHelper getSelectionManager() {
+//		return this.selectionManager;
+//	}
 
 	public static class TextScale {
 		public static final float MIN_SCALE = 0.125F;

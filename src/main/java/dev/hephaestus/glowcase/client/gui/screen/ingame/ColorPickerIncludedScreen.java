@@ -80,11 +80,4 @@ public interface ColorPickerIncludedScreen {
 	default void hideColorPickerWidget() {
 		this.getColorPickerWidget().hide();
 	}
-
-	default void insertHexTag(String hex) {}
-	default void insertFormattingTag(ChatFormatting formatting) {}
-	default void insertHexColor(int color) {
-		String hex = ColorUtil.toHex(color);
-		this.insertHexTag(hex);
-	}
 }

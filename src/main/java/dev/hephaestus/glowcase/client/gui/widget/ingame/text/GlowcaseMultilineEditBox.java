@@ -5,6 +5,7 @@ import dev.hephaestus.glowcase.client.util.ColorUtil;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
+import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,11 +13,13 @@ import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.MultilineTextField;
 import net.minecraft.client.gui.components.TextCursorUtils;
 import net.minecraft.client.gui.components.Whence;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -76,6 +79,18 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.textAlignment = textAlignment;
 	}
 
+	public void setTextColor(int textColor) {
+		this.textColor = textColor;
+	}
+
+	public void setTextShadow(boolean textShadow) {
+		this.textShadow = textShadow;
+	}
+
+	public void setTextAlignment(TextBlockEntity.TextAlignment textAlignment) {
+		this.textAlignment = textAlignment;
+	}
+
 	public void parseContents(String value) {
 		this.parsedLines.clear();
 		int lineCount = 0;
@@ -98,20 +113,9 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 
 	@Override
 	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-		// region Debug - View edit regions depending on text alignment
+		// Debug - View edit regions depending on text alignment (red is center, green is left & right alignments)
 //		graphics.outline(this.getX() + 1, this.getY() + 1, this.getWidth() - 2, this.getHeight() - 2, ColorUtil.RED);
 //		graphics.outline(this.getX() + this.sideAlignmentPadding, this.getY() + 2, this.getWidth() - (this.sideAlignmentPadding * 2), this.getHeight() - 4, ColorUtil.GREEN);
-
-//		Component centerText = Component.literal("Center");
-//		graphics.text(this.font, centerText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.CENTER, this.font.width(centerText)), this.getY() + 1, ColorUtil.WHITE);
-//		graphics.text(this.font, centerText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.CENTER, this.font.width(centerText)), this.getY() + 10, ColorUtil.RED);
-//		Component leftText = Component.literal("Left");
-//		graphics.text(this.font, leftText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.LEFT, this.font.width(leftText)), this.getY() + 1, ColorUtil.WHITE);
-//		graphics.text(this.font, leftText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.LEFT, this.font.width(leftText)), this.getY() + 10, ColorUtil.GREEN);
-//		Component rightText = Component.literal("Right");
-//		graphics.text(this.font, rightText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.RIGHT, this.font.width(rightText)), this.getY() + 1, ColorUtil.WHITE);
-//		graphics.text(this.font, rightText, this.getTextAlignmentX(TextBlockEntity.TextAlignment.RIGHT, this.font.width(rightText)), this.getY() + 10, ColorUtil.GREEN);
-		// endregion
 
 		// Render text lines
 		boolean insetCursor = false;
@@ -165,18 +169,40 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		}
 	}
 
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		// Check formatting hotkeys first, then key press textField if no hotkeys were pressed
+		int keyCode = event.key();
+		if (event.hasControlDown()) {
+			if (keyCode == GLFW.GLFW_KEY_B) {
+				this.insertTextTag(TagRegistry.SAFE.getTag("bold"));
+				return true;
+			} else if (keyCode == GLFW.GLFW_KEY_I) {
+				this.insertTextTag(TagRegistry.SAFE.getTag("italic"));
+				return true;
+			} else if (keyCode == GLFW.GLFW_KEY_U) {
+				this.insertTextTag(TagRegistry.SAFE.getTag("underline"));
+				return true;
+			} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
+				// There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above...
+				// Apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
+				// Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
+				this.insertTextTag(TagRegistry.SAFE.getTag("strikethrough"));
+				return true;
+			} else if (keyCode == GLFW.GLFW_KEY_O) {
+				this.insertTextTag(TagRegistry.SAFE.getTag("obfuscated"));
+				return true;
+			}
+		}
+		return super.keyPressed(event);
+	}
+
 	public void insertText(String text) {
 		this.textField.insertText(text);
 	}
 
-	public void insertTag(TextTag tag, boolean findShortest) {
-		if (tag == null) return;
-
-		// Find an alias with the least amount of characters
-		String tagName = tag.name();
-		if (findShortest && tag.aliases().length > 1) {
-			tagName = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
-		}
+	public void insertTag(String tagName) {
+		if (tagName.isBlank()) return;
 
 		String openTag = "<" + tagName + ">";
 		String closeTag = "</" + tagName + ">";
@@ -190,11 +216,28 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 
 			String newSelected = openTag + selected.replaceAll("\n", closeTag + "\n" + openTag) + closeTag;
 			int addedLength = newSelected.length() - selected.length();
+			int preInsertCursor = this.textField.cursor();
 			this.textField.setValue(beforeSelected + newSelected + afterSelected);
-			this.textField.seekCursor(Whence.ABSOLUTE, selectedView.endIndex() + addedLength);
+			this.textField.seekCursor(Whence.ABSOLUTE, preInsertCursor + addedLength - closeTag.length());
 		} else {
+			int preInsertCursor = this.textField.cursor();
 			this.insertText(openTag + closeTag);
+			this.textField.seekCursor(Whence.ABSOLUTE, preInsertCursor + openTag.length());
 		}
+	}
+
+	public void insertTextTag(TextTag tag) {
+		this.insertTextTag(tag, true);
+	}
+
+	public void insertTextTag(TextTag tag, boolean findShortestAlias) {
+		if (tag == null) return;
+
+		String tagName = tag.name();
+		if (findShortestAlias && tag.aliases().length > 1) { // Find an alias with the least amount of characters
+			tagName = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
+		}
+		this.insertTag(tagName);
 	}
 
 	@Override
