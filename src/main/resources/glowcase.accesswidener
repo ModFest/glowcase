@@ -9,3 +9,9 @@ accessible method net/minecraft/client/gui/components/EditBox onValueChange (Lja
 accessible field net/minecraft/client/data/models/BlockModelGenerators ROTATION_FACING Lnet/minecraft/client/data/models/blockstates/PropertyDispatch;
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor guiRenderState Lnet/minecraft/client/renderer/state/gui/GuiRenderState;
 accessible field net/minecraft/client/renderer/rendertype/RenderSetup textureTransform Lnet/minecraft/client/renderer/rendertype/TextureTransform;
+
+accessible method net/minecraft/client/gui/components/MultiLineEditBox <init> (Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/Component;IZIZZ)V
+accessible field net/minecraft/client/gui/components/MultiLineEditBox textField Lnet/minecraft/client/gui/components/MultilineTextField;
+extendable method net/minecraft/client/gui/components/MultiLineEditBox seekCursorScreen (DD)V
+extendable method net/minecraft/client/gui/components/MultiLineEditBox scrollToCursor ()V
+accessible class net/minecraft/client/gui/components/MultilineTextField$StringView
