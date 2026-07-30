@@ -2,6 +2,7 @@ package dev.hephaestus.glowcase.client.gui.widget.ingame.text;
 
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.client.util.GuiGraphicsUtil;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
@@ -16,7 +17,11 @@ import net.minecraft.client.gui.components.Whence;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
@@ -42,11 +47,16 @@ import java.util.function.Consumer;
 // - LINE HEIGHT IS 12, NOT 9!!!
 // - View-only mode for Popup Block?
 
-// TODO - Allow disable vertical overflow
 // TODO - Allow disable horizontal overflow using the parsed width? (Allow overflow of raw for editing)
 // FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
+// TODO - To ensure perfect elimination of word wrapping, perhaps extend MultilineTextField
+//  and move most of the logic (text alignment, line height, QuickText parsing & tags) that's in here over to there?
+//  I didn't want to extend it initially (though I don't remember why other than feel), but it may be worth it now
 public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public static final NodeParser PARSER = TagParser.DEFAULT;
+	private static final Component ARROW_LEFT_SYMBOL = Component.literal("«");
+	private static final Component ARROW_RIGHT_SYMBOL = Component.literal("»");
+	private static final Component ELLIPSIS_SYMBOL = Component.literal("...");
 
 	public final List<Component> parsedLines;
 	public final Consumer<List<Component>> parsedUpdateListener;
@@ -55,6 +65,8 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public int lineHeight;
 	public int maxLines;
 	public boolean parsedHorizontalBounds;
+	public int overflowArrowColor;
+	// TODO - Wordwrap toggle, Overflow safe zone options?
 
 	public int textColor = ColorUtil.WHITE;
 	public boolean textShadow = true;
@@ -66,7 +78,14 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		return new Builder(font, lines, x, y, width, height, parsedUpdateListener);
 	}
 
-	public GlowcaseMultilineEditBox(Font font, List<Component> parsedLines, int x, int y, int width, int height, int sideAlignmentPadding, int lineHeight, int maxLines, boolean parsedHorizontalBounds, boolean showBackground, boolean showDecorations, Consumer<List<Component>> parsedUpdateListener) {
+	public GlowcaseMultilineEditBox(
+		Font font, List<Component> parsedLines,
+		int x, int y, int width, int height,
+		int sideAlignmentPadding, int lineHeight, int maxLines,
+		boolean parsedHorizontalBounds, boolean showBackground, boolean showDecorations,
+		int overflowArrowColor,
+		Consumer<List<Component>> parsedUpdateListener
+	) {
 		super(font, x, y, width, height, CommonComponents.EMPTY, CommonComponents.EMPTY, ColorUtil.WHITE, true, -3092272, showBackground, showDecorations);
 		this.font = font;
 		this.parsedLines = parsedLines;
@@ -75,10 +94,12 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.maxLines = maxLines;
 		this.parsedHorizontalBounds = parsedHorizontalBounds;
 		this.parsedUpdateListener = parsedUpdateListener;
+		this.overflowArrowColor = overflowArrowColor;
 
 		this.focusedTime = Util.getMillis();
 
 		this.textField.setLineLimit(this.maxLines);
+		this.textField.width = 9999; // Hack to make the text field not word wrap (well, at least take longer too)
 		this.setValueFromLines();
 		this.setValueListener(this::parseContents);
 	}
@@ -143,14 +164,36 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			boolean isCursorLine = i == this.textField.getLineAtCursor();
 			boolean isSelectedLine = this.textField.hasSelection()
 				&& (selectedView.endIndex() > view.beginIndex() && selectedView.beginIndex() < view.endIndex());
+			// TODO - isEndSelectedLine
 			boolean renderRawLine = isCursorLine || isSelectedLine;
 
 			Component renderedLine = renderRawLine ?
 				Component.literal(this.getRawLineFromParsed(i)) :
 				this.parsedLines.get(i);
 			int renderedLineWidth = this.font.width(renderedLine);
+			boolean overflows = this.font.width(renderedLine) >= this.getWidth(); // Used for positioning & truncating
+			boolean overflowsLeft = false; // Used for rendering overflow arrows
+			boolean overflowsRight = false;
+
 			int lineX = this.getTextAlignmentX(renderedLineWidth);
-			graphics.text(this.font, renderedLine, lineX, lineY, this.textColor, this.textShadow);
+
+			if (overflows) {// Render truncated line if not selected or with cursor, otherwise offset lineX based on cursor
+				if (!isSelectedLine && !isCursorLine) {
+					lineX = Math.max(this.getX() + 1, lineX);
+
+					int ellipsisWidth = this.font.width(ELLIPSIS_SYMBOL);
+					renderedLine = Component.literal(
+						this.font.plainSubstrByWidth(
+							this.getRawLineFromParsed(i),
+							this.getWidth()
+								- (this.textAlignment == TextBlockEntity.TextAlignment.RIGHT || this.textAlignment == TextBlockEntity.TextAlignment.LEFT
+									? this.sideAlignmentPadding : 0)
+								- ellipsisWidth
+						)
+					).append(ELLIPSIS_SYMBOL);
+				}
+				renderedLineWidth = this.font.width(renderedLine);
+			}
 
 			// Set cursor positions
 			if (isCursorLine) {
@@ -160,6 +203,80 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 				int beforeCursorWidth = this.font.width(beforeCursor);
 				cursorX = this.getTextAlignmentX(renderedLineWidth) + beforeCursorWidth;
 				cursorY = lineY;
+
+				if (overflows) {
+					int extendPadding = 32;
+					int cursorDistLeft = cursorX - this.getX();
+					int cursorDistRight = this.getX() + this.getWidth() - cursorX;
+
+					if (cursorDistLeft < extendPadding) {
+						int diff = extendPadding - cursorDistLeft;
+						lineX += diff;
+						cursorX += diff;
+					} else if (cursorDistRight < extendPadding) {
+						int diff = extendPadding - cursorDistRight;
+						lineX -= diff;
+						cursorX -= diff;
+					}
+
+					overflowsLeft = lineX <= this.getX();
+					overflowsRight = lineX + renderedLineWidth >= this.getX() + this.getWidth();
+				}
+			}
+
+
+			// Render overflow indicators & fade text towards overflow
+			if (overflows && isCursorLine) {
+				int fadeX = 32;
+				int nonFadedLineX = lineX; // These will change if there is overflow on either side
+				Component nonFadedRenderedLine = renderedLine.copy();
+				int nonFadedRenderedLineWidth = renderedLineWidth;
+
+				// Cursed, but basically substrings the rendered line to render individual characters fading to the edges of the screen
+				if (overflowsLeft) {
+					int leftSideWidth = Mth.abs(nonFadedLineX - this.getX() - fadeX);
+					String leftSideText = this.font.plainSubstrByWidth(nonFadedRenderedLine.getString(), leftSideWidth);
+					String fadeOutText = this.font.plainSubstrByWidth(leftSideText, fadeX, true);
+					String removedText = leftSideText.substring(0, leftSideText.length() - fadeOutText.length());
+					nonFadedLineX += this.font.width(removedText); // Add now removed text width
+					for (char fadingChar : fadeOutText.toCharArray()) {
+						float alpha = Math.max((float) nonFadedLineX / (this.getX() + fadeX), 0.1f);
+						int color = ARGB.color(alpha, this.textColor);
+						String fadingStringChar = String.valueOf(fadingChar);
+						graphics.text(this.font, fadingStringChar, nonFadedLineX, lineY, color, this.textShadow);
+						nonFadedLineX += this.font.width(fadingStringChar);
+					}
+					nonFadedRenderedLine = Component.literal(
+						nonFadedRenderedLine.getString().substring(leftSideText.length())
+					);
+					nonFadedRenderedLineWidth = this.font.width(nonFadedRenderedLine);
+				}
+				if (overflowsRight) {
+					int rightSideWidth = nonFadedLineX + nonFadedRenderedLineWidth - this.getX() - this.getWidth() + fadeX;
+					String rightSideText = this.font.plainSubstrByWidth(nonFadedRenderedLine.getString(), rightSideWidth, true);
+					String fadeOutText = this.font.plainSubstrByWidth(rightSideText, fadeX);
+					nonFadedRenderedLine = Component.literal(
+						nonFadedRenderedLine.getString().substring(0, nonFadedRenderedLine.getString().length() - rightSideText.length())
+					);
+					nonFadedRenderedLineWidth = this.font.width(nonFadedRenderedLine);
+					int charX = nonFadedLineX + nonFadedRenderedLineWidth;
+					for (char fadingChar : fadeOutText.toCharArray()) {
+						float alpha = Math.max(1f -
+							(float) (charX - nonFadedLineX - nonFadedRenderedLineWidth) / (this.getX() + this.getWidth() - nonFadedLineX - nonFadedRenderedLineWidth),
+							0.1f
+						);
+						int color = ARGB.color(alpha, this.textColor);
+						String fadingStringChar = String.valueOf(fadingChar);
+						graphics.text(this.font, fadingStringChar, charX, lineY, color, this.textShadow);
+						charX += this.font.width(fadingStringChar);
+					}
+				}
+
+				graphics.text(this.font, nonFadedRenderedLine, nonFadedLineX, lineY, this.textColor, this.textShadow);
+				if (overflowsLeft) graphics.text(this.font, ARROW_LEFT_SYMBOL, this.getX() + 2, lineY, this.overflowArrowColor);
+				if (overflowsRight) graphics.text(this.font, ARROW_RIGHT_SYMBOL, this.getX() + this.getWidth() - this.font.width(ARROW_RIGHT_SYMBOL) - 2, lineY, this.overflowArrowColor);
+			} else {
+				graphics.text(this.font, renderedLine, lineX, lineY, this.textColor, this.textShadow);
 			}
 
 			// Render selection highlight
@@ -271,10 +388,25 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	protected void seekCursorScreen(double mouseX, double mouseY) {
 		double relativeY = mouseY - this.getY() - (this.innerPadding() / 2.0) + this.scrollAmount();
 		int top = Mth.floor(relativeY / this.lineHeight);
-		MultilineTextField.StringView clickedLineView = this.textField.getLineView(Mth.clamp(top, 0, this.textField.getLineCount() - 1));
+		int lineIndex = Mth.clamp(top, 0, this.textField.getLineCount() - 1);
+		MultilineTextField.StringView clickedLineView = this.textField.getLineView(lineIndex);
 
 		String rawLine = this.textField.value().substring(clickedLineView.beginIndex(), clickedLineView.endIndex());
-		double relativeX = mouseX - this.getTextAlignmentX(this.font.width(rawLine)) + this.getX(); // Adding X because it feels better for some reason
+		int rawLineWidth = this.font.width(rawLine);
+
+		int lineX = this.getTextAlignmentX(rawLineWidth);
+
+		// FIXME - This works, but doesn't feel good to actually use
+		boolean isCursorLine = this.textField.getLineAtCursor() == lineIndex;
+		MultilineTextField.StringView selectedView = this.textField.getSelected();
+		boolean isSelectedLine = this.textField.hasSelection()
+			&& (selectedView.endIndex() > clickedLineView.beginIndex() && selectedView.beginIndex() < clickedLineView.endIndex());
+		if (!isCursorLine && !isSelectedLine && rawLineWidth >= this.getWidth()) { // Offset for non-cursor, non-selected overflow align adjustment
+			lineX = Math.max(this.getX() + 1, lineX);
+		}
+
+		double relativeX = mouseX - lineX + this.getX(); // Adding X because it feels better for some reason
+
 		int left = Mth.floor(relativeX);
 		int clickedColumn = this.font.plainSubstrByWidth(this.textField.value().substring(clickedLineView.beginIndex(), clickedLineView.endIndex()), left).length();
 		this.textField.seekCursor(Whence.ABSOLUTE, clickedLineView.beginIndex() + clickedColumn);
@@ -359,6 +491,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		private boolean parsedHorizontalBounds = false;
 		private boolean showBackground = false;
 		private boolean showDecorations = true;
+		private int overflowArrowColor = ColorUtil.WHITE;
 
 		public Builder(Font font, List<Component> lines, int x, int y, int width, int height, Consumer<List<Component>> parsedUpdateListener) {
 			this.font = font;
@@ -402,12 +535,18 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			return this;
 		}
 
+		public Builder setOverflowArrowColor(int overflowArrowColor) {
+			this.overflowArrowColor = overflowArrowColor;
+			return this;
+		}
+
 		public GlowcaseMultilineEditBox build() {
 			return new GlowcaseMultilineEditBox(
 				this.font, this.lines,
 				this.x, this.y, this.width, this.height,
 				this.sideAlignmentPadding, this.lineHeight, this.maxLines, this.parsedHorizontalBounds,
 				this.showBackground, this.showDecorations,
+				this.overflowArrowColor,
 				this.parsedUpdateListener
 			);
 		}

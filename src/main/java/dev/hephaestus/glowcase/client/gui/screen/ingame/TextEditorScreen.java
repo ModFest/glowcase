@@ -27,6 +27,10 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 	abstract GlowcaseMultilineEditBox getGlowcaseMultilineEditBox();
 
+	public void focusEditBox() {
+		this.setFocused(this.getGlowcaseMultilineEditBox());
+	}
+
 	protected void initFormattingButtons(int x, int y, int innerPadding) {
 		this.initFormattingButtons(x, y, innerPadding, 20, 2);
 	}
@@ -62,7 +66,6 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.obfuscate")))
 			.build();
 
-		// TODO - Possibly better icon that fits nicely with the others (pixel resolution)
 		this.colorTextButton = IconButtonWidget.builder(COLOR_TEXT_ICON, button -> {
 			ColorPickerWidget colorPickerWidget = this.getColorPickerWidget();
 			colorPickerWidget.target(this.colorTextButton, ColorUtil.RED, false, true, pickedColor -> {});
@@ -70,6 +73,10 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 			colorPickerWidget.setPresetListener(preset -> {
 				if (preset.getPresetFormatting() != null) this.insertFormattingTag(preset.getPresetFormatting());
 				colorPickerWidget.hide();
+				// FIXME - This doesn't work because #clickedColorPicker() focuses the color picker right after #mouseClicked(),
+				//  and attempting to move it beforehand breaks *a lot* of stuff
+				//  Will probably need a skipFocus thing in the color picker
+				this.focusEditBox();
 			});
 		}).dimensions(buttonX + shiftX * 5, buttonY, buttonSize, buttonSize, 10, 10).build();
 		this.colorTextButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color_text")));

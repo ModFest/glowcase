@@ -117,10 +117,9 @@ public class NoteEditScreen extends TextEditorScreen {
 			(string) -> true);
 
 		// Setup Signing Screen
-
 		signing_text = new ArrayList<>();
 		//noinspection unchecked
-		Pair<Integer, Component>[] lines = new Pair[]{
+		Pair<Integer, Component>[] signingLines = new Pair[]{
 			new Pair<>(2, Component.translatable("gui.glowcase.note.signing")),
 			new Pair<>(3, Component.translatable("gui.glowcase.note.warning")),
 			new Pair<>(1, Component.literal("")),
@@ -129,7 +128,7 @@ public class NoteEditScreen extends TextEditorScreen {
 			new Pair<>(1, Component.literal("")),
 			new Pair<>(1, Component.translatable("gui.glowcase.note.required").setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
 		};
-		for (Pair<Integer, Component> section : lines) {
+		for (Pair<Integer, Component> section : signingLines) {
 			int height = section.getFirst();
 			List<FormattedText> texts = font.getSplitter().splitLines(section.getSecond(), BG_WIDTH - TXT_X_PADDING, Style.EMPTY);
 
@@ -159,7 +158,7 @@ public class NoteEditScreen extends TextEditorScreen {
 			this.changeAlignment.setMessage(Component.translatableEscape("gui.glowcase.alignment", textAlignment));
 		}).bounds(width / 2 - BG_WIDTH / 2, height / 2 - BG_HEIGHT / 2 - offset - 20, BG_WIDTH / 12 * 6 - 3 - 7, 20).build();
 
-		signButton = Button.builder(Component.translatable("book.signButton"), action -> {
+		this.signButton = Button.builder(Component.translatable("book.signButton"), action -> {
 			if (!signing) {
 				signing = true;
 				doneButton.setMessage(Component.translatable("gui.cancel"));
@@ -176,7 +175,7 @@ public class NoteEditScreen extends TextEditorScreen {
 				onClose();
 			}
 		}).bounds(width / 2 - BG_WIDTH / 2, height / 2 + BG_HEIGHT / 2 + offset, BG_WIDTH / 2 - 3, 20).build();
-		doneButton = Button.builder(Component.translatable("gui.done"), action -> {
+		this.doneButton = Button.builder(Component.translatable("gui.done"), action -> {
 			if (signing) {
 				signing = false;
 				doneButton.setMessage(Component.translatable("gui.done"));
@@ -188,12 +187,11 @@ public class NoteEditScreen extends TextEditorScreen {
 				onClose();
 		}).bounds(width / 2 + BG_WIDTH / 2 - (BG_WIDTH / 2 - 3), height / 2 + BG_HEIGHT / 2 + offset, BG_WIDTH / 2 - 3, 20).build();
 
-
 		this.colorPickerWidget = this.createColorPickerWidget();
 
-		addRenderableWidget(changeAlignment);
-		addRenderableWidget(doneButton);
-		addRenderableWidget(signButton);
+		addRenderableWidget(this.changeAlignment);
+		addRenderableWidget(this.doneButton);
+		addRenderableWidget(this.signButton);
 
 		initFormattingButtons(width / 2 - BG_WIDTH / 2 + BG_WIDTH / 12 * 6 - 5 - 7, height / 2 - BG_HEIGHT / 2 - offset - 20 - 4, width / 100);
 	}
