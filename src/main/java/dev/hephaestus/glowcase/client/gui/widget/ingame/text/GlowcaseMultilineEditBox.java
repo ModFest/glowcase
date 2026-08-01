@@ -20,25 +20,16 @@ import net.minecraft.util.Util;
 import java.util.List;
 import java.util.function.Consumer;
 
-// GOALS:
-// - Change text alignment (LEFT, CENTER, RIGHT)
-// - Change text color, toggle text shadow
-// - Update listener instead of only value listener
-// - Be able to resize and update position
-// - Render QuickText on non-selected lines
-// - View-only boolean? (e.g. PopupBlockViewScreen)
 
-// CHANGES FROM EXTENDED:
-// - Account for text alignment (rendering & clicking)
-// - QuickText rendering
-// - Account for changeable text color & shadow
-// - Update listener
-// - LINE HEIGHT IS 12, NOT 9!!!
-// - View-only mode for Popup Block?
-
-// TODO - Allow disable horizontal overflow using the parsed width? (Allow overflow of raw for editing)
-// FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
+/**
+ * A multiline edit box for Glowcase Screens to use. Includes support for vertical scrolling with multiple lines, horizontal scrolling if a line overflows, text alignment, QuickText formatting, and formatting hotkeys (e.g. Ctrl+B for a bold tag). <br><br>
+ * This class contains the widget side of things, including rendering and some mouse logic. {@link FormattableMultilineTextField} contains the text logic side of things, including text selection, cursor interactions, parsing into QuickText, and hotkey handling.
+ * @see FormattableMultilineTextField
+ * @see dev.hephaestus.glowcase.client.gui.screen.ingame.TextEditorScreen
+ * @author Superkat32
+ */
 public class GlowcaseMultilineEditBox extends MultiLineEditBox {
+	// FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
 	private static final Component ARROW_LEFT_SYMBOL = Component.literal("«");
 	private static final Component ARROW_RIGHT_SYMBOL = Component.literal("»");
 

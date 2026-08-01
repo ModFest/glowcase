@@ -24,9 +24,9 @@ import java.util.function.Consumer;
 /**
  * A MultilineTextField with QuickText, Text Alignment, and overflow text editing support.<br><br>
  *
- * This class handles the logic behind the {@link GlowcaseMultilineEditBox} Widget.
+ * This class handles the text logic behind the {@link GlowcaseMultilineEditBox} Widget.
  *
- * @apiNote The MultilineTextField stores its text in one String, while this class stores parsed Components in a List of lines.
+ * @apiNote The MultilineTextField stores its text in one String, while this class stores parsed Components in a List of lines. {@link FormattableMultilineTextField#parseLinesFromValue()} converts the String value into the List of Components, while {@link FormattableMultilineTextField#setValueFromParsedLines()} does the opposite.
  * @see GlowcaseMultilineEditBox
  * @author Superkat32
  */
