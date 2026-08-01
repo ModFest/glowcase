@@ -221,9 +221,8 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			MultilineTextField.StringView lineView = this.formatTextField.getLineView(cursorLine);
 			int lineWidth = this.font.width(this.formatTextField.value().substring(lineView.beginIndex(), lineView.endIndex()));
 			if (lineWidth >= this.getWidth()) {
-				this.formatTextField.cursorOverflowX = Mth.clamp(
-					this.formatTextField.cursorOverflowX + Mth.floor(scrollY * 5f),
-					-lineWidth + this.getWidth() - 32, 32 // FIXME - This doesn't cap properly on non-centered alignment
+				this.formatTextField.setCursorOverflowX(
+					this.formatTextField.cursorOverflowX + Mth.floor(scrollY * 5)
 				);
 				return true;
 			}

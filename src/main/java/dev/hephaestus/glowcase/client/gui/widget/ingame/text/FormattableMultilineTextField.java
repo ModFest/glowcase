@@ -98,8 +98,10 @@ public class FormattableMultilineTextField extends MultilineTextField {
 			String newSelected = openTag + selected.replaceAll("\n", closeTag + "\n" + openTag) + closeTag;
 			int addedLength = newSelected.length() - selected.length();
 			int preInsertCursorPos = this.cursor();
+			int preInsertSelectCursorPos = this.selectCursor;
 			this.setValue(beforeSelected + newSelected + afterSelected);
 			this.seekCursor(Whence.ABSOLUTE, preInsertCursorPos + addedLength - closeTag.length());
+			this.selectCursor = preInsertSelectCursorPos + openTag.length();
 		} else {
 			int preInsertCursorPos = this.cursor();
 			this.insertText(openTag + closeTag);
@@ -172,6 +174,19 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		} else {
 			this.cursorOverflowX = 0;
 		}
+	}
+
+	public void setCursorOverflowX(int cursorOverflowX) {
+		StringView cursorLineView = this.getLineView(this.getLineAtCursor());
+		String cursorLine = this.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex());
+		int cursorLineWidth = this.font.width(cursorLine);
+		// A little bit strange on the caps but it works
+		int min = -cursorLineWidth + this.width
+			- this.sideAlignmentPadding * (this.textAlignment == TextBlockEntity.TextAlignment.LEFT ? 2 : 1);
+		int max = this.textAlignment == TextBlockEntity.TextAlignment.LEFT ? 0 : this.sideAlignmentPadding;
+		this.cursorOverflowX = Mth.clamp(
+			cursorOverflowX, min, max
+		);
 	}
 
 	private int getCursorOverflowOffset(int cursorX, int safeZoneWidth) {

@@ -17,6 +17,7 @@ accessible method net/minecraft/client/gui/components/MultilineTextField onValue
 extendable method net/minecraft/client/gui/components/MultilineTextField onValueChange ()V
 extendable method net/minecraft/client/gui/components/MultiLineEditBox seekCursorScreen (DD)V
 extendable method net/minecraft/client/gui/components/MultiLineEditBox scrollToCursor ()V
+accessible field net/minecraft/client/gui/components/MultilineTextField selectCursor I
 accessible method net/minecraft/client/gui/components/MultilineTextField reflowDisplayLines ()V
 extendable method net/minecraft/client/gui/components/MultilineTextField reflowDisplayLines ()V
 accessible class net/minecraft/client/gui/components/MultilineTextField$StringView
