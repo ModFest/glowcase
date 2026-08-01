@@ -172,26 +172,6 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		} else {
 			this.cursorOverflowX = 0;
 		}
-
-//		int lineIndex = this.getLineAtCursor();
-//		StringView lineView = this.getLineView(lineIndex);
-//		String line = this.value().substring(lineView.beginIndex(), lineView.endIndex());
-//		int lineWidth = this.font.width(line);
-//		if (lineWidth >= this.width) { // overflows
-//			int safeZoneWidth = 32;
-//			String beforeCursor = this.value().substring(lineView.beginIndex(), this.cursor());
-//			int beforeCursorWidth = this.font.width(beforeCursor);
-//			int cursorX = this.getLineX(lineIndex, lineWidth) + beforeCursorWidth;
-//			int cursorDistLeft = cursorX - this.x;
-//			int cursorDistRight = this.x + this.width - cursorX;
-//			if (cursorDistLeft <= safeZoneWidth) {
-//				this.cursorOverflowX += safeZoneWidth - cursorDistLeft;
-//			} else if (cursorDistRight <= safeZoneWidth) {
-//				this.cursorOverflowX -= safeZoneWidth - cursorDistRight;
-//			}
-//		} else {
-//			this.cursorOverflowX = 0;
-//		}
 	}
 
 	private int getCursorOverflowOffset(int cursorX, int safeZoneWidth) {
