@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.util;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
@@ -12,6 +13,8 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 import org.joml.Matrix3x2fStack;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,6 +23,24 @@ public class GuiGraphicsUtil {
 	public static final int[] HUE_GRADIENT_COLORS = new int[]{
 		ColorUtil.RED, ColorUtil.YELLOW, ColorUtil.GREEN, ColorUtil.CYAN, ColorUtil.BLUE, ColorUtil.MAGENTA, ColorUtil.RED
 	};
+
+	/**
+	 * Render text fading out (or in) based on a given width.
+	 */
+	public static void extractFadingText(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int fadeWidth, int textColor, boolean textShadow, boolean leftToRight) {
+		int xOffset = 0;
+		for (char fadingChar : text.toCharArray()) {
+			String fadingString = String.valueOf(fadingChar);
+			int charWidth = font.width(fadingString);
+			float halfCharWidth = leftToRight ? 0 : charWidth / 2f;
+
+			float delta = (xOffset + halfCharWidth) / fadeWidth;
+			float alpha = Math.max(0.1f, leftToRight ? delta : 1f -  delta);
+			int color = ARGB.color(alpha, textColor);
+			graphics.text(font, fadingString, x + xOffset, y, color, textShadow);
+			xOffset += font.width(fadingString);
+		}
+	}
 
 	/**
 	 * Fill a horizontal gradient between two colors.

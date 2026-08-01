@@ -60,7 +60,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		// TODO - Text shadow & alignment will need to be manually updated if those options are present on this screen
 		//  For now though, they are always updated here because init() is called after closing the Properties screen
 		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
-		this.focusEditBox(); // Start ready to begin typing
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
 
 		int middle = width / 2;

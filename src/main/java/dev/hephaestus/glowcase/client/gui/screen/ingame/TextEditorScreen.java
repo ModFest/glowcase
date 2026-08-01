@@ -31,6 +31,12 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		this.setFocused(this.getGlowcaseMultilineEditBox());
 	}
 
+	@Override
+	protected void setInitialFocus() { // The edit box is the most likely thing to be used first, so focus it first
+		// FIXME - Uncomment this once note screen is ready, it crashes for now lol
+//		this.setInitialFocus(this.getGlowcaseMultilineEditBox());
+	}
+
 	protected void initFormattingButtons(int x, int y, int innerPadding) {
 		this.initFormattingButtons(x, y, innerPadding, 20, 2);
 	}
