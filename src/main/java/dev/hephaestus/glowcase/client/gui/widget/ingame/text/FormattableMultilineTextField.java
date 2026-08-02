@@ -330,7 +330,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		while (end < this.value().length() && !Character.isWhitespace(this.value().charAt(end))) {
 			end++;
 			if (isTag && this.value().charAt(end - 1) == '>') break;
-			if (this.value().charAt(end) == '<') break;
+			if (end < this.value().length() && this.value().charAt(end) == '<') break;
 		}
 
 		return end;

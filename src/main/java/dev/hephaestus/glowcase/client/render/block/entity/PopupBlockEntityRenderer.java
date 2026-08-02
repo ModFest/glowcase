@@ -33,7 +33,7 @@ public record PopupBlockEntityRenderer(BlockEntityRendererProvider.Context conte
 	@Override
 	public void extractRenderState(PopupBlockEntity blockEntity, PopupRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
-		if (blockEntity.lines.size() == 1 && blockEntity.lines.getFirst().getContents().equals(PlainTextContents.EMPTY)) {
+		if (blockEntity.lines.size() == 1 && blockEntity.lines.getFirst().getString().isBlank()) {
 			state.title = Component.translatable("gui.glowcase.warning.no_content").withStyle(ChatFormatting.RED);
 		} else {
 			state.title = Component.literal(blockEntity.title);
