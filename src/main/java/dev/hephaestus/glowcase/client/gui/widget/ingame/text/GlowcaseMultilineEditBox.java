@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.text;
 
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.client.util.GuiGraphicsUtil;
@@ -11,9 +12,12 @@ import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.MultilineTextField;
 import net.minecraft.client.gui.components.TextCursorUtils;
 import net.minecraft.client.gui.components.Whence;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 
@@ -30,6 +34,7 @@ import java.util.function.Consumer;
  */
 public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	// FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
+	// TODO - Cursor colors, truncate overflowing text
 	private static final Component ARROW_LEFT_SYMBOL = Component.literal("«");
 	private static final Component ARROW_RIGHT_SYMBOL = Component.literal("»");
 
@@ -40,8 +45,10 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public int sideAlignmentPadding;
 	public int lineHeight;
 	public int maxLines;
-	public boolean parsedHorizontalBounds;
+	public boolean truncateText;
 	public int overflowArrowColor;
+	public int insetCursorColor;
+	public int appendCursorColor;
 
 	public int textColor = ColorUtil.WHITE;
 	public boolean textShadow = true;
@@ -55,9 +62,9 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	public GlowcaseMultilineEditBox(
 		Font font, List<Component> parsedLines,
 		int x, int y, int width, int height,
-		int sideAlignmentPadding, int lineHeight, int maxLines,
-		boolean parsedHorizontalBounds, boolean showBackground, boolean showDecorations,
-		int overflowArrowColor,
+		int sideAlignmentPadding, int lineHeight, int maxLines, boolean truncateText,
+		boolean showBackground, boolean showDecorations,
+		int overflowArrowColor, int appendCursorColor, int insetCursorColor,
 		Consumer<List<Component>> parsedUpdateListener
 	) {
 		super(font, x, y, width, height, CommonComponents.EMPTY, CommonComponents.EMPTY, ColorUtil.WHITE, true, -3092272, showBackground, showDecorations);
@@ -65,14 +72,17 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.sideAlignmentPadding = sideAlignmentPadding;
 		this.lineHeight = lineHeight;
 		this.maxLines = maxLines;
-		this.parsedHorizontalBounds = parsedHorizontalBounds;
+		this.truncateText = truncateText;
 		this.parsedUpdateListener = parsedUpdateListener;
 		this.overflowArrowColor = overflowArrowColor;
+		this.appendCursorColor = appendCursorColor;
+		this.insetCursorColor = insetCursorColor;
 
 		this.focusedTime = Util.getMillis();
 
-		this.formatTextField = new FormattableMultilineTextField(this.font, parsedLines, x, width, sideAlignmentPadding, parsedUpdateListener);
+		this.formatTextField = new FormattableMultilineTextField(this.font, parsedLines, x + 1, width - 2, sideAlignmentPadding, parsedUpdateListener);
 		this.formatTextField.setLineLimit(this.maxLines);
+		this.formatTextField.truncateText = truncateText;
 		this.formatTextField.setCursorListener(this::scrollToCursor);
 		this.textField = this.formatTextField;
 	}
@@ -116,7 +126,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			boolean isCursorLine = this.formatTextField.isCursorLine(i);
 			boolean isSelectedLine = this.formatTextField.isSelectedLine(i);
 
-			Component renderedLine = this.formatTextField.getLineForRender(i);
+			FormattedText renderedLine = this.formatTextField.getLineForRender(i);
 
 			int renderedLineWidth = this.font.width(renderedLine);
 			boolean overflows = this.font.width(renderedLine) >= this.getWidth(); // Used for positioning & truncating
@@ -174,7 +184,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 				if (overflowsLeft) graphics.text(this.font, ARROW_LEFT_SYMBOL, this.getX() + 2, lineY, this.overflowArrowColor);
 				if (overflowsRight) graphics.text(this.font, ARROW_RIGHT_SYMBOL, this.getX() + this.getWidth() - this.font.width(ARROW_RIGHT_SYMBOL) - 2, lineY, this.overflowArrowColor);
 			} else {
-				graphics.text(this.font, renderedLine, lineX, lineY, this.textColor, this.textShadow);
+				graphics.text(this.font, Language.getInstance().getVisualOrder(renderedLine), lineX, lineY, this.textColor, this.textShadow);
 			}
 
 			// Render selection highlight
@@ -190,8 +200,12 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		// Render cursor
 		boolean showCursor = this.isFocused() && TextCursorUtils.isCursorVisible(Util.getMillis() - this.focusedTime);
 		if (showCursor) {
-			if (insetCursor) TextCursorUtils.extractInsertCursor(graphics, cursorX, cursorY, 0xCCFFFFFF, 10);
-			else TextCursorUtils.extractAppendCursor(graphics, this.font, cursorX, cursorY, 0xFFFFFFFF, true);
+			if (insetCursor) TextCursorUtils.extractInsertCursor(graphics, cursorX, cursorY, this.insetCursorColor, 10);
+			else TextCursorUtils.extractAppendCursor(graphics, this.font, cursorX, cursorY, this.appendCursorColor, this.textShadow);
+		}
+
+		if (this.isHovered()) {
+			graphics.requestCursor(CursorTypes.IBEAM);
 		}
 	}
 
@@ -219,6 +233,21 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			}
 		}
 		return super.mouseScrolled(mx, my, scrollX, scrollY);
+	}
+
+	@Override
+	public boolean charTyped(CharacterEvent event) {
+		if (super.charTyped(event)) {
+			int cursorLineIndex = this.formatTextField.getLineAtCursor();
+			MultilineTextField.StringView cursorLineView = this.formatTextField.getLineView(cursorLineIndex);
+			int cursorLineWidth = this.font.width(this.formatTextField.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex()));;
+
+			if (cursorLineWidth >= this.width) {
+				this.formatTextField.cursorOverflowX -= this.font.width(event.codepointAsString());
+			}
+			return true;
+		}
+		return false;
 	}
 
 	public void insertText(String text) {
@@ -263,7 +292,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		String rawLine = this.textField.value().substring(clickedLineView.beginIndex(), clickedLineView.endIndex());
 		int lineX = this.formatTextField.getLineX(lineIndex, this.font.width(rawLine));
 
-		double relativeX = mouseX - lineX + this.getX(); // Adding X because it feels better for some reason
+		double relativeX = mouseX - lineX + 2; // Adding 2 because it feels better for some reason
 
 		int left = Mth.floor(relativeX);
 		int clickedColumn = this.font.plainSubstrByWidth(this.textField.value().substring(clickedLineView.beginIndex(), clickedLineView.endIndex()), left).length();
@@ -284,10 +313,12 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		private int sideAlignmentPadding;
 		private int lineHeight = 12;
 		private int maxLines = Integer.MAX_VALUE;
-		private boolean parsedHorizontalBounds = false;
+		private boolean truncateText = false;
 		private boolean showBackground = false;
 		private boolean showDecorations = true;
 		private int overflowArrowColor = ColorUtil.WHITE;
+		private int appendCursorColor = 0xFFFFFFFF;
+		private int insetCursorColor = 0xCCFFFFFF;
 
 		public Builder(Font font, List<Component> lines, int x, int y, int width, int height, Consumer<List<Component>> parsedUpdateListener) {
 			this.font = font;
@@ -316,8 +347,8 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			return this;
 		}
 
-		public Builder parsedHorizontalBounds(boolean parsedHorizontalBounds) {
-			this.parsedHorizontalBounds = parsedHorizontalBounds;
+		public Builder setTruncateText(boolean truncateText) {
+			this.truncateText = truncateText;
 			return this;
 		}
 
@@ -336,13 +367,23 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 			return this;
 		}
 
+		public Builder setAppendCursorColor(int appendCursorColor) {
+			this.appendCursorColor = appendCursorColor;
+			return this;
+		}
+
+		public Builder setInsetCursorColor(int insetCursorColor) {
+			this.insetCursorColor = insetCursorColor;
+			return this;
+		}
+
 		public GlowcaseMultilineEditBox build() {
 			return new GlowcaseMultilineEditBox(
 				this.font, this.lines,
 				this.x, this.y, this.width, this.height,
-				this.sideAlignmentPadding, this.lineHeight, this.maxLines, this.parsedHorizontalBounds,
+				this.sideAlignmentPadding, this.lineHeight, this.maxLines, this.truncateText,
 				this.showBackground, this.showDecorations,
-				this.overflowArrowColor,
+				this.overflowArrowColor, this.appendCursorColor, this.insetCursorColor,
 				this.parsedUpdateListener
 			);
 		}

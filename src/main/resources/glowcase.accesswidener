@@ -13,13 +13,15 @@ accessible field net/minecraft/client/renderer/rendertype/RenderSetup textureTra
 accessible method net/minecraft/client/gui/components/MultiLineEditBox <init> (Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/Component;IZIZZ)V
 accessible field net/minecraft/client/gui/components/MultiLineEditBox textField Lnet/minecraft/client/gui/components/MultilineTextField;
 mutable field net/minecraft/client/gui/components/MultiLineEditBox textField Lnet/minecraft/client/gui/components/MultilineTextField;
-accessible method net/minecraft/client/gui/components/MultilineTextField onValueChange ()V
-extendable method net/minecraft/client/gui/components/MultilineTextField onValueChange ()V
 extendable method net/minecraft/client/gui/components/MultiLineEditBox seekCursorScreen (DD)V
 extendable method net/minecraft/client/gui/components/MultiLineEditBox scrollToCursor ()V
+accessible method net/minecraft/client/gui/components/MultilineTextField onValueChange ()V
+extendable method net/minecraft/client/gui/components/MultilineTextField onValueChange ()V
 accessible field net/minecraft/client/gui/components/MultilineTextField selectCursor I
 accessible method net/minecraft/client/gui/components/MultilineTextField reflowDisplayLines ()V
 extendable method net/minecraft/client/gui/components/MultilineTextField reflowDisplayLines ()V
-accessible class net/minecraft/client/gui/components/MultilineTextField$StringView
+accessible method net/minecraft/client/gui/components/MultilineTextField overflowsLineLimit (Ljava/lang/String;)Z
+extendable method net/minecraft/client/gui/components/MultilineTextField overflowsLineLimit (Ljava/lang/String;)Z
 accessible field net/minecraft/client/gui/components/MultilineTextField width I
 mutable field net/minecraft/client/gui/components/MultilineTextField width I
+accessible class net/minecraft/client/gui/components/MultilineTextField$StringView

@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.MultilineTextField;
 import net.minecraft.client.gui.components.Whence;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
 import org.jspecify.annotations.NonNull;
@@ -32,6 +33,7 @@ import java.util.function.Consumer;
  */
 public class FormattableMultilineTextField extends MultilineTextField {
 	public static final NodeParser PARSER = TagParser.DEFAULT;
+	private static final Component ELLIPSIS_SYMBOL = Component.literal("...");
 	public final Font font;
 	public final List<Component> parsedLines;
 	public final Consumer<List<Component>> parsedUpdateListener;
@@ -40,6 +42,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 	public int sideAlignmentPadding;
 	public int lineHeight = 12;
 	public boolean wordWrap = false;
+	public boolean truncateText = false;
 	public int cursorOverflowX = 0;
 	public int selectCursorOverflowX = 0;
 	public TextBlockEntity.TextAlignment textAlignment = TextBlockEntity.TextAlignment.CENTER;
@@ -180,10 +183,13 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		StringView cursorLineView = this.getLineView(this.getLineAtCursor());
 		String cursorLine = this.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex());
 		int cursorLineWidth = this.font.width(cursorLine);
-		// A little bit strange on the caps but it works
+		// Very strange (& mildly brute-forced) on the caps but it works
+		// FIXME - This could still be better, especially for note screen
+		int safeZoneWidth = this.sideAlignmentPadding == 0 ? 32 : this.sideAlignmentPadding;
+		boolean leftAligned = this.textAlignment == TextBlockEntity.TextAlignment.LEFT && this.sideAlignmentPadding > 0;
 		int min = -cursorLineWidth + this.width
-			- this.sideAlignmentPadding * (this.textAlignment == TextBlockEntity.TextAlignment.LEFT ? 2 : 1);
-		int max = this.textAlignment == TextBlockEntity.TextAlignment.LEFT ? 0 : this.sideAlignmentPadding;
+			- safeZoneWidth * (leftAligned ? 2 : 1);
+		int max = leftAligned ? 0 : safeZoneWidth;
 		this.cursorOverflowX = Mth.clamp(
 			cursorOverflowX, min, max
 		);
@@ -223,12 +229,23 @@ public class FormattableMultilineTextField extends MultilineTextField {
 	/**
 	 * @return The Component to render for a given line index. Returns raw text if line is selected or has the cursor, otherwise returns the parsed text.
 	 */
-	public Component getLineForRender(int lineIndex) {
+	public FormattedText getLineForRender(int lineIndex) {
 		boolean isCursorLine = this.isCursorLine(lineIndex);
 		boolean isSelectedLine = this.isSelectedLine(lineIndex);
 
 		if (isCursorLine || isSelectedLine) return Component.literal(this.getRawLineFromParsed(lineIndex));
-		return this.parsedLines.get(lineIndex);
+		Component parsedLine = this.parsedLines.get(lineIndex);
+		if (this.truncateText && this.font.width(parsedLine) >= this.width) {
+			int ellipsisWidth = this.font.width(ELLIPSIS_SYMBOL);
+			int alignmentWidth = this.textAlignment == TextBlockEntity.TextAlignment.LEFT || this.textAlignment == TextBlockEntity.TextAlignment.RIGHT
+				? this.sideAlignmentPadding : 0;
+
+			return FormattedText.composite(
+				this.font.substrByWidth(
+				parsedLine, this.width - alignmentWidth - ellipsisWidth
+			), ELLIPSIS_SYMBOL);
+		}
+		return parsedLine;
 	}
 
 	/**
@@ -317,6 +334,17 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		}
 
 		return end;
+	}
+
+	@Override
+	public boolean overflowsLineLimit(String newValue) {
+		if (this.wordWrap) return super.overflowsLineLimit(newValue);
+
+		int actualWidth = this.width;
+		this.width = Integer.MAX_VALUE;
+		boolean doesOverflow = super.overflowsLineLimit(newValue);
+		this.width = actualWidth;
+		return doesOverflow;
 	}
 
 	@Override
