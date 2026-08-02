@@ -337,7 +337,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 	}
 
 	@Override
-	public boolean overflowsLineLimit(String newValue) {
+	public boolean overflowsLineLimit(@NonNull String newValue) {
 		if (this.wordWrap) return super.overflowsLineLimit(newValue);
 
 		int actualWidth = this.width;
