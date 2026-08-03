@@ -3,8 +3,6 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.MultilineTextViewArea;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 
 public class PopupBlockViewScreen extends GlowcaseScreen {
 	private final PopupBlockEntity popupBlockEntity;
