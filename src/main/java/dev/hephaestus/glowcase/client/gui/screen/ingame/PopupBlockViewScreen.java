@@ -1,33 +1,45 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.text.MultilineTextViewArea;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
-//TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class PopupBlockViewScreen extends GlowcaseScreen {
 	private final PopupBlockEntity popupBlockEntity;
+	private MultilineTextViewArea textViewArea;
 
 	public PopupBlockViewScreen(PopupBlockEntity popupBlockEntity) {
 		this.popupBlockEntity = popupBlockEntity;
 	}
 
 	@Override
+	protected void init() {
+		int innerPadding = this.width / 100;
+		this.textViewArea = new MultilineTextViewArea(
+			this.font, this.popupBlockEntity.lines,
+			2, 40 + innerPadding,
+			this.width - 4, this.height - 40 - innerPadding,
+			this.popupBlockEntity.color, this.popupBlockEntity.textAlignment
+		);
+
+		this.addRenderableWidget(this.textViewArea);
+	}
+
+	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, 40 + 2 * this.width / 100F);
-		for (int i = 0; i < this.popupBlockEntity.lines.size(); ++i) {
-			var text = this.popupBlockEntity.lines.get(i);
+		if (!this.popupBlockEntity.viewScreenTitle || this.popupBlockEntity.title.isBlank()) return;
+		int titleWidth = this.font.width(this.popupBlockEntity.title);
+		graphics.text(
+			this.font, this.popupBlockEntity.title,
+			this.width / 2 - titleWidth / 2, 16,
+			this.popupBlockEntity.color
+		);
 
-			int lineWidth = this.font.width(text);
-			switch (this.popupBlockEntity.textAlignment) {
-				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.popupBlockEntity.color);
-				case CENTER -> graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.popupBlockEntity.color);
-				case RIGHT -> graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.popupBlockEntity.color);
-			}
-		}
-
-		graphics.pose().popMatrix();
+		int breakWidth = Math.min(titleWidth + 16, this.width / 2 - 16);
+		graphics.fill(this.width / 2 - breakWidth, 27, this.width / 2 + breakWidth, 28, this.popupBlockEntity.color);
 	}
 }

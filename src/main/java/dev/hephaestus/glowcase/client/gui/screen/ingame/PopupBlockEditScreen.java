@@ -8,20 +8,13 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
-import dev.hephaestus.glowcase.util.TextUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.font.TextFieldHelper;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 public class PopupBlockEditScreen extends TextEditorScreen implements BlockEditor<PopupBlockEntity> {
 	private final PopupBlockEntity popupBlockEntity;
@@ -104,11 +97,6 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 	}
 
 	@Override
-	public @Nullable CustomPacketPayload getUpdatePayload() {
-		return C2SEditPopupBlock.of(popupBlockEntity);
-	}
-
-	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
@@ -124,6 +112,11 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (this.mouseClickedColorPicker(event, doubleClick)) return true;
 		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	public @Nullable CustomPacketPayload getUpdatePayload() {
+		return C2SEditPopupBlock.of(popupBlockEntity);
 	}
 
 	@Override
