@@ -6,27 +6,44 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabButton;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Whence;
+import net.minecraft.client.gui.components.tabs.GridLayoutTab;
+import net.minecraft.client.gui.components.tabs.Tab;
+import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.components.tabs.TabNavigationBar;
+import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.layouts.LayoutSettings;
+import net.minecraft.client.gui.layouts.LinearLayout;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -51,7 +68,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		super.init();
 
 		this.glowcaseEditBox = GlowcaseMultilineEditBox.builder(
-			this.font, this.textBlockEntity.lines, 2, 24, this.width - 4, this.height - 24,
+			this.font, this.textBlockEntity.lines, 2, 25, this.width - 4, this.height - 28,
 			parsedLines -> {
 				this.textBlockEntity.lines = new ArrayList<>(parsedLines);
 				this.textBlockEntity.rebake(true);
@@ -62,14 +79,16 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
 
-		int middle = width / 2;
 
-		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203 - 5, INNER_PADDING, 113, 20);
-		initFormattingButtons(middle - 90 + 6 - 5, INNER_PADDING, 0);
+		int middle = width / 2 + 14;
+		int y = INNER_PADDING + 19;
+
+		TextScale.SliderWidget scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203 - 5, y, 113, 20);
+		initFormattingButtons(middle - 90 + 6 - 5, y, 0);
 
 		this.colorPickerWidget = this.createColorPickerWidget();
 
-		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 - 5, INNER_PADDING,
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 - 5, y,
 				() -> this.textBlockEntity.color, color -> {
 					this.textBlockEntity.color = color;
 					this.textBlockEntity.rebake(true);
@@ -81,7 +100,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.build();
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_color")));
 
-		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 + 64 + 6 - 5, INNER_PADDING,
+		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 + 64 + 6 - 5, y,
 				() -> this.textBlockEntity.backgroundColor, color -> {
 					this.textBlockEntity.backgroundColor = color;
 					this.textBlockEntity.rebake(true);
@@ -96,7 +115,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			TextBlockOptionsScreen optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
 			Minecraft.getInstance().setScreen(optionsScreen);
 		})
-			.dimensions(middle + 124 + 64 + 6 - 5, INNER_PADDING, 20, 20, 16, 16)
+			.dimensions(middle + 124 + 64 + 6 - 5, INNER_PADDING + 19, 20, 20, 16, 16)
 			.build();
 		moreOptionsButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.extra_properties")));
 
@@ -105,25 +124,82 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			this.backgroundColorEntryWidget
 		);
 
-		this.addRenderableWidget(this.colorEntryWidget);
 		this.addRenderableWidget(this.glowcaseEditBox);
+		this.addRenderableWidget(this.colorEntryWidget);
 		this.addRenderableWidget(this.backgroundColorEntryWidget);
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(moreOptionsButton);
+
+		List<AbstractWidget> editTabWidgets = new ArrayList<>(List.copyOf(this.formattingButtons));
+		editTabWidgets.add(scaleSlider);
+		editTabWidgets.add(this.colorEntryWidget);
+		editTabWidgets.add(this.backgroundColorEntryWidget);
+
+		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
+			this.width, height -> {
+				this.glowcaseEditBox.setY(height + 2);
+			})
+			.setY(2)
+			.setWidgetAreaPadding(2)
+			.addTabs(
+				new GlowcaseTab(
+					Component.literal("Edit"), 20,
+					editTabWidgets
+				),
+				new GlowcaseTab(
+					Component.literal("View"), 42,
+					List.of(moreOptionsButton)
+				),
+				new GlowcaseTab(
+					Component.literal("Misc"), 64,
+					List.of(moreOptionsButton)
+				)
+			).build();
+		this.addRenderableWidget(tabNavBar);
+
+//		LinearLayout tabsLayout = LinearLayout.horizontal();
+//		tabsLayout.defaultCellSetting().alignHorizontallyCenter();
+//
+//		List<AbstractWidget> textTabWidgets = new ArrayList<>(this.formattingButtons);
+//		textTabWidgets.addAll(List.of(scaleSlider, this.colorEntryWidget, this.backgroundColorEntryWidget));
+//		GlowcaseTabButton textTabButton = GlowcaseTabButton.builder(
+//			this, Component.literal("Text"), textTabWidgets
+//		).build();
+//		GlowcaseTabButton layoutTabButton = GlowcaseTabButton.builder(
+//			this, Component.literal("Layout"), List.of(moreOptionsButton)
+//		).build();
+//		GlowcaseTabButton extrasTabButton = GlowcaseTabButton.builder(
+//			this, Component.literal("Extras"), List.of()
+//		).build();
+//
+//
+////		this.tabButtonWidgets = List.of(textTabButton, layoutTabButton, extrasTabButton);
+////		int tabsWidth = Math.min(400, this.width) - 28;
+////		int tabWidth = Mth.roundToward(tabsWidth / this.tabButtonWidgets.size(), 2);
+////		for (GlowcaseTabButton tabButtonWidget : this.tabButtonWidgets) {
+////			tabsLayout.addChild(tabButtonWidget);
+////			tabButtonWidget.setWidth(tabWidth);
+////			this.addRenderableWidget(tabButtonWidget);
+////		}
+////
+////		tabsLayout.arrangeElements();
+////		tabsLayout.setX(Mth.roundToward((this.width - tabsWidth) / 2, 2));
+////		tabsLayout.setY(2);
+////		this.selectTab(0);
 	}
 
-	@Override
-	public TextBlockEntity getBlockEntity() {
-		return this.textBlockEntity;
-	}
-
-	@Override
-	public @Nullable CustomPacketPayload getUpdatePayload() {
-		return C2SEditTextBlock.of(textBlockEntity);
-	}
+//	@Override
+//	public void selectTab(int tabIndex) {
+//		TabWidgetsIncludedScreen.super.selectTab(tabIndex);
+//		this.glowcaseEditBox.setY(INNER_PADDING + 20 + this.tabButtonWidgets.get(tabIndex).getYOffset());
+//	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.HEADER_SEPARATOR, 0, 15, 0, 0, this.tabButtonWidgets.getFirst().getX(), 2, 32, 2);
+//		int afterLastTab = this.tabButtonWidgets.getLast().getRight();
+//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.HEADER_SEPARATOR, afterLastTab, 15, 0, 0, this.width, 2, 32, 2);
+//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.FOOTER_SEPARATOR, 0, 41, 0, 0, this.width, 2, 32, 2);
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}
@@ -167,6 +243,16 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	@Override
 	GlowcaseMultilineEditBox getGlowcaseMultilineEditBox() {
 		return this.glowcaseEditBox;
+	}
+
+	@Override
+	public TextBlockEntity getBlockEntity() {
+		return this.textBlockEntity;
+	}
+
+	@Override
+	public @Nullable CustomPacketPayload getUpdatePayload() {
+		return C2SEditTextBlock.of(textBlockEntity);
 	}
 
 	public static class TextScale {

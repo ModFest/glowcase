@@ -10,6 +10,10 @@ accessible field net/minecraft/client/data/models/BlockModelGenerators ROTATION_
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor guiRenderState Lnet/minecraft/client/renderer/state/gui/GuiRenderState;
 accessible field net/minecraft/client/renderer/rendertype/RenderSetup textureTransform Lnet/minecraft/client/renderer/rendertype/TextureTransform;
 
+accessible method net/minecraft/client/gui/components/tabs/TabNavigationBar <init> (ILnet/minecraft/client/gui/components/tabs/TabManager;Ljava/lang/Iterable;)V
+accessible field net/minecraft/client/gui/components/tabs/TabNavigationBar tabButtons Lcom/google/common/collect/ImmutableList;
+mutable field net/minecraft/client/gui/components/tabs/TabNavigationBar tabButtons Lcom/google/common/collect/ImmutableList;
+
 accessible method net/minecraft/client/gui/components/MultiLineEditBox <init> (Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/Component;IZIZZ)V
 accessible field net/minecraft/client/gui/components/MultiLineEditBox textField Lnet/minecraft/client/gui/components/MultilineTextField;
 mutable field net/minecraft/client/gui/components/MultiLineEditBox textField Lnet/minecraft/client/gui/components/MultilineTextField;
