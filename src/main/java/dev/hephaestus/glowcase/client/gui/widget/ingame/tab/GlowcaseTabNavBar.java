@@ -15,6 +15,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * A navigation bar for tabs that handles tab button placement & clicking and hiding/showing widgets for each tab.<br><br>
+ * This is similar to Vanilla's {@link net.minecraft.client.gui.components.tabs.TabNavigationBar} & {@link net.minecraft.client.gui.components.tabs.Tab}, but is ultimately separated for easier modifications of some hardcoded items, like tab button height & textures.
+ * @author Superkat32
+ */
 public class GlowcaseTabNavBar extends AbstractWidget {
 	public final List<GlowcaseTab> tabs = new ArrayList<>();
 	public final List<GlowcaseTabButton> tabButtons = new ArrayList<>();

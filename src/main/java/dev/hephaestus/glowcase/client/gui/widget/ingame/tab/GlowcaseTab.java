@@ -5,6 +5,11 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
+/**
+ * A container of information for a tab in a {@link GlowcaseTabNavBar}. All widgets included will be shown when this tab is selected, and hidden when unselected.
+ * @see GlowcaseTabNavBar
+ * @author Superkat32
+ */
 public class GlowcaseTab {
 	public final Component title;
 	public final List<AbstractWidget> widgets;

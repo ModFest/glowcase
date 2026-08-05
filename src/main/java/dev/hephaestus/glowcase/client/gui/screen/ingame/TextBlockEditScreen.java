@@ -156,50 +156,10 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				)
 			).build();
 		this.addRenderableWidget(tabNavBar);
-
-//		LinearLayout tabsLayout = LinearLayout.horizontal();
-//		tabsLayout.defaultCellSetting().alignHorizontallyCenter();
-//
-//		List<AbstractWidget> textTabWidgets = new ArrayList<>(this.formattingButtons);
-//		textTabWidgets.addAll(List.of(scaleSlider, this.colorEntryWidget, this.backgroundColorEntryWidget));
-//		GlowcaseTabButton textTabButton = GlowcaseTabButton.builder(
-//			this, Component.literal("Text"), textTabWidgets
-//		).build();
-//		GlowcaseTabButton layoutTabButton = GlowcaseTabButton.builder(
-//			this, Component.literal("Layout"), List.of(moreOptionsButton)
-//		).build();
-//		GlowcaseTabButton extrasTabButton = GlowcaseTabButton.builder(
-//			this, Component.literal("Extras"), List.of()
-//		).build();
-//
-//
-////		this.tabButtonWidgets = List.of(textTabButton, layoutTabButton, extrasTabButton);
-////		int tabsWidth = Math.min(400, this.width) - 28;
-////		int tabWidth = Mth.roundToward(tabsWidth / this.tabButtonWidgets.size(), 2);
-////		for (GlowcaseTabButton tabButtonWidget : this.tabButtonWidgets) {
-////			tabsLayout.addChild(tabButtonWidget);
-////			tabButtonWidget.setWidth(tabWidth);
-////			this.addRenderableWidget(tabButtonWidget);
-////		}
-////
-////		tabsLayout.arrangeElements();
-////		tabsLayout.setX(Mth.roundToward((this.width - tabsWidth) / 2, 2));
-////		tabsLayout.setY(2);
-////		this.selectTab(0);
 	}
-
-//	@Override
-//	public void selectTab(int tabIndex) {
-//		TabWidgetsIncludedScreen.super.selectTab(tabIndex);
-//		this.glowcaseEditBox.setY(INNER_PADDING + 20 + this.tabButtonWidgets.get(tabIndex).getYOffset());
-//	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.HEADER_SEPARATOR, 0, 15, 0, 0, this.tabButtonWidgets.getFirst().getX(), 2, 32, 2);
-//		int afterLastTab = this.tabButtonWidgets.getLast().getRight();
-//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.HEADER_SEPARATOR, afterLastTab, 15, 0, 0, this.width, 2, 32, 2);
-//		graphics.blit(RenderPipelines.GUI_TEXTURED, TextBlockEditScreen.FOOTER_SEPARATOR, 0, 41, 0, 0, this.width, 2, 32, 2);
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}

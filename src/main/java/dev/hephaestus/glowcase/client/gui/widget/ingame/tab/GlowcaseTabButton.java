@@ -15,6 +15,12 @@ import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 
+/**
+ * A clickable button which, when clicked, handles the actions for switching tabs in a {@link GlowcaseTabNavBar}.
+ * @see GlowcaseTab
+ * @see GlowcaseTabNavBar
+ * @author Superkat32
+ */
 public class GlowcaseTabButton extends AbstractButton {
 	public static final WidgetSprites SPRITES = new WidgetSprites(
 		Glowcase.id("tab/tab_selected"),
