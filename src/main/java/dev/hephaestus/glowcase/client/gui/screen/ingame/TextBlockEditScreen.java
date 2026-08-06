@@ -41,8 +41,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private static final int INNER_PADDING = 4;
 	private final TextBlockEntity textBlockEntity;
 
-	private List<EditBox> textWidgets;
-
 	private GlowcaseMultilineEditBox glowcaseEditBox;
 	private HexColorEditBox colorEntryWidget;
 	private HexColorEditBox backgroundColorEntryWidget;
@@ -137,11 +135,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.dimensions(0, 0, 20, 20, 16, 16)
 			.build();
 		moreOptionsButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.extra_properties")));
-
-		this.textWidgets = List.of(
-			this.colorEntryWidget,
-			this.backgroundColorEntryWidget
-		);
 
 		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(this.colorEntryWidget);
@@ -256,17 +249,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	@Override
-	public boolean charTyped(CharacterEvent event) {
-		for (final var element : this.textWidgets) {
-			if (element.charTyped(event)) {
-				return true;
-			}
-		}
-
-		return super.charTyped(event);
-	}
-
-	@Override
 	public boolean keyPressed(KeyEvent event) {
 		if (this.keyPressedColorPicker(event)) return true;
 		return super.keyPressed(event);
@@ -274,14 +256,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		for (final var text : textWidgets) {
-			if (!text.mouseClicked(event, doubleClick)) {
-				continue;
-			}
-			this.setFocused(text);
-			break;
-		}
-
 		if (mouseClickedColorPicker(event, doubleClick)) return true;
 		return super.mouseClicked(event, doubleClick);
 	}
