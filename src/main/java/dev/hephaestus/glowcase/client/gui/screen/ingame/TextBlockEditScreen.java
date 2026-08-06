@@ -7,43 +7,33 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabButton;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
-import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Whence;
-import net.minecraft.client.gui.components.tabs.GridLayoutTab;
-import net.minecraft.client.gui.components.tabs.Tab;
-import net.minecraft.client.gui.components.tabs.TabManager;
-import net.minecraft.client.gui.components.tabs.TabNavigationBar;
-import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -78,17 +68,46 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		//  For now though, they are always updated here because init() is called after closing the Properties screen
 		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
-
-
-		int middle = width / 2 + 14;
-		int y = INNER_PADDING + 19;
-
-		TextScale.SliderWidget scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203 - 5, y, 113, 20);
-		initFormattingButtons(middle - 90 + 6 - 5, y, 0);
+		this.addRenderableWidget(this.glowcaseEditBox);
 
 		this.colorPickerWidget = this.createColorPickerWidget();
 
-		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 - 5, y,
+		List<AbstractWidget> editTabWidgets = this.initEditTabWidgets();
+		List<AbstractWidget> viewTabWidgets = this.initViewTabWidgets();
+		List<AbstractWidget> miscTabWidgets = this.initMiscTabWidgets();
+
+		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
+			this.width, height -> {
+				this.glowcaseEditBox.setY(height + 3);
+			})
+			.setY(2)
+			.setWidgetAreaPadding(2)
+			.addTabs(
+				new GlowcaseTab(
+					Component.literal("Edit"), 20,
+					editTabWidgets
+				),
+				new GlowcaseTab(
+					Component.literal("View"), 20,
+					viewTabWidgets
+				),
+				new GlowcaseTab(
+					Component.literal("Misc"), 20,
+					miscTabWidgets
+				)
+			).build();
+		this.addRenderableWidget(tabNavBar);
+	}
+
+	public List<AbstractWidget> initEditTabWidgets() {
+		// nav bar y padding (2) + tab button height (20) + widget area padding (1) = 23;
+		int firstRowY = 23;
+
+		TextScale.SliderWidget scaleSlider = new TextScale.SliderWidget(textBlockEntity, 0, 0, 113, 20);
+
+		initFormattingButtons(0, 0, 0);
+
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 0, 0,
 				() -> this.textBlockEntity.color, color -> {
 					this.textBlockEntity.color = color;
 					this.textBlockEntity.rebake(true);
@@ -100,7 +119,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.build();
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_color")));
 
-		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle + 54 + 64 + 6 - 5, y,
+		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 0, 0,
 				() -> this.textBlockEntity.backgroundColor, color -> {
 					this.textBlockEntity.backgroundColor = color;
 					this.textBlockEntity.rebake(true);
@@ -112,10 +131,10 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));
 
 		Button moreOptionsButton = IconButtonWidget.builder(Glowcase.id("properties"), button -> {
-			TextBlockOptionsScreen optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-			Minecraft.getInstance().setScreen(optionsScreen);
-		})
-			.dimensions(middle + 124 + 64 + 6 - 5, INNER_PADDING + 19, 20, 20, 16, 16)
+				TextBlockOptionsScreen optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
+				Minecraft.getInstance().setScreen(optionsScreen);
+			})
+			.dimensions(0, 0, 20, 20, 16, 16)
 			.build();
 		moreOptionsButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.extra_properties")));
 
@@ -124,38 +143,110 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			this.backgroundColorEntryWidget
 		);
 
-		this.addRenderableWidget(this.glowcaseEditBox);
+		this.addRenderableWidget(scaleSlider);
 		this.addRenderableWidget(this.colorEntryWidget);
 		this.addRenderableWidget(this.backgroundColorEntryWidget);
-		this.addRenderableWidget(scaleSlider);
-		this.addRenderableWidget(moreOptionsButton);
 
-		List<AbstractWidget> editTabWidgets = new ArrayList<>(List.copyOf(this.formattingButtons));
+		LinearLayout editTabLayout = LinearLayout.horizontal().spacing(2);
+		editTabLayout.addChild(scaleSlider, LayoutSettings.defaults().paddingRight(6));
+		for (Button formattingButton : this.formattingButtons) {
+			editTabLayout.addChild(formattingButton);
+		}
+		editTabLayout.addChild(this.colorEntryWidget, LayoutSettings.defaults().paddingLeft(6));
+		editTabLayout.addChild(this.backgroundColorEntryWidget, LayoutSettings.defaults().paddingLeft(4));
+
+		editTabLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(editTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+
+		List<AbstractWidget> editTabWidgets = new ArrayList<>(this.formattingButtons);
 		editTabWidgets.add(scaleSlider);
 		editTabWidgets.add(this.colorEntryWidget);
 		editTabWidgets.add(this.backgroundColorEntryWidget);
+		return editTabWidgets;
+	}
 
-		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
-			this.width, height -> {
-				this.glowcaseEditBox.setY(height + 2);
-			})
-			.setY(2)
-			.setWidgetAreaPadding(2)
-			.addTabs(
-				new GlowcaseTab(
-					Component.literal("Edit"), 20,
-					editTabWidgets
-				),
-				new GlowcaseTab(
-					Component.literal("View"), 42,
-					List.of(moreOptionsButton)
-				),
-				new GlowcaseTab(
-					Component.literal("Misc"), 64,
-					List.of(moreOptionsButton)
-				)
-			).build();
-		this.addRenderableWidget(tabNavBar);
+	public List<AbstractWidget> initViewTabWidgets() {
+		int firstRowY = 23;
+
+		CycleButton<TextBlockEntity.TextAlignment> textAlignmentButton = CycleButton.builder(
+				alignment -> Component.literal(alignment.toString()),
+				this.textBlockEntity.textAlignment
+			)
+			.withValues(
+				// not `.values()` to not have CENTER_LEFT or CENTER_RIGHT, unless they get removed
+				TextBlockEntity.TextAlignment.CENTER,
+				TextBlockEntity.TextAlignment.LEFT,
+				TextBlockEntity.TextAlignment.RIGHT
+			)
+			.create(
+				Component.translatable("gui.glowcase.text_alignment"),
+				(button, alignment) -> {
+					this.textBlockEntity.textAlignment = alignment;
+					this.textBlockEntity.rebake(true);
+				}
+			);
+
+		CycleButton<TextBlockEntity.HorizontalAlignment> horizontalAnchorButton = CycleButton.builder(
+				alignment -> Component.literal(alignment.toString()),
+				this.textBlockEntity.horizontalAlignment
+			)
+			.withValues(TextBlockEntity.HorizontalAlignment.values())
+			.create(
+				Component.translatable("gui.glowcase.x_offset_label"),
+				(button, alignment) -> {
+					this.textBlockEntity.horizontalAlignment = alignment;
+					this.textBlockEntity.rebake(true);
+				}
+			);
+
+		CycleButton<TextBlockEntity.ZOffset> zOffsetButton = CycleButton.builder(
+				offset -> Component.literal(offset.toString()),
+				this.textBlockEntity.zOffset
+			)
+			.withValues(TextBlockEntity.ZOffset.values())
+			.create(
+				Component.translatable("gui.glowcase.z_offset_label"),
+				(button, offset) -> {
+					this.textBlockEntity.zOffset = offset;
+					this.textBlockEntity.rebake(true);
+				}
+			);
+
+
+		this.addRenderableWidget(textAlignmentButton);
+		this.addRenderableWidget(horizontalAnchorButton);
+		this.addRenderableWidget(zOffsetButton);
+
+		LinearLayout viewTabFirstRowLayout = LinearLayout.horizontal().spacing(2);
+		viewTabFirstRowLayout.addChild(textAlignmentButton);
+		viewTabFirstRowLayout.addChild(horizontalAnchorButton);
+		viewTabFirstRowLayout.addChild(zOffsetButton);
+
+		viewTabFirstRowLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(viewTabFirstRowLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+
+		return List.of(textAlignmentButton, horizontalAnchorButton, zOffsetButton);
+	}
+
+	public List<AbstractWidget> initMiscTabWidgets() {
+		int firstRowY = 23;
+		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
+			Component.translatable("gui.glowcase.text_shadow"),
+			(button, shadow) -> {
+				this.textBlockEntity.shadow = shadow;
+				this.textBlockEntity.rebake(true);
+			}
+		);
+
+		this.addRenderableWidget(textShadowButton);
+
+		LinearLayout miscTabLayout = LinearLayout.horizontal().spacing(4);
+		miscTabLayout.addChild(textShadowButton);
+
+		miscTabLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(miscTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+
+		return List.of(textShadowButton);
 	}
 
 	@Override

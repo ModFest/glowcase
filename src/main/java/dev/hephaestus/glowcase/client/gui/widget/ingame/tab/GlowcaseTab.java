@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * A container of information for a tab in a {@link GlowcaseTabNavBar}. All widgets included will be shown when this tab is selected, and hidden when unselected.
+ * @apiNote Widget area heights are normally 20 pixels per row, with 2 pixel padding between rows (e.g. 1 row = 20px, 2 rows = 42px, 3 rows = 64px)
  * @see GlowcaseTabNavBar
  * @author Superkat32
  */

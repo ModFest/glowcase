@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 
 /**
  * A navigation bar for tabs that handles tab button placement & clicking and hiding/showing widgets for each tab.<br><br>
- * This is similar to Vanilla's {@link net.minecraft.client.gui.components.tabs.TabNavigationBar} & {@link net.minecraft.client.gui.components.tabs.Tab}, but is ultimately separated for easier modifications of some hardcoded items, like tab button height & textures.
+ * This is similar to Vanilla's {@link net.minecraft.client.gui.components.tabs.TabNavigationBar} & {@link net.minecraft.client.gui.components.tabs.Tab}, but is ultimately separated for easier modifications of some hardcoded things, like tab button height & textures.
  * @author Superkat32
  */
 public class GlowcaseTabNavBar extends AbstractWidget {
@@ -121,7 +121,7 @@ public class GlowcaseTabNavBar extends AbstractWidget {
 		if (this.height != this.tabButtonHeight) { // Render footer if not collapsed
 			graphics.blit(
 				RenderPipelines.GUI_TEXTURED, Screen.FOOTER_SEPARATOR,
-				0, this.getHeight(),
+				0, this.getHeight() + this.widgetAreaPadding,
 				0, 0,
 				this.width, 2,
 				32, 2
