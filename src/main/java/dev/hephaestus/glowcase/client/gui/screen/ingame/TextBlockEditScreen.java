@@ -2,8 +2,10 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
@@ -31,6 +33,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,6 +49,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private HexColorEditBox backgroundColorEntryWidget;
 
 	private ColorPickerWidget colorPickerWidget;
+	private Button zFrontButton;
+	private Button zCenterButton;
+	private Button zBackButton;
+	private IconButtonWidget justifyLeftButton;
+	private IconButtonWidget justifyCenterButton;
+	private IconButtonWidget justifyRightButton;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -72,7 +81,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		List<AbstractWidget> editTabWidgets = this.initEditTabWidgets();
 		List<AbstractWidget> viewTabWidgets = this.initViewTabWidgets();
-		List<AbstractWidget> miscTabWidgets = this.initMiscTabWidgets();
+//		List<AbstractWidget> miscTabWidgets = this.initMiscTabWidgets();
 
 		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
 			this.width, height -> {
@@ -86,12 +95,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 					editTabWidgets
 				),
 				new GlowcaseTab(
-					Component.literal("View"), 20,
+					Component.literal("View"), 42,
 					viewTabWidgets
-				),
-				new GlowcaseTab(
-					Component.literal("Misc"), 20,
-					miscTabWidgets
+//				),
+//				new GlowcaseTab(
+//					Component.literal("Misc"), 20,
+//					miscTabWidgets
 				)
 			).build();
 		this.addRenderableWidget(tabNavBar);
@@ -159,88 +168,152 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	public List<AbstractWidget> initViewTabWidgets() {
-		int firstRowY = 23;
+		int firstRowY = 24;
+		int secondRowY = firstRowY + 22;
 
-		CycleButton<TextBlockEntity.TextAlignment> textAlignmentButton = CycleButton.builder(
-				alignment -> Component.literal(alignment.toString()),
-				this.textBlockEntity.textAlignment
-			)
-			.withValues(
-				// not `.values()` to not have CENTER_LEFT or CENTER_RIGHT, unless they get removed
-				TextBlockEntity.TextAlignment.CENTER,
-				TextBlockEntity.TextAlignment.LEFT,
-				TextBlockEntity.TextAlignment.RIGHT
-			)
-			.create(
-				Component.translatable("gui.glowcase.text_alignment"),
-				(button, alignment) -> {
-					this.textBlockEntity.textAlignment = alignment;
+		this.justifyLeftButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/left"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
 					this.textBlockEntity.rebake(true);
-				}
-			);
-
-		CycleButton<TextBlockEntity.HorizontalAlignment> horizontalAnchorButton = CycleButton.builder(
-				alignment -> Component.literal(alignment.toString()),
-				this.textBlockEntity.horizontalAlignment
-			)
-			.withValues(TextBlockEntity.HorizontalAlignment.values())
-			.create(
-				Component.translatable("gui.glowcase.x_offset_label"),
-				(button, alignment) -> {
-					this.textBlockEntity.horizontalAlignment = alignment;
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.LEFT);
+					this.updateSelectedJustifyButton();
+				})
+				.dimensions(0, 0, 20, 20, 16, 16)
+				.build();
+		this.justifyCenterButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/center"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
 					this.textBlockEntity.rebake(true);
-				}
-			);
-
-		CycleButton<TextBlockEntity.ZOffset> zOffsetButton = CycleButton.builder(
-				offset -> Component.literal(offset.toString()),
-				this.textBlockEntity.zOffset
-			)
-			.withValues(TextBlockEntity.ZOffset.values())
-			.create(
-				Component.translatable("gui.glowcase.z_offset_label"),
-				(button, offset) -> {
-					this.textBlockEntity.zOffset = offset;
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.CENTER);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(0, 0, 20, 20, 16, 16)
+			.build();
+		this.justifyRightButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/right"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
 					this.textBlockEntity.rebake(true);
-				}
-			);
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.RIGHT);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(0, 0, 20, 20, 16, 16)
+			.build();
+		this.updateSelectedJustifyButton();
 
+		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.zCenterButton = Button.builder(Component.translatable("gui.glowcase.center"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.zBackButton = Button.builder(Component.translatable("gui.glowcase.back"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.updateSelectedZButton();
 
-		this.addRenderableWidget(textAlignmentButton);
-		this.addRenderableWidget(horizontalAnchorButton);
-		this.addRenderableWidget(zOffsetButton);
+		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, this.textBlockEntity.horizontalAlignment, anchor -> {
+			if (anchor.getY() == 0) { // TODO - temp, add remaining anchors to block
+				this.textBlockEntity.horizontalAlignment = TextBlockEntity.HorizontalAlignment.values()[anchor.getX() + 1];
+				this.textBlockEntity.rebake(true);
+			}
+		});
 
-		LinearLayout viewTabFirstRowLayout = LinearLayout.horizontal().spacing(2);
-		viewTabFirstRowLayout.addChild(textAlignmentButton);
-		viewTabFirstRowLayout.addChild(horizontalAnchorButton);
-		viewTabFirstRowLayout.addChild(zOffsetButton);
-
-		viewTabFirstRowLayout.arrangeElements(); // Setup initial positioning
-		FrameLayout.centerInRectangle(viewTabFirstRowLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
-
-		return List.of(textAlignmentButton, horizontalAnchorButton, zOffsetButton);
-	}
-
-	public List<AbstractWidget> initMiscTabWidgets() {
-		int firstRowY = 23;
 		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
 			Component.translatable("gui.glowcase.text_shadow"),
 			(button, shadow) -> {
 				this.textBlockEntity.shadow = shadow;
 				this.textBlockEntity.rebake(true);
+				this.glowcaseEditBox.setTextShadow(shadow);
 			}
 		);
+		textShadowButton.setWidth(100);
 
+		Button insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {})
+			.bounds(0, 0, 20, 20)
+			.tooltip(Tooltip.create(Component.literal("Insert Font (Via QuickText Tags)")))
+			.build();
+
+		Vec3FieldsWidget offsetWidgets = new Vec3FieldsWidget(0, 0, 106, 20, Minecraft.getInstance(), Vec3.ZERO);
+		Vec3FieldsWidget rotationWidgets = new Vec3FieldsWidget(0, 0, 106, 20, Minecraft.getInstance(), Vec3.ZERO);
+
+		this.addRenderableWidget(this.justifyLeftButton);
+		this.addRenderableWidget(this.justifyCenterButton);
+		this.addRenderableWidget(this.justifyRightButton);
+		this.addRenderableWidget(zFrontButton);
+		this.addRenderableWidget(zCenterButton);
+		this.addRenderableWidget(zBackButton);
+		this.addRenderableWidget(anchorGrid);
 		this.addRenderableWidget(textShadowButton);
 
-		LinearLayout miscTabLayout = LinearLayout.horizontal().spacing(4);
-		miscTabLayout.addChild(textShadowButton);
+		this.addRenderableWidget(offsetWidgets);
+		this.addRenderableWidget(rotationWidgets);
+		this.addRenderableWidget(insertFontButton);
 
-		miscTabLayout.arrangeElements(); // Setup initial positioning
-		FrameLayout.centerInRectangle(miscTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+		LinearLayout viewTabFirstRowLayout = LinearLayout.horizontal().spacing(2);
+		viewTabFirstRowLayout.addChild(this.justifyLeftButton);
+		viewTabFirstRowLayout.addChild(this.justifyCenterButton, LayoutSettings.defaults().paddingLeft(-2));
+		viewTabFirstRowLayout.addChild(this.justifyRightButton, LayoutSettings.defaults().paddingLeft(-2).paddingRight(4));
+		viewTabFirstRowLayout.addChild(zFrontButton);
+		viewTabFirstRowLayout.addChild(zCenterButton, LayoutSettings.defaults().paddingLeft(-2));
+		viewTabFirstRowLayout.addChild(zBackButton, LayoutSettings.defaults().paddingLeft(-2).paddingRight(2));
+		viewTabFirstRowLayout.addChild(anchorGrid, LayoutSettings.defaults().paddingRight(4));
+		viewTabFirstRowLayout.addChild(textShadowButton);
 
-		return List.of(textShadowButton);
+		viewTabFirstRowLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(viewTabFirstRowLayout, 0, firstRowY, this.width, 42); // Finish positioning
+
+		offsetWidgets.setPosition(anchorGrid.getX() - 4 - offsetWidgets.getWidth(), secondRowY);
+		rotationWidgets.setPosition(offsetWidgets.getX() - 4 - rotationWidgets.getWidth(), secondRowY);
+		insertFontButton.setPosition(anchorGrid.getRight() + 6, secondRowY);
+
+		return List.of(
+			justifyRightButton, justifyCenterButton, justifyLeftButton,
+			zFrontButton, zCenterButton, zBackButton,
+			anchorGrid, textShadowButton,
+			offsetWidgets, rotationWidgets, insertFontButton
+		);
 	}
+
+	public void updateSelectedJustifyButton() {
+		TextBlockEntity.TextAlignment justify = this.textBlockEntity.textAlignment;
+		this.justifyLeftButton.active = justify != TextBlockEntity.TextAlignment.LEFT;
+		this.justifyCenterButton.active = justify != TextBlockEntity.TextAlignment.CENTER;
+		this.justifyRightButton.active = justify != TextBlockEntity.TextAlignment.RIGHT;
+	}
+
+	public void updateSelectedZButton() {
+		TextBlockEntity.ZOffset zOffset = this.textBlockEntity.zOffset;
+		this.zFrontButton.active = zOffset != TextBlockEntity.ZOffset.FRONT;
+		this.zCenterButton.active = zOffset != TextBlockEntity.ZOffset.CENTER;
+		this.zBackButton.active = zOffset != TextBlockEntity.ZOffset.BACK;
+	}
+
+//	public List<AbstractWidget> initMiscTabWidgets() {
+//		int firstRowY = 23;
+//		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
+//			Component.translatable("gui.glowcase.text_shadow"),
+//			(button, shadow) -> {
+//				this.textBlockEntity.shadow = shadow;
+//				this.textBlockEntity.rebake(true);
+//			}
+//		);
+//
+//		this.addRenderableWidget(textShadowButton);
+//
+//		LinearLayout miscTabLayout = LinearLayout.horizontal().spacing(4);
+//		miscTabLayout.addChild(textShadowButton);
+//
+//		miscTabLayout.arrangeElements(); // Setup initial positioning
+//		FrameLayout.centerInRectangle(miscTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+//
+//		return List.of(textShadowButton);
+//	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {

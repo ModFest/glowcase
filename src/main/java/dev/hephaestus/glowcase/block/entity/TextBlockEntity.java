@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TextBlockEntity extends GlowcaseBlockEntity {
-	public static final NodeParser PARSER = TagParser.DEFAULT;
-
 	public static final int PLATE_BACKGROUND = 0x44000000;
 
 	public List<Component> lines = new ArrayList<>();
@@ -76,41 +74,6 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.rebake(false);
 	}
 
-	public String getRawLine(int i) {
-		var line = this.lines.get(i);
-
-		if (line.getStyle() == null) {
-			return line.getString();
-		}
-
-		var insert = line.getStyle().getInsertion();
-
-		if (insert == null) {
-			return line.getString();
-		}
-		return insert;
-	}
-
-	public void addRawLine(int i, String string) {
-		var parsed = PARSER.parseComponent(string, ParserContext.of());
-
-		if (parsed.getString().equals(string)) {
-			this.lines.add(i, Component.literal(string));
-		} else {
-			this.lines.add(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
-		}
-	}
-
-	public void setRawLine(int i, String string) {
-		var parsed = PARSER.parseComponent(string, ParserContext.of());
-
-		if (parsed.getString().equals(string)) {
-			this.lines.set(i, Component.literal(string));
-		} else {
-			this.lines.set(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
-		}
-	}
-
 	public void rebake(boolean immediate) {
 		if (!this.hasLevel() || !this.getLevel().isClientSide()) return;
 		this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), immediate ? Block.UPDATE_IMMEDIATE : 0);
@@ -153,6 +116,32 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		@Override
 		public String getSerializedName() {
 			return name().toLowerCase();
+		}
+	}
+
+	public enum Anchor implements StringRepresentable {
+		TOP_LEFT(-1, 1), TOP(0, 1), TOP_RIGHT(1, 1),
+		MIDDLE_LEFT(-1, 0), MIDDLE(0, 0), MIDDLE_RIGHT(1, 0),
+		BOTTOM_LEFT(-1, -1), BOTTOM(0, -1), BOTTOM_RIGHT(1, -1);
+
+		private final int x;
+		private final int y;
+		Anchor(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		public int getX() {
+			return this.x;
+		}
+
+		public int getY() {
+			return this.y;
+		}
+
+		@Override
+		public String getSerializedName() {
+			return this.name().toLowerCase();
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
+import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import java.util.List;
@@ -10,6 +11,8 @@ import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.CommonColors;
 import net.minecraft.world.phys.Vec3;
 
 public class Vec3FieldsWidget extends AbstractContainerWidget {
@@ -27,6 +30,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			width / 3, height,
 			Component.empty()
 		);
+		this.x.setTextColor(ARGB.color(255, 75, 75));
 
 		this.y = new GlowcaseEditBox(
 			client.font,
@@ -34,6 +38,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			width / 3, height,
 			Component.empty()
 		);
+		this.y.setTextColor(ARGB.color(75, 255, 75));
 
 		this.z = new GlowcaseEditBox(
 			client.font,
@@ -41,6 +46,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			width / 3, height,
 			Component.empty()
 		);
+		this.z.setTextColor(ARGB.color(75, 75, 255));
 
 		this.value = defaultValue;
 
@@ -55,6 +61,24 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.x.setResponder(s -> value = new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z));
 		this.y.setResponder(s -> value = new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z));
 		this.z.setResponder(s -> value = new Vec3(value.x, value.y, ParseUtil.parseOrDefault(s, value.z)));
+	}
+
+	public void positionWidgets() {
+		this.x.setPosition(this.getX(), this.getY());
+		this.y.setPosition(this.getX() + this.getWidth() / 3, this.getY());
+		this.z.setPosition(this.getX() + (this.getWidth() / 3 * 2), this.getY());
+	}
+
+	@Override
+	public void setX(int x) {
+		super.setX(x);
+		this.positionWidgets();
+	}
+
+	@Override
+	public void setY(int y) {
+		super.setY(y);
+		this.positionWidgets();
 	}
 
 	public void setVec(Vec3 newVec) {
