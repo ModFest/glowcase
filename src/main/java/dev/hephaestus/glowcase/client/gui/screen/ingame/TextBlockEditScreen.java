@@ -5,6 +5,7 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
@@ -14,6 +15,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEd
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
+import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -30,18 +32,26 @@ import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.AttributeSet;
+import javax.swing.text.Style;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor<TextBlockEntity> {
-	private static final int INNER_PADDING = 4;
 	private final TextBlockEntity textBlockEntity;
 
 	private GlowcaseMultilineEditBox glowcaseEditBox;
@@ -49,12 +59,15 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private HexColorEditBox backgroundColorEntryWidget;
 
 	private ColorPickerWidget colorPickerWidget;
+	private SuggestionListWidget<Identifier> fontSuggestionWidget;
+
 	private Button zFrontButton;
 	private Button zCenterButton;
 	private Button zBackButton;
 	private IconButtonWidget justifyLeftButton;
 	private IconButtonWidget justifyCenterButton;
 	private IconButtonWidget justifyRightButton;
+	private Button insertFontButton;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -230,10 +243,25 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 		textShadowButton.setWidth(100);
 
-		Button insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {})
-			.bounds(0, 0, 20, 20)
+		this.insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {
+			// TODO - The logic behind this will need some updating if a Block Font button is ever added
+			this.fontSuggestionWidget.setPosition(this.insertFontButton.getRight() - 200, this.insertFontButton.getBottom());
+			this.fontSuggestionWidget.updateSuggestions(getAvailableFontIds(), "", this);
+		}).bounds(0, 0, 20, 20)
 			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.insert_font")))
 			.build();
+
+		this.fontSuggestionWidget = new SuggestionListWidget<>(
+			this.insertFontButton, this.font,
+			0, 0, 200, 200,
+			10, 4, 10,
+			identifier -> {
+				this.insertTag("font '" + identifier.toString() + "'");
+				this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
+			},
+			Identifier::toString
+		);
+		this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 
 		// TODO - set block values here
 		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, Vec3.ZERO)
@@ -307,6 +335,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.fontSuggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 	}
 
@@ -319,6 +348,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (mouseClickedColorPicker(event, doubleClick)) return true;
+		if (this.fontSuggestionWidget.mouseClicked(event, doubleClick)) return true;
 		return super.mouseClicked(event, doubleClick);
 	}
 
@@ -340,6 +370,46 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	@Override
 	public @Nullable CustomPacketPayload getUpdatePayload() {
 		return C2SEditTextBlock.of(textBlockEntity);
+	}
+
+	// This is so cursed but it gives the best order of fonts given the amount of repetitive entries
+	// Some number of fonts have duplicate entries within an "include" folder, which may or may not work with QuickText
+	// Minecraft fonts are listed first (predefined order), while remaining fonts come afterward
+	// Any fonts within the "include" folder, Minecraft or external, are omitted
+	public static List<Identifier> getAvailableFontIds() {
+		ResourceManager manager = Minecraft.getInstance().getResourceManager();
+		FileToIdConverter converter = FileToIdConverter.json("font");
+		List<Identifier> fontsInOrder = new ArrayList<>(); // List of fonts to return
+		List<Identifier> availableFonts = new ArrayList<>(); // All available fonts, including "include" folder entries
+		fontsInOrder.add(Identifier.withDefaultNamespace("default")); // Set proper order of Vanilla's builtin fonts
+		fontsInOrder.add(Identifier.withDefaultNamespace("alt"));
+		fontsInOrder.add(Identifier.withDefaultNamespace("illageralt"));
+		fontsInOrder.add(Identifier.withDefaultNamespace("uniform"));
+
+		for (Map.Entry<Identifier, List<Resource>> fontEntry : converter.listMatchingResourceStacks(manager).entrySet()) {
+			Identifier fontName = converter.fileToId(fontEntry.getKey());
+			availableFonts.add(fontName);
+		}
+
+		for (Iterator<Identifier> iterator = availableFonts.iterator(); iterator.hasNext(); ) {
+			Identifier id = iterator.next();
+			if (id.getNamespace().equals("minecraft") && !id.getPath().contains("include/")) {
+				iterator.remove();
+				if (fontsInOrder.contains(id)) continue; // Likely because we added the builtin fonts already
+				fontsInOrder.add(id);
+			}
+		}
+
+		for (Iterator<Identifier> iterator = availableFonts.iterator(); iterator.hasNext(); ) {
+			Identifier id =  iterator.next();
+			if (!id.getPath().contains("include/")) {
+				iterator.remove();
+				if (fontsInOrder.contains(id)) continue; // Shouldn't happen but just in case
+				fontsInOrder.add(id);
+			}
+		}
+
+		return fontsInOrder;
 	}
 
 	public static class TextScale {
