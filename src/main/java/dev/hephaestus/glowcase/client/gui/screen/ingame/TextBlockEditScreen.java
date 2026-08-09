@@ -15,7 +15,6 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEd
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
-import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -23,16 +22,13 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Whence;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.FileToIdConverter;
@@ -43,8 +39,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.text.AttributeSet;
-import javax.swing.text.Style;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -244,9 +238,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		textShadowButton.setWidth(100);
 
 		this.insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {
-			// TODO - The logic behind this will need some updating if a Block Font button is ever added
 			this.fontSuggestionWidget.setPosition(this.insertFontButton.getRight() - 200, this.insertFontButton.getBottom());
-			this.fontSuggestionWidget.updateSuggestions(getAvailableFontIds(), "", this);
+			if (this.fontSuggestionWidget.hasSuggestions()) {
+				this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
+			} else {
+				this.fontSuggestionWidget.updateSuggestions(getAvailableFontIds(), "", this);
+			}
 		}).bounds(0, 0, 20, 20)
 			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.insert_font")))
 			.build();
@@ -256,6 +253,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			0, 0, 200, 200,
 			10, 4, 10,
 			identifier -> {
+				// TODO - The logic behind this will need some updating if a Block Font button is ever added
 				this.insertTag("font '" + identifier.toString() + "'");
 				this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 			},
@@ -350,6 +348,19 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		if (mouseClickedColorPicker(event, doubleClick)) return true;
 		if (this.fontSuggestionWidget.mouseClicked(event, doubleClick)) return true;
 		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		if (this.fontSuggestionWidget.draggingScrollbar && this.fontSuggestionWidget.mouseDragged(event, dx, dy)) return true;
+		return super.mouseDragged(event, dx, dy);
+	}
+
+	@Override
+	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+		if (this.fontSuggestionWidget.isFocused() && this.fontSuggestionWidget.isMouseOver(x, y)
+			&& this.fontSuggestionWidget.mouseScrolled(x, y, scrollX, scrollY)) return true;
+		return super.mouseScrolled(x, y, scrollX, scrollY);
 	}
 
 	@Override

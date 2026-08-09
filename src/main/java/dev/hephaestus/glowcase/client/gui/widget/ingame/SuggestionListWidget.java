@@ -289,7 +289,9 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			}
 		}
 
-		if (mouseX >= this.getX() && mouseX <= this.getX() + listWidth) {
+		if (mouseX >= this.getX() && mouseX <= this.getX() + listWidth
+			&& mouseY >= this.getY() && mouseY <= this.getY() + this.getHeight()
+		) {
 			if (clickedIndex >= 0 && clickedIndex < suggestions.size()) {
 				onSelect.accept(suggestions.get(clickedIndex));
 				return true;
@@ -550,5 +552,9 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 		}
 
 		super.setFocused(focused);
+	}
+
+	public boolean hasSuggestions() {
+		return !this.suggestions.isEmpty();
 	}
 }
