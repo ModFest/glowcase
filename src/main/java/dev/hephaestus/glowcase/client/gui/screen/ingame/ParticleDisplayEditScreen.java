@@ -100,26 +100,12 @@ public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplay
 			.setPos(width / 10, height / 2 - 60)
 			.setWidth((4 * width / 10) - 6)
 			.build();
-//		positionMean = new Vec3FieldsWidget(
-//			this.font,
-//			width / 10, height / 2 - 60,
-//			(4 * width / 10) - 6,
-//			blockEntity.position.mean()
-//		);
-
 		this.addRenderableWidget(positionMean);
 
 		this.positionStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.position.stdDev())
 			.setPos(width / 10 + (4 * width / 10) + 6, height / 2 - 60)
 			.setWidth((4 * width / 10) - 6)
 			.build();
-//		positionStdDev = new Vec3FieldsWidget(
-//			this.font,
-//			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
-//			(4 * width / 10) - 6,
-//			blockEntity.position.stdDev()
-//		);
-
 		this.addRenderableWidget(positionStdDev);
 		// endregion
 
@@ -128,26 +114,12 @@ public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplay
 			.setPos(width / 10, (height / 2) - 10)
 			.setWidth((4 * width / 10) - 6)
 			.build();
-//		velocityMean = new Vec3FieldsWidget(
-//			this.font,
-//			width / 10, (height / 2) - 10,
-//			(4 * width / 10) - 6,
-//			blockEntity.velocity.mean()
-//		);
-
 		this.addRenderableWidget(velocityMean);
 
 		this.velocityStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.velocity.stdDev())
 			.setPos(width / 10 + (4 * width / 10) + 6, (height / 2) - 10)
 			.setWidth((4 * width / 10) - 6)
 			.build();
-//		velocityStdDev = new Vec3FieldsWidget(
-//			this.font,
-//			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
-//			(4 * width / 10) - 6,
-//			blockEntity.velocity.stdDev()
-//		);
-
 		this.addRenderableWidget(velocityStdDev);
 		// endregion
 
