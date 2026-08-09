@@ -133,12 +133,16 @@ public class SoundPlayerBlockEditScreen extends BlockEditorScreen<SoundPlayerBlo
 		}).bounds(width / 10, height / 2 + 90, (4 * width / 10) - 6, 20).build();
 		this.addRenderableWidget(this.relativeButton);
 
-		this.offset = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.offset
-		);
+		this.offset = Vec3FieldsWidget.builder(this.font, blockEntity.offset)
+			.setPos(width / 10 + (4 * width / 10) + 6, height / 2 + 90)
+			.setWidth((4 * width / 10) - 6)
+			.build();
+//		this.offset = new Vec3FieldsWidget(
+//			this.font,
+//			width / 10 + (4 * width / 10) + 6, height / 2 + 90,
+//			(4 * width / 10) - 6,
+//			blockEntity.offset
+//		);
 		this.addRenderableWidget(this.offset);
 
 		validSounds = BuiltInRegistries.SOUND_EVENT.stream()

@@ -71,8 +71,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				this.textBlockEntity.rebake(true);
 			}
 		).build();
-		// TODO - Text shadow & alignment will need to be manually updated if those options are present on this screen
-		//  For now though, they are always updated here because init() is called after closing the Properties screen
 		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
 		this.addRenderableWidget(this.glowcaseEditBox);
@@ -81,7 +79,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		List<AbstractWidget> editTabWidgets = this.initEditTabWidgets();
 		List<AbstractWidget> viewTabWidgets = this.initViewTabWidgets();
-//		List<AbstractWidget> miscTabWidgets = this.initMiscTabWidgets();
 
 		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
 			this.width, height -> {
@@ -97,10 +94,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				new GlowcaseTab(
 					Component.literal("View"), 42,
 					viewTabWidgets
-//				),
-//				new GlowcaseTab(
-//					Component.literal("Misc"), 20,
-//					miscTabWidgets
 				)
 			).build();
 		this.addRenderableWidget(tabNavBar);
@@ -180,6 +173,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				})
 				.dimensions(0, 0, 20, 20, 16, 16)
 				.build();
+		this.justifyLeftButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_left")));
 		this.justifyCenterButton = IconButtonWidget.builder(
 				Glowcase.id("text_alignment/center"), button -> {
 					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
@@ -189,6 +183,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				})
 			.dimensions(0, 0, 20, 20, 16, 16)
 			.build();
+		this.justifyCenterButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_center")));
 		this.justifyRightButton = IconButtonWidget.builder(
 				Glowcase.id("text_alignment/right"), button -> {
 					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
@@ -198,6 +193,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				})
 			.dimensions(0, 0, 20, 20, 16, 16)
 			.build();
+		this.justifyRightButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_right")));
 		this.updateSelectedJustifyButton();
 
 		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
@@ -236,11 +232,25 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		Button insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {})
 			.bounds(0, 0, 20, 20)
-			.tooltip(Tooltip.create(Component.literal("Insert Font (Via QuickText Tags)")))
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.insert_font")))
 			.build();
 
-		Vec3FieldsWidget offsetWidgets = new Vec3FieldsWidget(0, 0, 106, 20, Minecraft.getInstance(), Vec3.ZERO);
-		Vec3FieldsWidget rotationWidgets = new Vec3FieldsWidget(0, 0, 106, 20, Minecraft.getInstance(), Vec3.ZERO);
+		// TODO - set block values here
+		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, Vec3.ZERO)
+			.setWidth(106)
+			.setTooltips(
+				Tooltip.create(Component.translatable("gui.glowcase.x_offset_label")),
+				Tooltip.create(Component.translatable("gui.glowcase.y_offset_label")),
+				Tooltip.create(Component.translatable("gui.glowcase.z_offset_label"))
+			).build();
+		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, Vec3.ZERO)
+			.setWidth(106)
+			.setRotation(true)
+			.setTooltips(
+				Tooltip.create(Component.translatable("gui.glowcase.pitch_x_rot")),
+				Tooltip.create(Component.translatable("gui.glowcase.yaw_y_rot")),
+				Tooltip.create(Component.translatable("gui.glowcase.roll_z_rot"))
+			).build();
 
 		this.addRenderableWidget(this.justifyLeftButton);
 		this.addRenderableWidget(this.justifyCenterButton);
@@ -268,8 +278,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		viewTabFirstRowLayout.arrangeElements(); // Setup initial positioning
 		FrameLayout.centerInRectangle(viewTabFirstRowLayout, 0, firstRowY, this.width, 42); // Finish positioning
 
-		offsetWidgets.setPosition(anchorGrid.getX() - 4 - offsetWidgets.getWidth(), secondRowY);
-		rotationWidgets.setPosition(offsetWidgets.getX() - 4 - rotationWidgets.getWidth(), secondRowY);
+		rotationWidgets.setPosition(anchorGrid.getX() - 4 - rotationWidgets.getWidth(), secondRowY);
+		offsetWidgets.setPosition(rotationWidgets.getX() - 4 - offsetWidgets.getWidth(), secondRowY);
 		insertFontButton.setPosition(anchorGrid.getRight() + 6, secondRowY);
 
 		return List.of(
@@ -293,27 +303,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.zCenterButton.active = zOffset != TextBlockEntity.ZOffset.CENTER;
 		this.zBackButton.active = zOffset != TextBlockEntity.ZOffset.BACK;
 	}
-
-//	public List<AbstractWidget> initMiscTabWidgets() {
-//		int firstRowY = 23;
-//		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
-//			Component.translatable("gui.glowcase.text_shadow"),
-//			(button, shadow) -> {
-//				this.textBlockEntity.shadow = shadow;
-//				this.textBlockEntity.rebake(true);
-//			}
-//		);
-//
-//		this.addRenderableWidget(textShadowButton);
-//
-//		LinearLayout miscTabLayout = LinearLayout.horizontal().spacing(4);
-//		miscTabLayout.addChild(textShadowButton);
-//
-//		miscTabLayout.arrangeElements(); // Setup initial positioning
-//		FrameLayout.centerInRectangle(miscTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
-//
-//		return List.of(textShadowButton);
-//	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {

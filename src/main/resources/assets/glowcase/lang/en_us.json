@@ -101,6 +101,9 @@
 	"gui.glowcase.volume": "Volume",
 	"gui.glowcase.pitch": "Pitch",
 	"gui.glowcase.yaw": "Yaw",
+	"gui.glowcase.pitch_x_rot": "Pitch (X Rotation)",
+	"gui.glowcase.yaw_y_rot": "Yaw (Y Rotation)",
+	"gui.glowcase.roll_z_rot": "Roll (Z Rotation)",
 	"gui.glowcase.color_argb": "Color (ARGB)",
 	"gui.glowcase.color": "Color (RGB)",
 	"gui.glowcase.text_color": "Text Color (ARGB)",
@@ -187,10 +190,14 @@
 	"gui.glowcase.tab.edit": "Edit",
 	"gui.glowcase.tab.view": "View",
 	"gui.glowcase.tab.misc": "Misc",
+	"gui.glowcase.justify_left": "Text Justify Left",
+	"gui.glowcase.justify_center": "Text Justify Center",
+	"gui.glowcase.justify_right": "Text Justify Right",
 	"gui.glowcase.bold": "Bold (Ctrl+B)",
 	"gui.glowcase.italic": "Italic (Ctrl+I)",
 	"gui.glowcase.strikethrough": "Strikethrough (Ctrl+S or Ctrl+5)",
 	"gui.glowcase.underline": "Underline (Ctrl+U)",
 	"gui.glowcase.obfuscate": "Obfuscate (Ctrl+O)",
-	"gui.glowcase.color_text": "Color Text (Via QuickText Tags)"
+	"gui.glowcase.color_text": "Color Text (Via QuickText Tags)",
+	"gui.glowcase.insert_font": "Insert Font (Via QuickText Tags)"
 }

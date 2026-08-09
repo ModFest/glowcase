@@ -31,6 +31,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -95,41 +96,57 @@ public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplay
 		// endregion
 
 		// region Position
-		positionMean = new Vec3FieldsWidget(
-			width / 10, height / 2 - 60,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.position.mean()
-		);
+		positionMean = Vec3FieldsWidget.builder(this.font, blockEntity.position.mean())
+			.setPos(width / 10, height / 2 - 60)
+			.setWidth((4 * width / 10) - 6)
+			.build();
+//		positionMean = new Vec3FieldsWidget(
+//			this.font,
+//			width / 10, height / 2 - 60,
+//			(4 * width / 10) - 6,
+//			blockEntity.position.mean()
+//		);
 
 		this.addRenderableWidget(positionMean);
 
-		positionStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.position.stdDev()
-		);
+		this.positionStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.position.stdDev())
+			.setPos(width / 10 + (4 * width / 10) + 6, height / 2 - 60)
+			.setWidth((4 * width / 10) - 6)
+			.build();
+//		positionStdDev = new Vec3FieldsWidget(
+//			this.font,
+//			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
+//			(4 * width / 10) - 6,
+//			blockEntity.position.stdDev()
+//		);
 
 		this.addRenderableWidget(positionStdDev);
 		// endregion
 
 		// region Velocity
-		velocityMean = new Vec3FieldsWidget(
-			width / 10, (height / 2) - 10,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.velocity.mean()
-		);
+		this.velocityMean = Vec3FieldsWidget.builder(this.font, blockEntity.velocity.mean())
+			.setPos(width / 10, (height / 2) - 10)
+			.setWidth((4 * width / 10) - 6)
+			.build();
+//		velocityMean = new Vec3FieldsWidget(
+//			this.font,
+//			width / 10, (height / 2) - 10,
+//			(4 * width / 10) - 6,
+//			blockEntity.velocity.mean()
+//		);
 
 		this.addRenderableWidget(velocityMean);
 
-		velocityStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.velocity.stdDev()
-		);
+		this.velocityStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.velocity.stdDev())
+			.setPos(width / 10 + (4 * width / 10) + 6, (height / 2) - 10)
+			.setWidth((4 * width / 10) - 6)
+			.build();
+//		velocityStdDev = new Vec3FieldsWidget(
+//			this.font,
+//			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
+//			(4 * width / 10) - 6,
+//			blockEntity.velocity.stdDev()
+//		);
 
 		this.addRenderableWidget(velocityStdDev);
 		// endregion
