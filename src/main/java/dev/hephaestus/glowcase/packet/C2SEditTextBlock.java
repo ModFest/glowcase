@@ -13,12 +13,15 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 
 public record C2SEditTextBlock(
 	BlockPos pos,
 	TextBlockEntity.TextAlignment alignment,
 	TextBlockEntity.HorizontalAlignment horizontalAlignment,
-	TextBlockEntity.ZOffset offset,
+	TextBlockEntity.ZOffset zOffset,
+	Vec3 renderOffsets,
+	Vec3 rotation,
 	TextBlockValues values
 ) implements C2SEditBlockEntity {
 	public static final Type<C2SEditTextBlock> ID = new Type<>(Glowcase.id("channel.text_block"));
@@ -26,7 +29,9 @@ public record C2SEditTextBlock(
 		BlockPos.STREAM_CODEC, C2SEditTextBlock::pos,
 		ByteBufCodecs.BYTE.map(index -> TextBlockEntity.TextAlignment.values()[index], textAlignment -> (byte) textAlignment.ordinal()), C2SEditTextBlock::alignment,
 		TextBlockEntity.HorizontalAlignment.STREAM_CODEC, C2SEditTextBlock::horizontalAlignment,
-		ByteBufCodecs.BYTE.map(index -> TextBlockEntity.ZOffset.values()[index], zOffset -> (byte) zOffset.ordinal()), C2SEditTextBlock::offset,
+		ByteBufCodecs.BYTE.map(index -> TextBlockEntity.ZOffset.values()[index], zOffset -> (byte) zOffset.ordinal()), C2SEditTextBlock::zOffset,
+		Vec3.STREAM_CODEC, C2SEditTextBlock::renderOffsets,
+		Vec3.STREAM_CODEC, C2SEditTextBlock::rotation,
 		TextBlockValues.PACKET_CODEC, C2SEditTextBlock::values,
 		C2SEditTextBlock::new
 	);
@@ -37,6 +42,8 @@ public record C2SEditTextBlock(
 			be.textAlignment,
 			be.horizontalAlignment,
 			be.zOffset,
+			be.offset,
+			be.rotation,
 			new TextBlockValues(be.shadow, be.scale, be.backgroundColor, be.color, be.lines)
 		);
 	}
@@ -57,7 +64,9 @@ public record C2SEditTextBlock(
 		be.horizontalAlignment = this.horizontalAlignment();
 		be.backgroundColor = this.values().backgroundColor();
 		be.color = this.values().color();
-		be.zOffset = this.offset();
+		be.zOffset = this.zOffset();
+		be.offset = this.renderOffsets();
+		be.rotation = this.rotation();
 
 		be.setChanged();
 	}

@@ -48,13 +48,15 @@ public class GlowcaseEditBox extends EditBox {
 
 	@Override
 	public boolean charTyped(CharacterEvent event) {
-		if (filter != null && !filter.apply(this.getValue(), event.codepoint(), this.getCursorPosition())) return false;
+		if (this.filter != null
+			&& !this.filter.apply(this.getValue(), event.codepoint(), this.getCursorPosition(), this.highlightPos)
+		) return false;
 
 		return super.charTyped(event);
 	}
 
 	@FunctionalInterface
 	public interface Filter {
-		boolean apply(String currentValue, final int newChar, final int cursorPos);
+		boolean apply(String currentValue, final int newChar, final int cursorPos, final int highlightPos);
 	}
 }

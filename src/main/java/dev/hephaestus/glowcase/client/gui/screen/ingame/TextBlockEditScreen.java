@@ -40,6 +40,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -119,10 +120,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				this.textBlockEntity.rebake(true);
 			})
 			.setStep(0.125f)
+			.setWidth(113)
 			.build();
 		scaleSlider.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_scale_slider")));
-
-		initFormattingButtons(0, 0, 0);
 
 		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 0, 0,
 				() -> this.textBlockEntity.color, color -> {
@@ -147,15 +147,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.build();
 		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));
 
-		Button moreOptionsButton = IconButtonWidget.builder(Glowcase.id("properties"), button -> {
-				TextBlockOptionsScreen optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-				Minecraft.getInstance().setScreen(optionsScreen);
-			})
-			.dimensions(0, 0, 20, 20, 16, 16)
-			.build();
-		moreOptionsButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.extra_properties")));
-
 		this.addRenderableWidget(scaleSlider);
+		this.initFormattingButtons(0, 0, 0);
 		this.addRenderableWidget(this.colorEntryWidget);
 		this.addRenderableWidget(this.backgroundColorEntryWidget);
 
@@ -271,22 +264,31 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 		this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 
-		// TODO - set block values here
-		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, Vec3.ZERO)
+		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
 			.setWidth(106)
 			.setTooltips(
 				Tooltip.create(Component.translatable("gui.glowcase.x_offset_label")),
 				Tooltip.create(Component.translatable("gui.glowcase.y_offset_label")),
 				Tooltip.create(Component.translatable("gui.glowcase.z_offset_label"))
-			).build();
-		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, Vec3.ZERO)
+			)
+			.setOnValueChange(vec3 -> {
+				this.textBlockEntity.offset = vec3;
+				this.textBlockEntity.rebake(true);
+			})
+			.build();
+		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.rotation)
 			.setWidth(106)
 			.setRotation(true)
 			.setTooltips(
-				Tooltip.create(Component.translatable("gui.glowcase.pitch_x_rot")),
-				Tooltip.create(Component.translatable("gui.glowcase.yaw_y_rot")),
-				Tooltip.create(Component.translatable("gui.glowcase.roll_z_rot"))
-			).build();
+				Tooltip.create(Component.translatable("gui.glowcase.yaw")),
+				Tooltip.create(Component.translatable("gui.glowcase.pitch")),
+				Tooltip.create(Component.translatable("gui.glowcase.roll"))
+			)
+			.setOnValueChange(vec3 -> {
+				this.textBlockEntity.rotation = vec3;
+				this.textBlockEntity.rebake(true);
+			})
+			.build();
 
 		this.addRenderableWidget(this.justifyLeftButton);
 		this.addRenderableWidget(this.justifyCenterButton);

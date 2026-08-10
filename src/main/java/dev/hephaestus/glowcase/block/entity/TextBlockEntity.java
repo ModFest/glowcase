@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,8 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	public float scale = 1F;
 	public int color = ColorUtil.WHITE;
 	public int backgroundColor = 0;
+	public Vec3 offset = Vec3.ZERO;
+	public Vec3 rotation = Vec3.ZERO; // Yaw, pitch, roll
 
 	public TextBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.TEXT_BLOCK_ENTITY.get(), pos, state);
@@ -52,7 +55,10 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		view.store("z_offset", ZOffset.CODEC, this.zOffset);
 		view.putBoolean("shadow", this.shadow);
 
-		view.store("lines", ComponentSerialization.CODEC.listOf(), lines);
+		view.store("lines", ComponentSerialization.CODEC.listOf(), this.lines);
+
+		view.store("offset", Vec3.CODEC, this.offset);
+		view.store("rotation", Vec3.CODEC, this.rotation);
 	}
 
 	@Override
@@ -71,6 +77,10 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
+
+		this.offset = view.read("offset", Vec3.CODEC).orElse(Vec3.ZERO);
+		this.rotation = view.read("rotation", Vec3.CODEC).orElse(Vec3.ZERO);
+
 		this.rebake(false);
 	}
 
@@ -107,6 +117,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		}
 	}
 
+	@Deprecated
 	public enum HorizontalAlignment implements StringRepresentable {
 		LEFT, CENTER, RIGHT;
 
@@ -123,6 +134,17 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		TOP_LEFT(-1, 1), TOP(0, 1), TOP_RIGHT(1, 1),
 		MIDDLE_LEFT(-1, 0), MIDDLE(0, 0), MIDDLE_RIGHT(1, 0),
 		BOTTOM_LEFT(-1, -1), BOTTOM(0, -1), BOTTOM_RIGHT(1, -1);
+
+		public static final Codec<Anchor> CODEC = StringRepresentable.fromEnum(Anchor::values);
+		public static final StreamCodec<ByteBuf, Anchor> STREAM_CODEC = ByteBufCodecs.BYTE.map(index -> Anchor.values()[index], anchor -> (byte) anchor.ordinal());
+
+		public static Anchor fromHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
+			return switch (horizontalAlignment) {
+				case LEFT -> MIDDLE_LEFT;
+				case RIGHT -> MIDDLE_RIGHT;
+				default -> MIDDLE;
+			};
+		}
 
 		private final int x;
 		private final int y;

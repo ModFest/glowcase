@@ -31,3 +31,4 @@ mutable field net/minecraft/client/gui/components/MultilineTextField width I
 accessible class net/minecraft/client/gui/components/MultilineTextField$StringView
 
 accessible field net/minecraft/client/gui/components/EditBox displayPos I
+accessible field net/minecraft/client/gui/components/EditBox highlightPos I

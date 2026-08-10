@@ -88,6 +88,14 @@ public class EditableSliderWidget extends AbstractSliderButton {
 	}
 
 	@Override
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		if (this.editing) {
+			return this.editBox.mouseDragged(event, dx, dy);
+		}
+		return super.mouseDragged(event, dx, dy);
+	}
+
+	@Override
 	public boolean keyPressed(KeyEvent event) {
 		if (this.editing) {
 			if (event.isEscape() || event.isConfirmation()) {
@@ -166,7 +174,7 @@ public class EditableSliderWidget extends AbstractSliderButton {
 		private float step = 0.1f;
 
 		private int x, y;
-		private int width = 113;
+		private int width = 150;
 		private int height = 20;
 
 		public Builder(Font font, float initValue, float min, float max, Function<Float, Component> getMessage, Consumer<Float> onValueChange) {
