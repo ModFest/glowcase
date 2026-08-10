@@ -185,6 +185,7 @@
 	"gui.glowcase.render_distance_value.infinite": "Render Distance: Infinite",
 	"gui.glowcase.text_alignment": "Text Alignment",
 	"gui.glowcase.text_shadow": "Text Shadow",
+	"gui.glowcase.text_scale_slider": "Text Scale (Left-click to slide, right-click to edit)",
 	"gui.glowcase.more": "More...",
 	"gui.glowcase.extra_properties": "Extra Properties",
 	"gui.glowcase.tab.edit": "Edit",

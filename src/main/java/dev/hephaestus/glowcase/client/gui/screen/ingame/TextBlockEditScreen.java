@@ -9,6 +9,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.slider.EditableSliderWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
@@ -110,7 +111,16 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		// nav bar y padding (2) + tab button height (20) + widget area padding (1) = 23;
 		int firstRowY = 23;
 
-		TextScale.SliderWidget scaleSlider = new TextScale.SliderWidget(textBlockEntity, 0, 0, 113, 20);
+		EditableSliderWidget scaleSlider = EditableSliderWidget.builder(
+			this.font, this.textBlockEntity.scale, 0.125f, 16,
+			aFloat -> Component.translatable("gui.glowcase.scale_value", aFloat),
+			aFloat -> {
+				this.textBlockEntity.scale = aFloat;
+				this.textBlockEntity.rebake(true);
+			})
+			.setStep(0.125f)
+			.build();
+		scaleSlider.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_scale_slider")));
 
 		initFormattingButtons(0, 0, 0);
 
