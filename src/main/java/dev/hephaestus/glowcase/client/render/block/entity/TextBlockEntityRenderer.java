@@ -90,6 +90,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 
 		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
+		// TODO (AC) - Anchor variables, and related rendering (unsure where that would be, so mentioning it here instead)
 		state.textAlignment = blockEntity.textAlignment;
 		state.horizontalAlignment = blockEntity.horizontalAlignment;
 		state.zOffset = blockEntity.zOffset;

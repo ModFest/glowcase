@@ -224,7 +224,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.updateSelectedZButton();
 
 		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, this.textBlockEntity.horizontalAlignment, anchor -> {
-			if (anchor.getY() == 0) { // TODO - temp, add remaining anchors to block
+			// TODO (AC) - Set block anchor variables here
+			if (anchor.getY() == 0) {
 				this.textBlockEntity.horizontalAlignment = TextBlockEntity.HorizontalAlignment.values()[anchor.getX() + 1];
 				this.textBlockEntity.rebake(true);
 			}

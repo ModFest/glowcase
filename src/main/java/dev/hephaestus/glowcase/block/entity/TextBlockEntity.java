@@ -27,6 +27,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	public static final int PLATE_BACKGROUND = 0x44000000;
 
 	public List<Component> lines = new ArrayList<>();
+	// TODO (AC) - Anchor related field changes/additions (don't forget to save & load them!)
 	public TextAlignment textAlignment = TextAlignment.CENTER;
 	public HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
 	public ZOffset zOffset = ZOffset.CENTER;
@@ -73,6 +74,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
+		// TODO (AC) - Handle loading old data alignment and converting it into new justify/anchor/whatever data
 		this.textAlignment = view.read("text_alignment", TextAlignment.CODEC).orElse(TextAlignment.CENTER);
 		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
@@ -89,6 +91,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), immediate ? Block.UPDATE_IMMEDIATE : 0);
 	}
 
+	// TODO (AC) - Rename into TextJustify?
 	public enum TextAlignment implements StringRepresentable {
 		LEFT,
 		CENTER,
@@ -106,6 +109,8 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		}
 	}
 
+	// TODO (AC Idea) - Rename to "ZAnchor" to provide a clear distinction between xyz offset and this?
+	//  If done, fields/variables and translations for the edit screen should be updated
 	public enum ZOffset implements StringRepresentable {
 		FRONT, CENTER, BACK;
 
