@@ -3,7 +3,6 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
@@ -14,12 +13,8 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
-import dev.hephaestus.glowcase.util.InputFilters;
-import dev.hephaestus.glowcase.util.ParseUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
@@ -36,16 +31,12 @@ import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor<TextBlockEntity> {
 	private final TextBlockEntity textBlockEntity;
@@ -436,65 +427,5 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}
 
 		return fontsInOrder;
-	}
-
-	public static class TextScale {
-		public static final float MIN_SCALE = 0.125F;
-		public static final float MAX_SCALE = 16;
-		public static final float SCALE_DELTA = MAX_SCALE - MIN_SCALE;
-
-		public static class SliderWidget extends AbstractSliderButton {
-			private final TextBlockEntity entity;
-			private Consumer<Float> scaleResponder;
-
-			public SliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
-				var initialValue = (entity.scale - MIN_SCALE) / SCALE_DELTA;
-				super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
-				this.entity = entity;
-			}
-
-			@Override
-			protected void updateMessage() {
-				this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
-			}
-
-			@Override
-			protected void applyValue() {
-				entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
-				if (scaleResponder != null) scaleResponder.accept(entity.scale);
-
-				entity.rebake(true);
-			}
-
-			public void setScaleResponder(Consumer<Float> responder) {
-				this.scaleResponder = responder;
-			}
-
-			public void updateValue(double newValue) {
-				this.value = Mth.clamp(newValue, 0.0, 1.0);
-				updateMessage();
-			}
-		}
-
-		public static class InputWidget extends GlowcaseEditBox {
-			private Consumer<Float> scaleResponder;
-
-			public InputWidget(TextBlockEntity entity, Font font, int x, int y, int width, int height) {
-				super(font, x, y, width, height, Component.empty());
-				this.setValue(String.valueOf(entity.scale));
-				this.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.scale")));
-				this.setFilter(InputFilters::realNumber);
-				this.setResponder(input -> {
-					entity.scale = (float) Math.clamp(ParseUtil.parseOrDefault(input, 1d), MIN_SCALE, MAX_SCALE);
-					if (scaleResponder != null) scaleResponder.accept(entity.scale);
-
-					entity.rebake(true);
-				});
-			}
-
-			public void setScaleResponder(Consumer<Float> scaleResponder) {
-				this.scaleResponder = scaleResponder;
-			}
-		}
 	}
 }

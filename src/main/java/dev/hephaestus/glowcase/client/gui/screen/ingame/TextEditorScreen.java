@@ -5,19 +5,13 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
-import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
-import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public abstract class TextEditorScreen extends EditorScreen implements ColorPickerIncludedScreen, TagFormatIncludedScreen {
@@ -95,12 +89,6 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		this.formattingButtons = List.of(boldText, italicText, strikeText, underlineText, obfuscateText, this.colorTextButton);
 		for (Button formattingButton : formattingButtons) {
 			this.addRenderableWidget(formattingButton);
-		}
-	}
-
-	protected void toggleFormattingButtons(boolean active) {
-		for (Button formattingButton : formattingButtons) {
-			formattingButton.active = active;
 		}
 	}
 
