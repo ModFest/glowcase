@@ -65,6 +65,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private IconButtonWidget justifyRightButton;
 	private Button insertFontButton;
 
+	// TODO - Scrollable number edit boxes, delete options screen & other old stuff, test on multiplayer
+
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
 	}

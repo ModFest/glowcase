@@ -11,6 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.font.TextFieldHelper;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -24,11 +25,19 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 	protected Button colorTextButton;
 	protected List<Button> formattingButtons;
+	protected boolean queuedEditBoxFocus = false;
 
 	abstract GlowcaseMultilineEditBox getGlowcaseMultilineEditBox();
 
 	public void focusEditBox() {
 		this.setFocused(this.getGlowcaseMultilineEditBox());
+	}
+
+	// Queue the GlowcaseEditBox to be focused, intended for other widgets to call from the mouseClicked method.
+	// Widgets are focused after they return true in mouseClicked, making it impossible for them to focus the edit box.
+	// The queue is checked for on mouseRelease
+	public void queueFocusEditBox() {
+		this.queuedEditBoxFocus = true;
 	}
 
 	@Override
@@ -79,10 +88,6 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 			colorPickerWidget.setPresetListener(preset -> {
 				if (preset.getPresetFormatting() != null) this.insertFormattingTag(preset.getPresetFormatting());
 				colorPickerWidget.hide();
-				// FIXME - This doesn't work because #clickedColorPicker() focuses the color picker right after #mouseClicked(),
-				//  and attempting to move it beforehand breaks *a lot* of stuff
-				//  Will probably need a skipFocus thing in the color picker
-				this.focusEditBox();
 			});
 		}).dimensions(buttonX + shiftX * 5, buttonY, buttonSize, buttonSize, 10, 10).build();
 		this.colorTextButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color_text")));
@@ -100,7 +105,26 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 	}
 
 	@Override
+	public boolean mouseReleased(MouseButtonEvent event) {
+		boolean released = super.mouseReleased(event);
+		// Do after current focused widget mouseReleased to prevent drag desync issues
+		// Also doing it on mouseReleased is convenient since extending classes usually don't override this
+		this.checkQueuedEditBoxFocus();
+		return released;
+	}
+
+	public void checkQueuedEditBoxFocus() {
+		if (this.queuedEditBoxFocus) {
+			if (this.getFocused() != null) this.focusEditBox();
+			this.queuedEditBoxFocus = false;
+		}
+	}
+
+	@Override
 	public void insertTag(String tagName) {
 		this.getGlowcaseMultilineEditBox().insertTag(tagName);
+		// The edit box is almost certainly going to want to be focused after a tag insert, so may as well queue it here
+		// Keyboard shortcuts aren't a worry here as they are handled within the edit box
+		this.queueFocusEditBox();
 	}
 }

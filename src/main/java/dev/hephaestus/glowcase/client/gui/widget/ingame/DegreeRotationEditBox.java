@@ -13,7 +13,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 
 /**
- * An Edit Box which only accepts numbers, and appends the degree symbol° at the end of the value.
+ * An Edit Box which only accepts numbers, and appends the degree symbol° at the end of the value.<br><br>
+ * Additionally, it is the current home of the Creature of Whimsy °0.0°
+ * @author Superkat32
  */
 public class DegreeRotationEditBox extends GlowcaseEditBox {
 	private static final WidgetSprites SPRITES = new WidgetSprites(
