@@ -6,7 +6,10 @@ import dev.hephaestus.glowcase.util.ParseUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 
 import java.util.function.Consumer;
@@ -80,9 +83,11 @@ public abstract class NumberEditBox<T extends Number> extends GlowcaseEditBox {
 	public boolean keyPressed(KeyEvent event) {
 		if (event.isUp()) {
 			this.stepUp(event.hasShiftDown(), event.hasControlDownWithQuirk());
+			this.playClickSound(Minecraft.getInstance().getSoundManager());
 			return true;
 		} else if (event.isDown()) {
 			this.stepDown(event.hasShiftDown(), event.hasControlDownWithQuirk());
+			this.playClickSound(Minecraft.getInstance().getSoundManager());
 			return true;
 		}
 		return super.keyPressed(event);
@@ -92,12 +97,18 @@ public abstract class NumberEditBox<T extends Number> extends GlowcaseEditBox {
 	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
 		if (scrollY > 0) {
 			this.stepUp(Minecraft.getInstance().hasShiftDown(), Minecraft.getInstance().hasControlDown());
+			this.playClickSound(Minecraft.getInstance().getSoundManager());
 			return true;
 		} else if (scrollY < 0) {
 			this.stepDown(Minecraft.getInstance().hasShiftDown(), Minecraft.getInstance().hasControlDown());
+			this.playClickSound(Minecraft.getInstance().getSoundManager());
 			return true;
 		}
 		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	public void playClickSound(SoundManager soundManager) {
+		soundManager.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1f, 0.15f));
 	}
 
 	public void updateEditBox() {
