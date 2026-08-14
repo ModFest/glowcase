@@ -7,7 +7,7 @@ import com.mojang.serialization.DynamicOps;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;

@@ -1,5 +1,6 @@
-package dev.hephaestus.glowcase.client.gui.widget.ingame;
+package dev.hephaestus.glowcase.client.gui.widget.ingame.number;
 
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.util.InputFilters;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,12 +13,14 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 
+import java.util.function.Consumer;
+
 /**
  * An Edit Box which only accepts numbers, and appends the degree symbol° at the end of the value.<br><br>
  * Additionally, it is the current home of the Creature of Whimsy °0.0°
  * @author Superkat32
  */
-public class DegreeRotationEditBox extends GlowcaseEditBox {
+public class DegreeRotationEditBox extends NumberEditBox.FloatEditBox {
 	private static final WidgetSprites SPRITES = new WidgetSprites(
 		Identifier.withDefaultNamespace("widget/text_field"), Identifier.withDefaultNamespace("widget/text_field_highlighted")
 	);
@@ -28,11 +31,21 @@ public class DegreeRotationEditBox extends GlowcaseEditBox {
 	private final Font font;
 	private int textColor;
 	private long idleTime = 0;
-	public DegreeRotationEditBox(Font font, int x, int y, int width, int height, Component text) {
-		super(font, x, y, width, height, text);
+
+	public DegreeRotationEditBox(
+		Font font, int x, int y, int width, int height,
+		float initValue, float minValue, float maxValue,
+		float shiftStep, float shiftCtrlStep, float step, float ctrlStep,
+		Filter inputFilter, Consumer<Float> onValueChange
+	) {
+		super(font, x, y, width, height, initValue, minValue, maxValue, shiftStep, shiftCtrlStep, step, ctrlStep, inputFilter, onValueChange);
 		this.font = font;
-		this.setFilter(InputFilters::realNumber);
 	}
+//	public DegreeRotationEditBox(Font font, int x, int y, int width, int height, Component text) {
+//		super(font, x, y, width, height, text);
+//		this.font = font;
+//		this.setFilter(InputFilters::realNumber);
+//	}
 
 	@Override
 	public void setTextColor(int textColor) {

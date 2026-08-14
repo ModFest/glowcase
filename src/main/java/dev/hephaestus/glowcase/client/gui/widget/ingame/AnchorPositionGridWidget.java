@@ -30,17 +30,12 @@ public class AnchorPositionGridWidget extends AbstractContainerWidget {
 
 	public final List<Button> anchorButtons = new ArrayList<>();
 	public final Consumer<TextBlockEntity.Anchor> onClick;
-	public TextBlockEntity.Anchor anchor = TextBlockEntity.Anchor.MIDDLE;
+	public TextBlockEntity.Anchor anchor;
 
-	public AnchorPositionGridWidget(int x, int y, TextBlockEntity.HorizontalAlignment horizontalAlignment, Consumer<TextBlockEntity.Anchor> onClick) {
+	public AnchorPositionGridWidget(int x, int y, TextBlockEntity.Anchor anchor, Consumer<TextBlockEntity.Anchor> onClick) {
 		// Two rows of normal buttons (20 * 2) + button row padding (2) = 42px
 		// Each anchor button here is 14x14px (42 / 3 = 14)
-		TextBlockEntity.Anchor realAnchor = switch (horizontalAlignment) {
-			case LEFT -> TextBlockEntity.Anchor.MIDDLE_LEFT;
-			case RIGHT -> TextBlockEntity.Anchor.MIDDLE_RIGHT;
-			default -> TextBlockEntity.Anchor.MIDDLE;
-		};
-		this(x, y, 42, 42, realAnchor, onClick);
+		this(x, y, 42, 42, anchor, onClick);
 	}
 
 	private AnchorPositionGridWidget(int x, int y, int width, int height, TextBlockEntity.Anchor anchor, Consumer<TextBlockEntity.Anchor> onClick) {

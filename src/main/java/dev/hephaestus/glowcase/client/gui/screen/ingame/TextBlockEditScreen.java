@@ -5,7 +5,7 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.slider.EditableSliderWidget;
@@ -56,7 +56,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private IconButtonWidget justifyRightButton;
 	private Button insertFontButton;
 
-	// TODO - Scrollable number edit boxes, delete options screen & other old stuff, test on multiplayer
+	// TODO - Scrollable number edit boxes, test on multiplayer
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -216,7 +216,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}).size(50, 20).build();
 		this.updateSelectedZButton();
 
-		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, this.textBlockEntity.horizontalAlignment, anchor -> {
+		// TODO (AC) - Use block entity anchor value instead of horizontal alignment
+		TextBlockEntity.Anchor fakeAnchor = TextBlockEntity.Anchor.fromHorizontalAlignment(this.textBlockEntity.horizontalAlignment);
+		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, fakeAnchor, anchor -> {
 			// TODO (AC) - Set block anchor variables here
 			if (anchor.getY() == 0) {
 				this.textBlockEntity.horizontalAlignment = TextBlockEntity.HorizontalAlignment.values()[anchor.getX() + 1];
@@ -260,6 +262,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
 			.setWidth(106)
+			.setEditBoxCharacterLimit(5)
 			.setTooltips(
 				Tooltip.create(Component.translatable("gui.glowcase.x_offset_label")),
 				Tooltip.create(Component.translatable("gui.glowcase.y_offset_label")),
@@ -273,6 +276,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.rotation)
 			.setWidth(106)
 			.setRotation(true)
+			.setEditBoxCharacterLimit(5)
 			.setTooltips(
 				Tooltip.create(Component.translatable("gui.glowcase.yaw")),
 				Tooltip.create(Component.translatable("gui.glowcase.pitch")),

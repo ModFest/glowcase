@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.slider;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.NumberEditBox;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.ParseUtil;
 import net.minecraft.client.gui.Font;
@@ -20,6 +21,7 @@ import java.util.function.Function;
  * Everything is using floats instead of doubles because I kept having issues with lesser precise numbers becoming very very precise (e.g. 1.055 -> 1.054990584928 or something stupid)
  *
  * @apiNote It is not intuitive per normal Minecraft UI design to have right-click do anything special, so consider including a tooltip to let users know that this widget is right-clickable!
+ * @see NumberEditBox
  * @author Superkat32
  */
 public class EditableSliderWidget extends AbstractSliderButton {

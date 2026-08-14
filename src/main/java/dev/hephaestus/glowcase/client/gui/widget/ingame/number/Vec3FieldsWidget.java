@@ -1,7 +1,8 @@
-package dev.hephaestus.glowcase.client.gui.widget.ingame;
+package dev.hephaestus.glowcase.client.gui.widget.ingame.number;
 
+import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.util.InputFilters;
-import dev.hephaestus.glowcase.util.ParseUtil;
+
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -13,9 +14,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +30,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 
 	private final boolean colored;
 	private final boolean isRotation;
+	private final int editBoxCharacterLimit;
 	@Nullable
 	private Tooltip[] tooltips;
 	@Nullable
@@ -45,7 +45,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 	public Vec3FieldsWidget(
 		Font font, Vec3 defaultValue,
 		int x, int y, int width, int height,
-		boolean colored, boolean isRotation,
+		boolean colored, boolean isRotation, int editBoxCharacterLimit,
 		@Nullable Tooltip[] tooltips, @Nullable Consumer<Vec3> onValueChange
 	) {
 		super(x, y, width, height, Component.empty(),  AbstractScrollArea.defaultSettings(10));
@@ -53,35 +53,58 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.colored = colored;
 		this.isRotation = isRotation;
 		this.tooltips = tooltips;
+		this.editBoxCharacterLimit = editBoxCharacterLimit;
 		this.onValueChange = onValueChange;
 
 		this.value = defaultValue;
 
-		this.xEditBox = this.createEditBox(0);
-		this.yEditBox = this.createEditBox(1);
-		this.zEditBox = this.createEditBox(2);
+		this.xEditBox = this.createEditBox(0, defaultValue.x());
+		this.yEditBox = this.createEditBox(1, defaultValue.y());
+		this.zEditBox = this.createEditBox(2, defaultValue.z());
 
-		this.xEditBox.setValue(String.valueOf(defaultValue.x));
-		this.yEditBox.setValue(String.valueOf(defaultValue.y));
-		this.zEditBox.setValue(String.valueOf(defaultValue.z));
-
-		this.xEditBox.setResponder(s -> this.updateValue(new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z)));
-		this.yEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z)));
-		this.zEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, value.y, ParseUtil.parseOrDefault(s, value.z))));
+//		this.xEditBox.setValue(String.valueOf(defaultValue.x));
+//		this.yEditBox.setValue(String.valueOf(defaultValue.y));
+//		this.zEditBox.setValue(String.valueOf(defaultValue.z));
+//
+//		this.xEditBox.setResponder(s -> this.updateValue(new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z)));
+//		this.yEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z)));
+//		this.zEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, value.y, ParseUtil.parseOrDefault(s, value.z))));
 	}
 
-	private GlowcaseEditBox createEditBox(int index) {
+	private GlowcaseEditBox createEditBox(int index, double initValue) {
 		int width = this.getWidth() / 3;
 		int height = this.getHeight();
 		int x = this.getX() + (width * index);
 		int y = this.getY();
 
+		List<Consumer<Float>> changeListeners = List.of(
+			xUpdate -> this.updateValue(new Vec3(xUpdate, this.value.y(), this.value.z())),
+			yUpdate -> this.updateValue(new Vec3(this.value.x(), yUpdate, this.value.z())),
+			zUpdate -> this.updateValue(new Vec3(this.value.x(), this.value.y(), zUpdate))
+		);
 		GlowcaseEditBox editBox;
 		if (this.isRotation) {
-			editBox = new DegreeRotationEditBox(this.font, x, y, width, height, Component.empty());
+//			editBox = new DegreeRotationEditBox(this.font, x, y, width, height, Component.empty());
+			editBox = NumberEditBox.degreeFloatBuilder(this.font, (float) initValue, changeListeners.get(index))
+				.setBounds(x, y, width, height)
+				.build();
 		} else {
-			editBox = new GlowcaseEditBox(this.font, x, y, width, height, Component.empty());
+//			editBox = new GlowcaseEditBox(this.font, x, y, width, height, Component.empty());;
+//			editBox = NumberEditBox.doubleBuilder(this.font, initValue, changeListeners.get(index))
+//				.setBounds(x, y, width, height).build();
+//			editBox = new NumberEditBox.FloatEditBox(this.font, x, y, width, height, (float) initValue, changeListeners.get(index));
+//			editBox = new NumberEditBox.FloatEditBox(
+//				this.font, x, y, width, height,
+//				(float) initValue, 0, Float.MAX_VALUE,
+//				0.01f, 0.125f, 0.1f, 1.0f,
+//				changeListeners.get(index)
+//			);
+			editBox = NumberEditBox.floatBuilder(this.font, (float) initValue, changeListeners.get(index))
+				.setBounds(x, y, width, height)
+				.build();
 		}
+
+		editBox.setMaxLength(this.editBoxCharacterLimit);
 
 		editBox.setFilter(InputFilters::realNumber);
 		if (this.colored) {
@@ -119,17 +142,27 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.positionWidgets();
 	}
 
-	public void setVec(Vec3 newVec) {
-		this.xEditBox.setValue(String.valueOf(newVec.x));
-		this.yEditBox.setValue(String.valueOf(newVec.y));
-		this.zEditBox.setValue(String.valueOf(newVec.z));
-	}
+//	public void setVec(Vec3 newVec) {
+//		this.xEditBox.setValue(String.valueOf(newVec.x));
+//		this.yEditBox.setValue(String.valueOf(newVec.y));
+//		this.zEditBox.setValue(String.valueOf(newVec.z));
+//	}
 
 	@Override
 	protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		xEditBox.extractRenderState(graphics, mouseX, mouseY, delta);
 		yEditBox.extractRenderState(graphics, mouseX, mouseY, delta);
 		zEditBox.extractRenderState(graphics, mouseX, mouseY, delta);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+		if (this.getChildAt(mx, my).isPresent() && this.getChildAt(mx, my).get().mouseScrolled(mx, my, scrollX, scrollY)) return true;
+//		if (this.xEditBox.mouseScrolled(mx, my, scrollX, scrollY)
+//			|| this.yEditBox.mouseScrolled(mx, my, scrollX, scrollY)
+//			|| this.zEditBox.mouseScrolled(mx, my, scrollX, scrollY)
+//		) return true;
+		return super.mouseScrolled(mx, my, scrollX, scrollY);
 	}
 
 	@Override
@@ -168,6 +201,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 
 		private boolean colored = true;
 		private boolean rotation = false;
+		private int editBoxCharacterLimit = 7;
 
 		@Nullable
 		private Tooltip[] tooltips = null;
@@ -195,11 +229,10 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			return this;
 		}
 
-		public void setDims(int width, int height) {
+		public void setSize(int width, int height) {
 			this.setWidth(width);
 			this.setHeight(height);
 		}
-
 		public Builder setTooltips(Tooltip xTooltip, Tooltip yTooltip, Tooltip zTooltip) {
 			this.tooltips = new Tooltip[3];
 			this.tooltips[0] = xTooltip;
@@ -218,6 +251,11 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			return this;
 		}
 
+		public Builder setEditBoxCharacterLimit(int editBoxCharacterLimit) {
+			this.editBoxCharacterLimit = editBoxCharacterLimit;
+			return this;
+		}
+
 		public Builder setOnValueChange(@Nullable Consumer<Vec3> onValueChange) {
 			this.onValueChange = onValueChange;
 			return this;
@@ -227,7 +265,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			return new Vec3FieldsWidget(
 				this.font, this.value,
 				this.x, this.y, this.width, this.height,
-				this.colored, this.rotation,
+				this.colored, this.rotation, this.editBoxCharacterLimit,
 				this.tooltips, this.onValueChange
 			);
 		}
