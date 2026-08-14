@@ -1,14 +1,11 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.number;
 
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
-import dev.hephaestus.glowcase.util.InputFilters;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
@@ -18,6 +15,8 @@ import java.util.function.Consumer;
 /**
  * An Edit Box which only accepts numbers, and appends the degree symbol° at the end of the value.<br><br>
  * Additionally, it is the current home of the Creature of Whimsy °0.0°
+ * @see NumberEditBox
+ * @see NumberEditBox.FloatEditBox
  * @author Superkat32
  */
 public class DegreeRotationEditBox extends NumberEditBox.FloatEditBox {

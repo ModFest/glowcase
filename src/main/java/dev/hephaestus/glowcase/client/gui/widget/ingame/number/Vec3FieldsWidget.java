@@ -1,11 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.number;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
-import dev.hephaestus.glowcase.util.InputFilters;
-
-import java.util.List;
-import java.util.function.Consumer;
-
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
@@ -17,6 +12,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 public class Vec3FieldsWidget extends AbstractContainerWidget {
 	private static final int X_COLOR = ARGB.color(255, 75, 75);
@@ -58,55 +56,37 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 
 		this.value = defaultValue;
 
-		this.xEditBox = this.createEditBox(0, defaultValue.x());
-		this.yEditBox = this.createEditBox(1, defaultValue.y());
-		this.zEditBox = this.createEditBox(2, defaultValue.z());
-
-//		this.xEditBox.setValue(String.valueOf(defaultValue.x));
-//		this.yEditBox.setValue(String.valueOf(defaultValue.y));
-//		this.zEditBox.setValue(String.valueOf(defaultValue.z));
-//
-//		this.xEditBox.setResponder(s -> this.updateValue(new Vec3(ParseUtil.parseOrDefault(s, value.x), value.y , value.z)));
-//		this.yEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, ParseUtil.parseOrDefault(s, value.y), value.z)));
-//		this.zEditBox.setResponder(s -> this.updateValue(new Vec3(value.x, value.y, ParseUtil.parseOrDefault(s, value.z))));
+		this.xEditBox = this.createEditBox(0);
+		this.yEditBox = this.createEditBox(1);
+		this.zEditBox = this.createEditBox(2);
 	}
 
-	private GlowcaseEditBox createEditBox(int index, double initValue) {
-		int width = this.getWidth() / 3;
-		int height = this.getHeight();
-		int x = this.getX() + (width * index);
-		int y = this.getY();
-
+	private GlowcaseEditBox createEditBox(int index) {
+		double[] initValues = { this.value.x(), this.value.y(), this.value.z() };
 		List<Consumer<Float>> changeListeners = List.of(
 			xUpdate -> this.updateValue(new Vec3(xUpdate, this.value.y(), this.value.z())),
 			yUpdate -> this.updateValue(new Vec3(this.value.x(), yUpdate, this.value.z())),
 			zUpdate -> this.updateValue(new Vec3(this.value.x(), this.value.y(), zUpdate))
 		);
+
+		int width = this.getWidth() / 3;
+		int height = this.getHeight();
+		int x = this.getX() + (width * index);
+		int y = this.getY();
+
 		GlowcaseEditBox editBox;
+		double initValue = initValues[index];
 		if (this.isRotation) {
-//			editBox = new DegreeRotationEditBox(this.font, x, y, width, height, Component.empty());
 			editBox = NumberEditBox.degreeFloatBuilder(this.font, (float) initValue, changeListeners.get(index))
 				.setBounds(x, y, width, height)
 				.build();
 		} else {
-//			editBox = new GlowcaseEditBox(this.font, x, y, width, height, Component.empty());;
-//			editBox = NumberEditBox.doubleBuilder(this.font, initValue, changeListeners.get(index))
-//				.setBounds(x, y, width, height).build();
-//			editBox = new NumberEditBox.FloatEditBox(this.font, x, y, width, height, (float) initValue, changeListeners.get(index));
-//			editBox = new NumberEditBox.FloatEditBox(
-//				this.font, x, y, width, height,
-//				(float) initValue, 0, Float.MAX_VALUE,
-//				0.01f, 0.125f, 0.1f, 1.0f,
-//				changeListeners.get(index)
-//			);
 			editBox = NumberEditBox.floatBuilder(this.font, (float) initValue, changeListeners.get(index))
 				.setBounds(x, y, width, height)
 				.build();
 		}
-
 		editBox.setMaxLength(this.editBoxCharacterLimit);
 
-		editBox.setFilter(InputFilters::realNumber);
 		if (this.colored) {
 			int[] textColors = {X_COLOR, Y_COLOR, Z_COLOR};
 			editBox.setTextColor(textColors[index]);
@@ -157,11 +137,8 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 
 	@Override
 	public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
-		if (this.getChildAt(mx, my).isPresent() && this.getChildAt(mx, my).get().mouseScrolled(mx, my, scrollX, scrollY)) return true;
-//		if (this.xEditBox.mouseScrolled(mx, my, scrollX, scrollY)
-//			|| this.yEditBox.mouseScrolled(mx, my, scrollX, scrollY)
-//			|| this.zEditBox.mouseScrolled(mx, my, scrollX, scrollY)
-//		) return true;
+		if (this.getChildAt(mx, my).isPresent()
+			&& this.getChildAt(mx, my).get().mouseScrolled(mx, my, scrollX, scrollY)) return true;
 		return super.mouseScrolled(mx, my, scrollX, scrollY);
 	}
 
