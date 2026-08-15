@@ -23,6 +23,7 @@ import java.util.function.Consumer;
  * @author Superkat32 (But if there's problems blame The Creature of No Whimsy)
  */
 public abstract class NumberEditBox<T extends Number> extends GlowcaseEditBox {
+	// FIXME - Possibly make this entire abstraction implementation cleaner and nicer
 	public final Consumer<T> onValueChange;
 	public T numberValue;
 	public T minValue, maxValue;
@@ -169,9 +170,16 @@ public abstract class NumberEditBox<T extends Number> extends GlowcaseEditBox {
 			});
 		}
 
+		// TODO - Consider making the steps add to the current value instead of rounding to nearest step (BigDecimals?)
+		// FIXME - With doubles and floats, if the initial value is rounded up, the step increment will be over by one
+		//  e.g. 0.15 step up 0.1 -> 0.3 (should be 0.2) (this problem is obsolete if above todo is done instead)
 		@Override
 		public void stepUp(boolean shift, boolean ctrl) {
 			float step = this.getStep(shift, ctrl);
+//			BigDecimal stepDecimal = new BigDecimal(step);
+//			BigDecimal valueDecimal = new BigDecimal(this.numberValue)
+//				.add(stepDecimal).setScale(3, RoundingMode.HALF_DOWN);
+//			this.numberValue = valueDecimal.floatValue();
 			float round = 1f / step;
 			this.numberValue = Math.clamp(Math.round((this.numberValue + step) * round) / round, this.minValue, this.maxValue);
 			this.updateEditBox();
@@ -180,6 +188,10 @@ public abstract class NumberEditBox<T extends Number> extends GlowcaseEditBox {
 		@Override
 		public void stepDown(boolean shift, boolean ctrl) {
 			float step = this.getStep(shift, ctrl);
+//			BigDecimal stepDecimal = new BigDecimal(step);
+//			BigDecimal valueDecimal = new BigDecimal(this.numberValue)
+//				.subtract(stepDecimal).setScale(3, RoundingMode.HALF_UP);
+//			this.numberValue = valueDecimal.floatValue();
 			float round = 1f / step;
 			this.numberValue = Math.clamp(Math.round((this.numberValue - step) * round) / round, this.minValue, this.maxValue);
 			this.updateEditBox();
