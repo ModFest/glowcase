@@ -56,8 +56,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private IconButtonWidget justifyRightButton;
 	private Button insertFontButton;
 
-	// TODO - test on multiplayer
-
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
 	}
@@ -400,8 +398,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public static List<Identifier> getAvailableFontIds() {
 		ResourceManager manager = Minecraft.getInstance().getResourceManager();
 		FileToIdConverter converter = FileToIdConverter.json("font");
-		List<Identifier> fontsInOrder = new ArrayList<>(); // List of fonts to return
 		List<Identifier> availableFonts = new ArrayList<>(); // All available fonts, including "include" folder entries
+		List<Identifier> fontsInOrder = new ArrayList<>(); // List of fonts to return
 		fontsInOrder.add(Identifier.withDefaultNamespace("default")); // Set proper order of Vanilla's builtin fonts
 		fontsInOrder.add(Identifier.withDefaultNamespace("alt"));
 		fontsInOrder.add(Identifier.withDefaultNamespace("illageralt"));

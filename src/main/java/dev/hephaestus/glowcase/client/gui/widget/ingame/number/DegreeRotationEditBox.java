@@ -40,11 +40,6 @@ public class DegreeRotationEditBox extends NumberEditBox.FloatEditBox {
 		super(font, x, y, width, height, initValue, minValue, maxValue, shiftStep, shiftCtrlStep, step, ctrlStep, inputFilter, onValueChange);
 		this.font = font;
 	}
-//	public DegreeRotationEditBox(Font font, int x, int y, int width, int height, Component text) {
-//		super(font, x, y, width, height, text);
-//		this.font = font;
-//		this.setFilter(InputFilters::realNumber);
-//	}
 
 	@Override
 	public void setTextColor(int textColor) {

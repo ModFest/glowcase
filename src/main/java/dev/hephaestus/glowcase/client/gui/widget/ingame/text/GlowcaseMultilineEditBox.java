@@ -34,6 +34,7 @@ import java.util.function.Consumer;
  */
 public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 	// FIXME - Ctrl+right on final word of line moves cursor to beginning of next line, instead of end of that line
+	//  (This is actually a vanilla thing with MultilineTextField)
 	private static final Component ARROW_LEFT_SYMBOL = Component.literal("«");
 	private static final Component ARROW_RIGHT_SYMBOL = Component.literal("»");
 

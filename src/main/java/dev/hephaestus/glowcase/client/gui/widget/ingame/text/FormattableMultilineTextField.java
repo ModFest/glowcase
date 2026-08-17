@@ -355,7 +355,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		}
 
 		int actualWidth = this.width;
-		this.width = Integer.MAX_VALUE; // Somewhat reasonable prevent word wrapping without much actual effort here
+		this.width = Integer.MAX_VALUE; // Somewhat reasonable way to prevent word wrapping without much actual effort
 		super.reflowDisplayLines();
 		this.width = actualWidth;
 	}
