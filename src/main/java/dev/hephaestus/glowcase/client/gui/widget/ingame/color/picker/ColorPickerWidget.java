@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -57,6 +58,7 @@ public class ColorPickerWidget extends AbstractButton {
 	@Nullable
 	public Consumer<Integer> confirmListener = null;
 	public boolean showAlpha = false;
+	public float minAlpha = 0f;
 
 	public final List<PickerArea> clickableAreas;
 	public PickerArea previewArea;
@@ -85,7 +87,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.previewArea = new PickerArea(this, false);
 		this.satValueArea = new PickerArea(this, xLerp -> this.saturation = xLerp, yLerp -> this.value = 1f - yLerp);
 		this.hueArea = new PickerArea(this, xLerp -> this.hue = xLerp);
-		this.alphaArea = new PickerArea(this, xLerp -> this.alpha = xLerp);
+		this.alphaArea = new PickerArea(this, xLerp -> this.alpha = (1f - this.minAlpha) * xLerp + this.minAlpha);
 		this.presetsArea = new PickerArea(this, false);
 		this.formattingPresetAreas = PickerPreset.createFormattingPresets(this);
 		this.alphaPresetAreas = PickerPreset.createAlphaPresets(this);
@@ -149,7 +151,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.hueArea.lerpThumbX(this.hue);
 		this.satValueArea.lerpThumbX(this.saturation);
 		this.satValueArea.lerpThumbY(1f - this.value);
-		if (this.showAlpha) this.alphaArea.lerpThumbX(this.alpha);
+		if (this.showAlpha) this.alphaArea.lerpThumbX((this.alpha - this.minAlpha) / (1f - this.minAlpha));
 	}
 
 	// region R.E.P.O - Render, Extract, and Position Operations
@@ -270,7 +272,15 @@ public class ColorPickerWidget extends AbstractButton {
 	// endregion
 
 	public void target(AbstractWidget widget, int initColor, boolean showAlpha, ColorSetter pickedColorListener) {
-		this.target(widget, initColor, showAlpha, false, pickedColorListener);
+		this.target(widget, initColor, showAlpha, 0f, false, pickedColorListener);
+	}
+
+	public void target(AbstractWidget widget, int initColor, boolean showAlpha, float minAlpha, ColorSetter pickedColorListener) {
+		this.target(widget, initColor, showAlpha, minAlpha, false, pickedColorListener);
+	}
+
+	public void target(AbstractWidget widget, int initColor, boolean showAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
+		this.target(widget, initColor, showAlpha, 0f, rightAligned, pickedColorListener);
 	}
 
 	/**
@@ -278,10 +288,11 @@ public class ColorPickerWidget extends AbstractButton {
 	 * @param widget The Widget to position the Color Picker too.
 	 * @param initColor The initial color the Color Picker should be, and should revert to if canceled/undone.
 	 * @param showAlpha Whether the alpha should be editable, and the alpha slider visible.
+	 * @param minAlpha The minimum allowed alpha value of the alpha slider.
 	 * @param rightAligned If the Color Picker Widget should align itself to the right side of the widget instead of the left side  .
 	 * @param pickedColorListener What to do with the picked color, as an integer.
 	 */
-	public void target(AbstractWidget widget, int initColor, boolean showAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
+	public void target(AbstractWidget widget, int initColor, boolean showAlpha, @Range(from = 0, to = 1) float minAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
 		Screen screen = Minecraft.getInstance().screen;
 		this.visible = true;
 		this.active = true;
@@ -299,12 +310,13 @@ public class ColorPickerWidget extends AbstractButton {
 		this.setColor(initColor);
 
 		this.showAlpha = showAlpha;
+		this.minAlpha = minAlpha;
 		this.setHeight(this.showAlpha ? DEFAULT_ALPHA_HEIGHT : DEFAULT_HEIGHT);
 
 		this.pickedColorListener = pickedColorListener;
 		this.presetListener = preset -> { // Default preset behaviour, just set the picker color
 			if (preset.isAlphaPreset()) {
-				this.alpha = preset.getAlpha();
+				this.alpha = Math.max(preset.getAlpha(), this.minAlpha);
 				this.updateAreaThumbs();
 			} else {
 				this.setColor(preset.getPresetColor(), false);

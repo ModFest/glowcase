@@ -5,9 +5,9 @@ import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.slider.EditableSliderWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
@@ -46,7 +46,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private HexColorEditBox backgroundColorEntryWidget;
 
 	private ColorPickerWidget colorPickerWidget;
-	private SuggestionListWidget<Identifier> fontSuggestionWidget;
+	private SuggestionListWidget<Identifier> fontSuggestionWidget; // TODO - Preview font beside name :)
 
 	private Button zFrontButton;
 	private Button zCenterButton;
@@ -123,6 +123,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				}
 			)
 			.setEditableAlpha(true)
+			.setPickerMinAlpha(0.102f) // Equal to 1A in hex, lower alpha values are skipped in rendering I believe
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
 		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_color")));
