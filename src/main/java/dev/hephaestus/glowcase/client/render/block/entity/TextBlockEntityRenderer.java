@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -44,6 +45,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		public float scale = 1;
 		public int color;
 		public int backgroundColor;
+		public Vec3 offset;
+		public Vec3 rotation; // Yaw, pitch, roll
 	}
 
 	// Unbaked rendering
@@ -87,6 +90,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 
 		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
+		// TODO (AC) - Anchor variables, and related rendering (unsure where that would be, so mentioning it here instead)
 		state.textAlignment = blockEntity.textAlignment;
 		state.horizontalAlignment = blockEntity.horizontalAlignment;
 		state.zOffset = blockEntity.zOffset;
@@ -94,6 +98,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		state.scale = blockEntity.scale;
 		state.color = blockEntity.color;
 		state.backgroundColor = blockEntity.backgroundColor;
+		state.offset = blockEntity.offset;
+		state.rotation = blockEntity.rotation;
 	}
 
 	@Override
@@ -130,6 +136,12 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
 			case BACK -> poseStack.translate(0D, 0D, -0.4D);
 		}
+
+		// Translate extra offsets (negative y to match Minecraft's coordinates)
+		poseStack.translate(state.offset.x(), -state.offset.y(), state.offset.z());
+
+		// Apply extra rotations
+		poseStack.mulPose(Quaternionsf.rotateDegreesYXZ((float) state.rotation.x(), (float) state.rotation.y(), (float) state.rotation.z()));
 
 		// Scale for parity with older versions of Glowcase.
 		// Unless Mojang ever changes the rendering scale, this shall remain.

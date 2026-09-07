@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.mixin.client;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import dev.hephaestus.glowcase.client.gui.screen.ingame.TagFormatIncludedScreen;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.TextBlockEditScreen;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
@@ -14,8 +15,8 @@ public class KeyboardHandlerMixin {
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/client/GameNarrator;isActive()Z")
 	)
 	private boolean preventNarratorToggleOnTextBlockScreen(boolean original) {
-		//prevents the narrator from being toggled when pressing "ctrl+b" to hotkey bold formatting in the text block
-		return original && !(Minecraft.getInstance().screen instanceof TextBlockEditScreen);
+		// Prevents the narrator from being toggled when pressing "ctrl+b" to hotkey bold formatting in formattable screens
+		return original && !(Minecraft.getInstance().screen instanceof TagFormatIncludedScreen);
 	}
 
 }

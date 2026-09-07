@@ -4,6 +4,8 @@ import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.packet.C2SEditSpriteBlock;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,7 +16,6 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -24,16 +25,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> {
+public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> implements ColorPickerIncludedScreen {
 	private EditBox spriteWidget;
 	private Button spriteWidgetHelpButton;
 	private Button rotationWidget;
 	private Button zOffsetToggle;
-	private EditBox colorEntryWidget;
+	private HexColorEditBox colorEntryWidget;
 	private EditBox scaleEntryWidget;
 
 	private List<FormattedCharSequence> spriteHelpTooltipText;
 
+	private ColorPickerWidget colorPickerWidget;
 	private SuggestionListWidget<String> suggestionWidget;
     private List<String> validSprites = new ArrayList<>();
 
@@ -73,13 +75,14 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 90, height / 2 + 5, 180, 20).build();
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 35, 180, 20, Component.empty());
-		this.colorEntryWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
-		this.colorEntryWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorEntryWidget.getValue()).ifSuccess(color -> {
-				this.blockEntity.color = color == null ? 0xFFFFFFFF : color.getValue() | 0xFF000000;
-			});
-		});
+		this.colorPickerWidget = this.createColorPickerWidget();
+
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, width / 2 - 90, height / 2 + 35,
+				() -> this.blockEntity.color, color -> this.blockEntity.color = color
+			)
+			.setWidth(180)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
 
 		this.scaleEntryWidget = new EditBox(this.minecraft.font, width / 2 - 90, height / 2 + 65, 180, 20, Component.empty());
 		this.scaleEntryWidget.setValue(String.valueOf(this.blockEntity.scale));
@@ -143,6 +146,7 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 			setTooltip(this.spriteHelpTooltipText);
 		}*/
 
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
 		// render the list over everything
 		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
@@ -151,6 +155,9 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		double mouseX = event.x();
 		double mouseY = event.y();
+
+		if (mouseClickedColorPicker(event, doubleClick)) return true;
+
         if (suggestionWidget.isMouseOver(mouseX, mouseY) && spriteWidget.isFocused()) {
             return suggestionWidget.mouseClicked(event, doubleClick);
         } else {
@@ -185,6 +192,7 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 		if (suggestionWidget.keyPressed(event)) {
 			return true;
 		}
+		if (keyPressedColorPicker(event)) return true;
 		return super.keyPressed(event);
 	}
 
@@ -193,5 +201,10 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 		blockEntity.setSprite(spriteWidget.getValue());
 		blockEntity.setChanged();
 		return C2SEditSpriteBlock.of(blockEntity);
+	}
+
+	@Override
+	public ColorPickerWidget getColorPickerWidget() {
+		return this.colorPickerWidget;
 	}
 }

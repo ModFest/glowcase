@@ -42,7 +42,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 	private final List<T> suggestions = new ArrayList<>();
 	private int selectedItem = -1;
-	private final @Nullable EditBox textFieldWidget;
+	private final @Nullable AbstractWidget focusedWidget;
 	private @NotNull String filter = "";
 	private int scrollOffset = 0;
 
@@ -61,10 +61,10 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 	private int scrollbarDragStartY = 0;
 	private int initialScrollOffset = 0;
 
-	public SuggestionListWidget(@Nullable EditBox widget, Font textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
+	public SuggestionListWidget(@Nullable AbstractWidget widget, Font textRenderer, int x, int y, int width, int height, int baseLineHeight, int padding, int maxRows, Consumer<T> onSelect, Function<T, String> toStringFunction) {
 		super(x, y, width, height, Component.empty());
 
-		this.textFieldWidget = widget;
+		this.focusedWidget = widget;
 
 		this.client = Minecraft.getInstance();
 
@@ -141,7 +141,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 	public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
 		if (suggestions.isEmpty()) return;
 
-		if (textFieldWidget != null && !textFieldWidget.isFocused()) {
+		if (focusedWidget != null && !focusedWidget.isFocused()) {
 			this.suggestions.clear();
 			this.setFocused(false);
 		}
@@ -289,7 +289,9 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			}
 		}
 
-		if (mouseX >= this.getX() && mouseX <= this.getX() + listWidth) {
+		if (mouseX >= this.getX() && mouseX <= this.getX() + listWidth
+			&& mouseY >= this.getY() && mouseY <= this.getY() + this.getHeight()
+		) {
 			if (clickedIndex >= 0 && clickedIndex < suggestions.size()) {
 				onSelect.accept(suggestions.get(clickedIndex));
 				return true;
@@ -536,8 +538,8 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			return true;
 		}
 
-		if (textFieldWidget != null) {
-			return textFieldWidget.keyPressed(event);
+		if (focusedWidget != null) {
+			return focusedWidget.keyPressed(event);
 		}
 
 		return super.keyPressed(event);
@@ -550,5 +552,9 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 		}
 
 		super.setFocused(focused);
+	}
+
+	public boolean hasSuggestions() {
+		return !this.suggestions.isEmpty();
 	}
 }

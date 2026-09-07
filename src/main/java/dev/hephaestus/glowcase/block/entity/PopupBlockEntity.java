@@ -15,12 +15,12 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 public class PopupBlockEntity extends GlowcaseBlockEntity {
-	public static final NodeParser PARSER = TagParser.DEFAULT;
 	public String title = "";
 	public List<Component> lines = new ArrayList<>();
 	public TextBlockEntity.TextAlignment textAlignment = TextBlockEntity.TextAlignment.CENTER;
 	public int color = 0xFFFFFFFF;
 	public boolean renderDirty = true;
+	public boolean viewScreenTitle = true;
 
 	public PopupBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.POPUP_BLOCK_ENTITY.get(), pos, state);
@@ -32,6 +32,7 @@ public class PopupBlockEntity extends GlowcaseBlockEntity {
 		super.saveAdditional(view);
 
 		view.putString("title", this.title);
+		view.putBoolean("view_screen_title", this.viewScreenTitle);
 		view.putInt("color", this.color);
 
 		view.store("text_alignment", TextBlockEntity.TextAlignment.CODEC, this.textAlignment);
@@ -44,6 +45,7 @@ public class PopupBlockEntity extends GlowcaseBlockEntity {
 		super.loadAdditional(view);
 
 		this.title = view.getStringOr("title", "");
+		this.viewScreenTitle = view.getBooleanOr("view_screen_title", true);
 		this.color = view.getIntOr("color", 0xFFFFFF);
 
 		this.textAlignment = view.read("text_alignment", TextBlockEntity.TextAlignment.CODEC).orElse(TextBlockEntity.TextAlignment.CENTER);
@@ -51,40 +53,5 @@ public class PopupBlockEntity extends GlowcaseBlockEntity {
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElse(List.of(Component.empty())));
 
 		this.renderDirty = true;
-	}
-
-	public String getRawLine(int i) {
-		var line = this.lines.get(i);
-
-		if (line.getStyle() == null) {
-			return line.getString();
-		}
-
-		var insert = line.getStyle().getInsertion();
-
-		if (insert == null) {
-			return line.getString();
-		}
-		return insert;
-	}
-
-	public void addRawLine(int i, String string) {
-		var parsed = PARSER.parseComponent(string, ParserContext.of());
-
-		if (parsed.getString().equals(string)) {
-			this.lines.add(i, Component.literal(string));
-		} else {
-			this.lines.add(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
-		}
-	}
-
-	public void setRawLine(int i, String string) {
-		var parsed = PARSER.parseComponent(string, ParserContext.of());
-
-		if (parsed.getString().equals(string)) {
-			this.lines.set(i, Component.literal(string));
-		} else {
-			this.lines.set(i, Component.empty().append(parsed).setStyle(Style.EMPTY.withInsertion(string)));
-		}
 	}
 }

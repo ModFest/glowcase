@@ -44,4 +44,26 @@ public class ParseUtil {
 
 		return Double.parseDouble(string);
 	}
+
+	public static boolean canParseFloat(String string) {
+		if (string.isEmpty() || string.equals("-")) {
+			return true;
+		}
+
+		try {
+			Float.valueOf(string);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public static float parseOrDefault(String string, float value) {
+		if (string.isEmpty() || string.equals("-") || !canParseFloat(string)) {
+			return value;
+		}
+
+		return Float.parseFloat(string);
+	}
 }

@@ -1,50 +1,60 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
-import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.slider.EditableSliderWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
-import dev.hephaestus.glowcase.util.InputFilters;
-import dev.hephaestus.glowcase.util.ParseUtil;
-import eu.pb4.placeholders.api.parsers.tag.TagRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.font.TextFieldHelper;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.components.Whence;
+import net.minecraft.client.gui.layouts.FrameLayout;
+import net.minecraft.client.gui.layouts.LayoutSettings;
+import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.util.Mth;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Map;
 
-//TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor<TextBlockEntity> {
-	private static final int innerPadding = 4;
-	private static final int editorOffset = 20;
 	private final TextBlockEntity textBlockEntity;
 
-	private List<EditBox> textWidgets;
-	private List<EditBox> colorListeners;
+	private GlowcaseMultilineEditBox glowcaseEditBox;
+	private HexColorEditBox colorEntryWidget;
+	private HexColorEditBox backgroundColorEntryWidget;
 
-	private TextFieldHelper selectionManager;
-	private EditBox colorEntryWidget;
-	private int currentRow;
-	private long ticksSinceOpened = 0;
 	private ColorPickerWidget colorPickerWidget;
-	private Color colorEntryPreColorPicker; //used for color picker cancel button
+	private SuggestionListWidget<Identifier> fontSuggestionWidget; // TODO - Preview font beside name :)
+
+	private Button zFrontButton;
+	private Button zCenterButton;
+	private Button zBackButton;
+	private IconButtonWidget justifyLeftButton;
+	private IconButtonWidget justifyCenterButton;
+	private IconButtonWidget justifyRightButton;
+	private Button insertFontButton;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -54,66 +64,322 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	public void init() {
 		super.init();
 
-		this.selectionManager = new TextFieldHelper(
-			() -> this.textBlockEntity.getRawLine(this.currentRow),
-			(string) -> {
-				textBlockEntity.setRawLine(this.currentRow, string);
+		this.glowcaseEditBox = GlowcaseMultilineEditBox.builder(
+			this.font, this.textBlockEntity.lines, 2, 25, this.width - 4, this.height - 28,
+			parsedLines -> {
+				this.textBlockEntity.lines = new ArrayList<>(parsedLines);
 				this.textBlockEntity.rebake(true);
-			},
-			TextFieldHelper.createClipboardGetter(this.minecraft),
-			TextFieldHelper.createClipboardSetter(this.minecraft),
-			(_) -> true);
+			}
+		).build();
+		this.glowcaseEditBox.updateSettings(this.textBlockEntity.color, this.textBlockEntity.shadow, this.textBlockEntity.textAlignment);
+		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
+		this.addRenderableWidget(this.glowcaseEditBox);
 
-		int middle = width / 2;
+		this.colorPickerWidget = this.createColorPickerWidget();
 
-		var scaleSlider = new TextScale.SliderWidget(textBlockEntity, middle - 203, innerPadding, 113, 20);
-		addFormattingButtons(middle - 90 + 6, innerPadding, 0, 20, 2);
+		List<AbstractWidget> editTabWidgets = this.initEditTabWidgets();
+		List<AbstractWidget> viewTabWidgets = this.initViewTabWidgets();
 
-		this.colorEntryWidget = new EditBox(this.minecraft.font, middle + 54, innerPadding, 64, 20, Component.empty());
-		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.color")));
-		this.colorEntryWidget.setValue(ColorUtil.toAlphaHex(this.textBlockEntity.color));
-		this.colorEntryWidget.setResponder(string -> {
-			ColorUtil.parse(string, this.textBlockEntity.color).ifSuccess(newColor -> {
-				final int color = (Math.max(newColor >>> 24, 0x1A) << 24) | (newColor & ColorUtil.RGB_MASK);
+		GlowcaseTabNavBar tabNavBar = GlowcaseTabNavBar.builder(
+			this.width, height -> {
+				this.glowcaseEditBox.setY(height + 3);
+			})
+			.setY(2)
+			.setWidgetAreaPadding(2)
+			.addTabs(
+				new GlowcaseTab(
+					Component.literal("Edit"), 20,
+					editTabWidgets
+				),
+				new GlowcaseTab(
+					Component.literal("View"), 42,
+					viewTabWidgets
+				)
+			).build();
+		this.addRenderableWidget(tabNavBar);
+	}
 
-				this.textBlockEntity.color = color;
-				// make sure it doesn't update from the color picker updating the text
-				if (this.colorEntryWidget.isFocused()) {
-					this.colorPickerWidget.setColor(new Color(color));
+	public List<AbstractWidget> initEditTabWidgets() {
+		// nav bar y padding (2) + tab button height (20) + widget area padding (1) = 23;
+		int firstRowY = 23;
+
+		EditableSliderWidget scaleSlider = EditableSliderWidget.builder(
+			this.font, this.textBlockEntity.scale, 0.125f, 16,
+			aFloat -> Component.translatable("gui.glowcase.scale_value", aFloat),
+			aFloat -> {
+				this.textBlockEntity.scale = aFloat;
+				this.textBlockEntity.rebake(true);
+			})
+			.setStep(0.125f)
+			.setWidth(113)
+			.build();
+		scaleSlider.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_scale_slider")));
+
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 0, 0,
+				() -> this.textBlockEntity.color, color -> {
+					this.textBlockEntity.color = color;
+					this.textBlockEntity.rebake(true);
+					this.glowcaseEditBox.setTextColor(color);
 				}
+			)
+			.setEditableAlpha(true)
+			.setPickerMinAlpha(0.102f) // Equal to 1A in hex, lower alpha values are skipped in rendering I believe
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
+		this.colorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.text_color")));
+
+		this.backgroundColorEntryWidget = HexColorEditBox.builder(this.minecraft.font, 0, 0,
+				() -> this.textBlockEntity.backgroundColor, color -> {
+					this.textBlockEntity.backgroundColor = color;
+					this.textBlockEntity.rebake(true);
+				}
+			)
+			.setEditableAlpha(true)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
+		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));
+
+		this.addRenderableWidget(scaleSlider);
+		this.initFormattingButtons(0, 0, 0);
+		this.addRenderableWidget(this.colorEntryWidget);
+		this.addRenderableWidget(this.backgroundColorEntryWidget);
+
+		LinearLayout editTabLayout = LinearLayout.horizontal().spacing(2);
+		editTabLayout.addChild(scaleSlider, LayoutSettings.defaults().paddingRight(6));
+		for (Button formattingButton : this.formattingButtons) {
+			editTabLayout.addChild(formattingButton);
+		}
+		editTabLayout.addChild(this.colorEntryWidget, LayoutSettings.defaults().paddingLeft(6));
+		editTabLayout.addChild(this.backgroundColorEntryWidget, LayoutSettings.defaults().paddingLeft(4));
+
+		editTabLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(editTabLayout, 0, firstRowY, this.width, firstRowY); // Finish positioning
+
+		List<AbstractWidget> editTabWidgets = new ArrayList<>(this.formattingButtons);
+		editTabWidgets.add(scaleSlider);
+		editTabWidgets.add(this.colorEntryWidget);
+		editTabWidgets.add(this.backgroundColorEntryWidget);
+		return editTabWidgets;
+	}
+
+	public List<AbstractWidget> initViewTabWidgets() {
+		int firstRowY = 24;
+		int secondRowY = firstRowY + 22;
+
+		this.justifyLeftButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/left"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
+					this.textBlockEntity.rebake(true);
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.LEFT);
+					this.updateSelectedJustifyButton();
+				})
+				.dimensions(0, 0, 20, 20, 16, 16)
+				.build();
+		this.justifyLeftButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_left")));
+		this.justifyCenterButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/center"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
+					this.textBlockEntity.rebake(true);
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.CENTER);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(0, 0, 20, 20, 16, 16)
+			.build();
+		this.justifyCenterButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_center")));
+		this.justifyRightButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/right"), button -> {
+					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
+					this.textBlockEntity.rebake(true);
+					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.RIGHT);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(0, 0, 20, 20, 16, 16)
+			.build();
+		this.justifyRightButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_right")));
+		this.updateSelectedJustifyButton();
+
+		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.zCenterButton = Button.builder(Component.translatable("gui.glowcase.center"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.zBackButton = Button.builder(Component.translatable("gui.glowcase.back"), button -> {
+			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
+			this.textBlockEntity.rebake(true);
+			this.updateSelectedZButton();
+		}).size(50, 20).build();
+		this.updateSelectedZButton();
+
+		// TODO (AC) - Use block entity anchor value instead of horizontal alignment
+		TextBlockEntity.Anchor fakeAnchor = TextBlockEntity.Anchor.fromHorizontalAlignment(this.textBlockEntity.horizontalAlignment);
+		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, fakeAnchor, anchor -> {
+			// TODO (AC) - Set block anchor variables here
+			if (anchor.getY() == 0) {
+				this.textBlockEntity.horizontalAlignment = TextBlockEntity.HorizontalAlignment.values()[anchor.getX() + 1];
 				this.textBlockEntity.rebake(true);
-			});
+			}
 		});
 
-		this.colorPickerWidget = ColorPickerWidget.builder(this, 216, 10).size(182, 104).build();
-		this.colorPickerWidget.toggle(false); //start deactivated
+		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
+			Component.translatable("gui.glowcase.text_shadow"),
+			(button, shadow) -> {
+				this.textBlockEntity.shadow = shadow;
+				this.textBlockEntity.rebake(true);
+				this.glowcaseEditBox.setTextShadow(shadow);
+			}
+		);
+		textShadowButton.setWidth(100);
 
-		var moreOptionsButton = Button.builder(
-				Component.translatable("gui.glowcase.more"),
-				button -> {
-					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-					Minecraft.getInstance().setScreen(optionsScreen);
-				})
-			.bounds(middle + 124, innerPadding, 80, 20)
+		this.insertFontButton = IconButtonWidget.builder(Component.literal("Aa"), button -> {
+			this.fontSuggestionWidget.setPosition(this.insertFontButton.getRight() - 200, this.insertFontButton.getBottom());
+			if (this.fontSuggestionWidget.hasSuggestions()) {
+				this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
+			} else {
+				this.fontSuggestionWidget.updateSuggestions(getAvailableFontIds(), "", this);
+			}
+		}).bounds(0, 0, 20, 20)
+			.tooltip(Tooltip.create(Component.translatable("gui.glowcase.insert_font")))
 			.build();
 
-		this.textWidgets = List.of(
-			this.colorEntryWidget
+		this.fontSuggestionWidget = new SuggestionListWidget<>(
+			this.insertFontButton, this.font,
+			0, 0, 200, 200,
+			10, 4, 10,
+			identifier -> {
+				// TODO - The logic behind this will need some updating if a Block Font button is ever added
+				this.insertTag("font '" + identifier.toString() + "'");
+				this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
+			},
+			Identifier::toString
 		);
+		this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 
-		this.colorListeners = List.of(
-			this.colorEntryWidget
+		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
+			.setWidth(106)
+			.setEditBoxCharacterLimit(5)
+			.setTooltips(
+				Tooltip.create(Component.translatable("gui.glowcase.x_offset_label")),
+				Tooltip.create(Component.translatable("gui.glowcase.y_offset_label")),
+				Tooltip.create(Component.translatable("gui.glowcase.z_offset_label"))
+			)
+			.setOnValueChange(vec3 -> {
+				this.textBlockEntity.offset = vec3;
+				this.textBlockEntity.rebake(true);
+			})
+			.build();
+		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.rotation)
+			.setWidth(106)
+			.setRotation(true)
+			.setEditBoxCharacterLimit(5)
+			.setTooltips(
+				Tooltip.create(Component.translatable("gui.glowcase.yaw")),
+				Tooltip.create(Component.translatable("gui.glowcase.pitch")),
+				Tooltip.create(Component.translatable("gui.glowcase.roll"))
+			)
+			.setOnValueChange(vec3 -> {
+				this.textBlockEntity.rotation = vec3;
+				this.textBlockEntity.rebake(true);
+			})
+			.build();
+
+		this.addRenderableWidget(this.justifyLeftButton);
+		this.addRenderableWidget(this.justifyCenterButton);
+		this.addRenderableWidget(this.justifyRightButton);
+		this.addRenderableWidget(zFrontButton);
+		this.addRenderableWidget(zCenterButton);
+		this.addRenderableWidget(zBackButton);
+		this.addRenderableWidget(anchorGrid);
+		this.addRenderableWidget(textShadowButton);
+
+		this.addRenderableWidget(offsetWidgets);
+		this.addRenderableWidget(rotationWidgets);
+		this.addRenderableWidget(insertFontButton);
+
+		LinearLayout viewTabFirstRowLayout = LinearLayout.horizontal().spacing(2);
+		viewTabFirstRowLayout.addChild(this.justifyLeftButton);
+		viewTabFirstRowLayout.addChild(this.justifyCenterButton, LayoutSettings.defaults().paddingLeft(-2));
+		viewTabFirstRowLayout.addChild(this.justifyRightButton, LayoutSettings.defaults().paddingLeft(-2).paddingRight(4));
+		viewTabFirstRowLayout.addChild(zFrontButton);
+		viewTabFirstRowLayout.addChild(zCenterButton, LayoutSettings.defaults().paddingLeft(-2));
+		viewTabFirstRowLayout.addChild(zBackButton, LayoutSettings.defaults().paddingLeft(-2).paddingRight(2));
+		viewTabFirstRowLayout.addChild(anchorGrid, LayoutSettings.defaults().paddingRight(4));
+		viewTabFirstRowLayout.addChild(textShadowButton);
+
+		viewTabFirstRowLayout.arrangeElements(); // Setup initial positioning
+		FrameLayout.centerInRectangle(viewTabFirstRowLayout, 0, firstRowY, this.width, 42); // Finish positioning
+
+		rotationWidgets.setPosition(anchorGrid.getX() - 4 - rotationWidgets.getWidth(), secondRowY);
+		offsetWidgets.setPosition(rotationWidgets.getX() - 4 - offsetWidgets.getWidth(), secondRowY);
+		insertFontButton.setPosition(anchorGrid.getRight() + 6, secondRowY);
+
+		return List.of(
+			justifyRightButton, justifyCenterButton, justifyLeftButton,
+			zFrontButton, zCenterButton, zBackButton,
+			anchorGrid, textShadowButton,
+			offsetWidgets, rotationWidgets, insertFontButton
 		);
+	}
 
-		this.addRenderableWidget(colorPickerWidget);
-		this.addRenderableWidget(this.colorEntryWidget);
-		this.addRenderableWidget(scaleSlider);
-		this.addRenderableWidget(moreOptionsButton);
+	public void updateSelectedJustifyButton() {
+		TextBlockEntity.TextAlignment justify = this.textBlockEntity.textAlignment;
+		this.justifyLeftButton.active = justify != TextBlockEntity.TextAlignment.LEFT;
+		this.justifyCenterButton.active = justify != TextBlockEntity.TextAlignment.CENTER;
+		this.justifyRightButton.active = justify != TextBlockEntity.TextAlignment.RIGHT;
+	}
+
+	public void updateSelectedZButton() {
+		TextBlockEntity.ZOffset zOffset = this.textBlockEntity.zOffset;
+		this.zFrontButton.active = zOffset != TextBlockEntity.ZOffset.FRONT;
+		this.zCenterButton.active = zOffset != TextBlockEntity.ZOffset.CENTER;
+		this.zBackButton.active = zOffset != TextBlockEntity.ZOffset.BACK;
 	}
 
 	@Override
-	public void tick() {
-		++this.ticksSinceOpened;
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.fontSuggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
+	}
+
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (this.keyPressedColorPicker(event)) return true;
+		return super.keyPressed(event);
+	}
+
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (mouseClickedColorPicker(event, doubleClick)) return true;
+		if (this.fontSuggestionWidget.mouseClicked(event, doubleClick)) return true;
+		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+		if (this.fontSuggestionWidget.draggingScrollbar && this.fontSuggestionWidget.mouseDragged(event, dx, dy)) return true;
+		return super.mouseDragged(event, dx, dy);
+	}
+
+	@Override
+	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+		if (this.fontSuggestionWidget.isFocused() && this.fontSuggestionWidget.isMouseOver(x, y)
+			&& this.fontSuggestionWidget.mouseScrolled(x, y, scrollX, scrollY)) return true;
+		return super.mouseScrolled(x, y, scrollX, scrollY);
+	}
+
+	@Override
+	public ColorPickerWidget getColorPickerWidget() {
+		return this.colorPickerWidget;
+	}
+
+	@Override
+	GlowcaseMultilineEditBox getGlowcaseMultilineEditBox() {
+		return this.glowcaseEditBox;
 	}
 
 	@Override
@@ -126,406 +392,43 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		return C2SEditTextBlock.of(textBlockEntity);
 	}
 
-	private boolean isFocusedTextActive() {
-		final GuiEventListener focused = this.getFocused();
-		if (focused instanceof EditBox text) {
-			return text.canConsumeInput();
+	// This is so cursed but it gives the best order of fonts given the amount of repetitive entries
+	// Some number of fonts have duplicate entries within an "include" folder, which may or may not work with QuickText
+	// Minecraft fonts are listed first (predefined order), while remaining fonts come afterward
+	// Any fonts within the "include" folder, Minecraft or external, are omitted
+	public static List<Identifier> getAvailableFontIds() {
+		ResourceManager manager = Minecraft.getInstance().getResourceManager();
+		FileToIdConverter converter = FileToIdConverter.json("font");
+		List<Identifier> availableFonts = new ArrayList<>(); // All available fonts, including "include" folder entries
+		List<Identifier> fontsInOrder = new ArrayList<>(); // List of fonts to return
+		fontsInOrder.add(Identifier.withDefaultNamespace("default")); // Set proper order of Vanilla's builtin fonts
+		fontsInOrder.add(Identifier.withDefaultNamespace("alt"));
+		fontsInOrder.add(Identifier.withDefaultNamespace("illageralt"));
+		fontsInOrder.add(Identifier.withDefaultNamespace("uniform"));
+
+		for (Map.Entry<Identifier, List<Resource>> fontEntry : converter.listMatchingResourceStacks(manager).entrySet()) {
+			Identifier fontName = converter.fileToId(fontEntry.getKey());
+			availableFonts.add(fontName);
 		}
-		return false;
-	}
 
-	private void checkRow() {
-		final int size = this.textBlockEntity.lines.size();
-		if (this.currentRow >= size) {
-			this.currentRow = size - 1;
-		}
-	}
-
-	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-		super.extractRenderState(graphics, mouseX, mouseY, delta);
-
-		graphics.pose().pushMatrix();
-		graphics.pose().translate(0, editorOffset + 2 * this.width / 100F);
-		for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-			var text = this.currentRow == i ? Component.literal(this.textBlockEntity.getRawLine(i)) : this.textBlockEntity.lines.get(i);
-
-			int lineWidth = this.font.width(text);
-			switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> graphics.text(minecraft.font, text, this.width / 10, i * 12, this.textBlockEntity.color);
-				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
-					graphics.text(minecraft.font, text, this.width / 2 - lineWidth / 2, i * 12, this.textBlockEntity.color);
-				case RIGHT ->
-					graphics.text(minecraft.font, text, this.width - this.width / 10 - lineWidth, i * 12, this.textBlockEntity.color);
+		for (Iterator<Identifier> iterator = availableFonts.iterator(); iterator.hasNext(); ) {
+			Identifier id = iterator.next();
+			if (id.getNamespace().equals("minecraft") && !id.getPath().contains("include/")) {
+				iterator.remove();
+				if (fontsInOrder.contains(id)) continue; // Likely because we added the builtin fonts already
+				fontsInOrder.add(id);
 			}
 		}
 
-		int caretStart = this.selectionManager.getCursorPos();
-		int caretEnd = this.selectionManager.getSelectionPos();
-
-		if (caretStart >= 0) {
-			this.checkRow();
-			String line = this.textBlockEntity.getRawLine(this.currentRow);
-			int selectionStart = Mth.clamp(Math.min(caretStart, caretEnd), 0, line.length());
-			int selectionEnd = Mth.clamp(Math.max(caretStart, caretEnd), 0, line.length());
-
-			String preSelection = line.substring(0, Mth.clamp(line.length(), 0, selectionStart));
-			int startX = this.minecraft.font.width(preSelection);
-
-			float push = switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> this.width / 10F;
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> this.width / 2F - this.font.width(line) / 2F;
-				case RIGHT -> this.width - this.width / 10F - this.font.width(line);
-			};
-
-			startX += (int) push;
-
-
-			int caretStartY = this.currentRow * 12;
-			if (this.ticksSinceOpened / 6 % 2 == 0 && !this.isFocusedTextActive()) {
-				if (selectionStart < line.length()) {
-					graphics.fill(startX, caretStartY, startX + 1, caretStartY + 9, 0xCCFFFFFF);
-				} else {
-					graphics.text(minecraft.font, "_", startX, this.currentRow * 12, 0xFFFFFFFF, false);
-				}
-			}
-
-			if (caretStart != caretEnd) {
-				int endX = startX + this.minecraft.font.width(line.substring(selectionStart, selectionEnd));
-				graphics.textHighlight(startX, caretStartY, endX, caretStartY + 9, false);
+		for (Iterator<Identifier> iterator = availableFonts.iterator(); iterator.hasNext(); ) {
+			Identifier id =  iterator.next();
+			if (!id.getPath().contains("include/")) {
+				iterator.remove();
+				if (fontsInOrder.contains(id)) continue; // Shouldn't happen but just in case
+				fontsInOrder.add(id);
 			}
 		}
 
-		graphics.pose().popMatrix();
-
-		colorPickerWidget.extractRenderState(graphics, mouseX, mouseY, delta);
-	}
-
-	@Override
-	public boolean charTyped(CharacterEvent event) {
-		for (final var element : this.textWidgets) {
-			if (element.charTyped(event)) {
-				return true;
-			}
-		}
-
-		return this.selectionManager.charTyped(event);
-	}
-
-	@Override
-	public boolean keyPressed(KeyEvent event) {
-		var keyCode = event.key();
-
-		if (this.colorPickerWidget.active) {
-			switch (keyCode) {
-				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> this.colorPickerWidget.confirmColor();
-				case GLFW.GLFW_KEY_ESCAPE -> this.colorPickerWidget.cancel();
-				default -> {
-					final GuiEventListener listener = this.colorPickerWidget.targetElement;
-					if (listener != null) {
-						this.setFocused(listener);
-						return listener.keyPressed(event);
-					}
-				}
-			}
-
-			this.toggleColorPicker(false);
-			this.setFocused(null);
-
-			return true;
-		}
-
-		if (this.getFocused() != null) {
-			if (this.getFocused().keyPressed(event)) {
-				return true;
-			}
-
-			this.toggleColorPicker(false);
-			this.setFocused(null);
-
-			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-				return true;
-			}
-		}
-
-		{
-			setFocused(null);
-			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-				this.textBlockEntity.addRawLine(this.currentRow + 1,
-					this.textBlockEntity.getRawLine(this.currentRow).substring(
-						Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
-					));
-				this.textBlockEntity.setRawLine(this.currentRow,
-					this.textBlockEntity.getRawLine(this.currentRow).substring(0, Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
-					));
-				this.textBlockEntity.rebake(true);
-				++this.currentRow;
-				this.selectionManager.setCursorToStart();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_UP) {
-				this.currentRow = Math.max(this.currentRow - 1, 0);
-				this.selectionManager.setCursorToEnd();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
-				this.currentRow = Math.min(this.currentRow + 1, (this.textBlockEntity.lines.size() - 1));
-				this.selectionManager.setCursorToEnd();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.textBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
-				--this.currentRow;
-				this.selectionManager.setCursorToEnd();
-				deleteLine();
-				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.textBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.textBlockEntity.getRawLine(this.currentRow).length()) {
-				deleteLine();
-				return true;
-			} else {
-
-				//formatting hotkeys
-				if (event.hasControlDown()) {
-					if (keyCode == GLFW.GLFW_KEY_B) {
-						insertTag(TagRegistry.SAFE.getTag("bold"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_I) {
-						insertTag(TagRegistry.SAFE.getTag("italic"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_U) {
-						insertTag(TagRegistry.SAFE.getTag("underline"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
-						//There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
-						//apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
-						//Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
-						insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
-						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_O) {
-						insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
-						return true;
-					}
-				}
-
-				try {
-					boolean val = this.selectionManager.keyPressed(event) || super.keyPressed(event);
-					int selectionOffset = this.textBlockEntity.getRawLine(this.currentRow).length() - this.selectionManager.getCursorPos();
-
-					// Find line feed characters and create proper newlines
-					for (int i = 0; i < this.textBlockEntity.lines.size(); ++i) {
-						int lineFeedIndex = this.textBlockEntity.getRawLine(i).indexOf("\n");
-
-						if (lineFeedIndex >= 0) {
-							this.textBlockEntity.addRawLine(i + 1,
-								this.textBlockEntity.getRawLine(i).substring(
-									Mth.clamp(lineFeedIndex + 1, 0, this.textBlockEntity.getRawLine(i).length())
-								));
-							this.textBlockEntity.setRawLine(i,
-								this.textBlockEntity.getRawLine(i).substring(0, Mth.clamp(lineFeedIndex, 0, this.textBlockEntity.getRawLine(i).length())
-								));
-							this.textBlockEntity.rebake(true);
-							++this.currentRow;
-							this.selectionManager.setCursorToEnd();
-							this.selectionManager.moveByChars(-selectionOffset);
-						}
-					}
-					return val;
-				} catch (StringIndexOutOfBoundsException e) {
-					e.printStackTrace();
-					Minecraft.getInstance().setScreen(null);
-					return false;
-				}
-			}
-		}
-	}
-
-	private void deleteLine() {
-		this.textBlockEntity.setRawLine(this.currentRow,
-			this.textBlockEntity.getRawLine(this.currentRow) + this.textBlockEntity.getRawLine(this.currentRow + 1)
-		);
-
-		this.textBlockEntity.lines.remove(this.currentRow + 1);
-		this.textBlockEntity.rebake(true);
-	}
-
-	private void colorListenerClicked(EditBox textWidget) {
-		this.colorPickerWidget.setPosition(Math.min(textWidget.getX(), width - colorPickerWidget.getWidth()), textWidget.getY() + textWidget.getHeight());
-		this.colorPickerWidget.setTargetElement(textWidget);
-		this.colorPickerWidget.setOnAccept(picker -> {
-			textWidget.setValue(ColorUtil.toAlphaHex(picker.getCurrentColor().getRGB()));
-		});
-		this.colorPickerWidget.setOnCancel(picker -> {
-			picker.setColor(this.colorEntryPreColorPicker);
-			textWidget.setValue(ColorUtil.toAlphaHex(this.colorEntryPreColorPicker.getRGB()));
-		});
-		this.colorPickerWidget.setChangeListener(color -> {
-			final int newColor = ColorUtil.transferAlpha(this.colorEntryPreColorPicker.getRGB(), color.getRGB());
-			textWidget.setValue(ColorUtil.toAlphaHex(newColor));
-		});
-		this.colorPickerWidget.setPresetListener((color, formatting) -> {
-			this.colorPickerWidget.setColor(color);
-		});
-		ColorUtil.parse(textWidget.getValue(), ColorUtil.WHITE).ifSuccess(color -> {
-			final Color pickerColor = new Color(color);
-			this.colorEntryPreColorPicker = pickerColor;
-			this.colorPickerWidget.setColor(pickerColor);
-		}).ifError(textColorError -> this.colorEntryPreColorPicker = this.colorPickerWidget.getCurrentColor());
-		toggleColorPicker(true);
-	}
-
-	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		double mouseX = event.x();
-		double mouseY = event.y();
-		int topOffset = (int) (editorOffset + 2 * this.width / 100F);
-
-		for (final var text : textWidgets) {
-			if (!text.mouseClicked(event, doubleClick)) {
-				continue;
-			}
-			this.setFocused(text);
-			if (this.colorListeners.contains(text)) {
-				this.colorListenerClicked(text);
-			}
-			if (this.colorPickerWidget.targetElement != text) {
-				text.setFocused(false);
-			}
-			break;
-		}
-
-		if (colorPickerWidget.active && colorPickerWidget.visible) {
-			if (colorPickerWidget.isMouseOver(mouseX, mouseY)) {
-				colorPickerWidget.mouseClicked(event, doubleClick);
-				this.setFocused(colorPickerWidget);
-				this.setDragging(true);
-				return true;
-			} else {
-				if (!this.colorPickerWidget.targetElement.isMouseOver(mouseX, mouseY)) {
-					toggleColorPicker(false);
-				}
-			}
-		}
-		if (mouseY > topOffset) {
-			this.currentRow = Mth.clamp((int) (mouseY - topOffset) / 12, 0, this.textBlockEntity.lines.size() - 1);
-			this.setFocused(null);
-			String baseContents = this.textBlockEntity.getRawLine(currentRow);
-			int baseContentsWidth = this.font.width(baseContents);
-			int contentsStart;
-			int contentsEnd;
-			switch (this.textBlockEntity.textAlignment) {
-				case LEFT -> {
-					contentsStart = this.width / 10;
-					contentsEnd = contentsStart + baseContentsWidth;
-				}
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> {
-					int midpoint = this.width / 2;
-					int textMidpoint = baseContentsWidth / 2;
-					contentsStart = midpoint - textMidpoint;
-					contentsEnd = midpoint + textMidpoint;
-				}
-				case RIGHT -> {
-					contentsEnd = this.width - this.width / 10;
-					contentsStart = contentsEnd - baseContentsWidth;
-				}
-				//even though this is exhaustive, javac won't treat contentsStart and contentsEnd as initialized
-				//why? who knows! just throw bc this should be impossible
-				default -> throw new IllegalStateException(":HOW:");
-			}
-
-			if (mouseX <= contentsStart) {
-				this.selectionManager.setCursorToStart();
-			} else if (mouseX >= contentsEnd) {
-				this.selectionManager.setCursorToEnd();
-			} else {
-				int lastWidth = 0;
-				for (int i = 1; i < baseContents.length(); i++) {
-					String testContents = baseContents.substring(0, i);
-					int width = this.font.width(testContents);
-					int midpointWidth = (width + lastWidth) / 2;
-					if (mouseX < contentsStart + midpointWidth) {
-						this.selectionManager.setCursorPos(i - 1, false);
-						break;
-					} else if (mouseX <= contentsStart + width) {
-						this.selectionManager.setCursorPos(i, false);
-						break;
-					}
-					lastWidth = width;
-				}
-			}
-			return true;
-		} else {
-			return super.mouseClicked(event, doubleClick);
-		}
-	}
-
-	@Override
-	public ColorPickerWidget colorPickerWidget() {
-		return this.colorPickerWidget;
-	}
-
-	@Override
-	public void toggleColorPicker(boolean active) {
-		this.colorPickerWidget.toggle(active);
-	}
-
-	@Override
-	TextFieldHelper getSelectionManager() {
-		return this.selectionManager;
-	}
-
-	public static class TextScale {
-		public static final float MIN_SCALE = 0.125F;
-		public static final float MAX_SCALE = 16;
-		public static final float SCALE_DELTA = MAX_SCALE - MIN_SCALE;
-
-		public static class SliderWidget extends AbstractSliderButton {
-			private final TextBlockEntity entity;
-			private Consumer<Float> scaleResponder;
-
-			public SliderWidget(TextBlockEntity entity, int x, int y, int width, int height) {
-				var initialValue = (entity.scale - MIN_SCALE) / SCALE_DELTA;
-				super(x, y, width, height, Component.translatable("gui.glowcase.scale_value", entity.scale), initialValue);
-				this.entity = entity;
-			}
-
-			@Override
-			protected void updateMessage() {
-				this.setMessage(Component.translatable("gui.glowcase.scale_value", entity.scale));
-			}
-
-			@Override
-			protected void applyValue() {
-				entity.scale = (float) Math.round(Mth.lerp(this.value, MIN_SCALE, MAX_SCALE) * 8F) / 8F;
-				if (scaleResponder != null) scaleResponder.accept(entity.scale);
-
-				entity.rebake(true);
-			}
-
-			public void setScaleResponder(Consumer<Float> responder) {
-				this.scaleResponder = responder;
-			}
-
-			public void updateValue(double newValue) {
-				this.value = Mth.clamp(newValue, 0.0, 1.0);
-				updateMessage();
-			}
-		}
-
-		public static class InputWidget extends GlowcaseEditBox {
-			private Consumer<Float> scaleResponder;
-
-			public InputWidget(TextBlockEntity entity, Font font, int x, int y, int width, int height) {
-				super(font, x, y, width, height, Component.empty());
-				this.setValue(String.valueOf(entity.scale));
-				this.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.scale")));
-				this.setFilter(InputFilters::realNumber);
-				this.setResponder(input -> {
-					entity.scale = (float) Math.clamp(ParseUtil.parseOrDefault(input, 1d), MIN_SCALE, MAX_SCALE);
-					if (scaleResponder != null) scaleResponder.accept(entity.scale);
-
-					entity.rebake(true);
-				});
-			}
-
-			public void setScaleResponder(Consumer<Float> scaleResponder) {
-				this.scaleResponder = scaleResponder;
-			}
-		}
+		return fontsInOrder;
 	}
 }
