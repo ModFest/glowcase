@@ -66,25 +66,20 @@ public class NoteEditScreen extends TextEditorScreen {
 			NoteComponent note = stack.get(Glowcase.NOTE_COMPONENT.get());
 			assert note != null;
 
-			this.lines = new ArrayList<>(
-				note.lines().stream()
-					.filter(component -> !component.getString().isBlank())
-					.toList()
-			);
-//			lines = new ArrayList<>();
-//			lines.addAll(note.lines());
-//			for (int i = 0; i < (NoteComponent.LINES_LIMIT - note.lines().size()); i++)
-//				lines.add(Component.literal(""));
+			this.lines = new ArrayList<>();
+			this.lines.addAll(note.lines());
+			for (int i = 0; i < (NoteComponent.LINES_LIMIT - note.lines().size()); i++)
+				this.lines.add(Component.literal(""));
 
-			textAlignment = note.alignment();
+			this.textAlignment = note.alignment();
 		} else {
 			// Default data
-			lines = new ArrayList<>();
+			this.lines = new ArrayList<>();
 
-//			for (int i = 0; i < NoteComponent.LINES_LIMIT; i++)
-//				lines.add(Component.literal(""));
+			for (int i = 0; i < NoteComponent.LINES_LIMIT; i++)
+				this.lines.add(Component.literal(""));
 
-			textAlignment = NoteComponent.Alignment.LEFT;
+			this.textAlignment = NoteComponent.Alignment.LEFT;
 		}
 	}
 
