@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block;
 
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -14,7 +13,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -27,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public class SpriteBlock extends WaterloggableGlowcaseBlock {
-	public static final MapCodec<SpriteBlock> CODEC = simpleCodec(SpriteBlock::new);
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 
 	public SpriteBlock(BlockBehaviour.Properties settings) {
@@ -76,10 +73,5 @@ public class SpriteBlock extends WaterloggableGlowcaseBlock {
 		textConsumer.accept(Component.translatable("block.glowcase.sprite_block.tooltip.0").withStyle(ChatFormatting.GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.generic.tooltip").withStyle(ChatFormatting.DARK_GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.sprite_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

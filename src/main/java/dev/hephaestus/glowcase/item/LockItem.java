@@ -4,8 +4,8 @@ import dev.hephaestus.glowcase.mixin.BaseContainerBlockEntityAccessor;
 
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.criterion.ItemPredicate;
-import net.minecraft.advancements.criterion.MinMaxBounds;
+import net.minecraft.advancements.predicates.ItemPredicate;
+import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;

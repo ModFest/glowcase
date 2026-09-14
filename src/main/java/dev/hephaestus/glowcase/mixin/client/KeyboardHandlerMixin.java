@@ -15,7 +15,7 @@ public class KeyboardHandlerMixin {
 	)
 	private boolean preventNarratorToggleOnTextBlockScreen(boolean original) {
 		//prevents the narrator from being toggled when pressing "ctrl+b" to hotkey bold formatting in the text block
-		return original && !(Minecraft.getInstance().screen instanceof TextBlockEditScreen);
+		return original && !(Minecraft.getInstance().gui.screen() instanceof TextBlockEditScreen);
 	}
 
 }

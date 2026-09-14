@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Pair;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
@@ -26,7 +27,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -347,8 +347,8 @@ public class NoteEditScreen extends TextEditorScreen {
 		boolean result;
 
 		int keyCode = event.key();
-		if (this.colorPickerWidget.active && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE)) {
-			if (keyCode == GLFW.GLFW_KEY_ENTER) {
+		if (this.colorPickerWidget.active && (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_ESCAPE)) {
+			if (keyCode == InputConstants.KEY_RETURN) {
 				this.colorPickerWidget.confirmColor();
 			} else {
 				this.colorPickerWidget.cancel();
@@ -357,21 +357,21 @@ public class NoteEditScreen extends TextEditorScreen {
 		} else {
 			setFocused(null);
 			result = true;
-			if (keyCode == GLFW.GLFW_KEY_UP || (keyCode == GLFW.GLFW_KEY_LEFT && selectionManager.getCursorPos() <= 0 && currentRow > 0)) {
+			if (keyCode == InputConstants.KEY_UP || (keyCode == InputConstants.KEY_LEFT && selectionManager.getCursorPos() <= 0 && currentRow > 0)) {
 				// Move cursor up
 				currentRow = Math.max(currentRow - 1, signing ? 6 : 0);
 				editing_line_offset = 0;
 				selectionManager.setCursorToEnd();
-			} else if (keyCode == GLFW.GLFW_KEY_DOWN || (keyCode == GLFW.GLFW_KEY_RIGHT && selectionManager.getCursorPos() >= getRawLine(currentRow).length() && currentRow < NoteComponent.LINES_LIMIT - 1)) {
+			} else if (keyCode == InputConstants.KEY_DOWN || (keyCode == InputConstants.KEY_RIGHT && selectionManager.getCursorPos() >= getRawLine(currentRow).length() && currentRow < NoteComponent.LINES_LIMIT - 1)) {
 				// Move cursor down
 				currentRow = Math.min(currentRow + 1, signing ? 7 : NoteComponent.LINES_LIMIT - 1);
 				editing_line_offset = 0;
 
-				if (keyCode == GLFW.GLFW_KEY_DOWN)
+				if (keyCode == InputConstants.KEY_DOWN)
 					selectionManager.setCursorToEnd();
 				else
 					selectionManager.setCursorToStart();
-			} else if (!signing && (currentRow < NoteComponent.LINES_LIMIT - 1) && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+			} else if (!signing && (currentRow < NoteComponent.LINES_LIMIT - 1) && (keyCode == InputConstants.KEY_RETURN)) {
 				// Split lines (enter)
 				if (hasSpaceLeft()) {
 					int cursor = selectionManager.getCursorPos();
@@ -396,7 +396,7 @@ public class NoteEditScreen extends TextEditorScreen {
 						selectionManager.setCursorToStart();
 					}
 				}
-			} else if (!signing && (currentRow > 0 && selectionManager.getCursorPos() <= 0) && (keyCode == GLFW.GLFW_KEY_BACKSPACE)) {
+			} else if (!signing && (currentRow > 0 && selectionManager.getCursorPos() <= 0) && (keyCode == InputConstants.KEY_BACKSPACE)) {
 				// Delete before cursor (backspace)
 				String curLine = getRawLine(currentRow);
 				String before = getRawLine(currentRow - 1);
@@ -408,7 +408,7 @@ public class NoteEditScreen extends TextEditorScreen {
 				currentRow--;
 				selectionManager.setCursorToStart();
 				selectionManager.moveByChars(before.length());
-			} else if (!signing && (currentRow < NoteComponent.LINES_LIMIT - 1 && selectionManager.getCursorPos() >= getRawLine(currentRow).length()) && (keyCode == GLFW.GLFW_KEY_DELETE)) {
+			} else if (!signing && (currentRow < NoteComponent.LINES_LIMIT - 1 && selectionManager.getCursorPos() >= getRawLine(currentRow).length()) && (keyCode == InputConstants.KEY_DELETE)) {
 				// Delete after cursor (delete key)
 				String curLine = getRawLine(currentRow);
 				String after = getRawLine(currentRow + 1);
@@ -416,7 +416,7 @@ public class NoteEditScreen extends TextEditorScreen {
 
 				lines.remove(currentRow + 1);
 				lines.add(Component.nullToEmpty(""));
-			} else if (signing && keyCode == GLFW.GLFW_KEY_TAB) {
+			} else if (signing && keyCode == InputConstants.KEY_TAB) {
 				// Tab
 				currentRow = (currentRow == 6 ? 7 : 6);
 			} else {

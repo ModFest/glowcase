@@ -1,11 +1,11 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.vertex;
 
-import net.caffeinemc.mods.sodium.client.util.sorting.VertexSorters;
-import net.caffeinemc.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting.MultiBufferSourceMixin;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder.Result;
-import com.mojang.blaze3d.vertex.VertexFormat.IndexType;
 import dev.hephaestus.glowcase.mixinsupport.sodium.SodiumCompatShortcuts;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -40,7 +40,7 @@ public record CompiledMesh(MeshData meshData, @Nullable Sorter sorter) implement
 	public record SodiumSortState(CompactVectorArray centroids, IndexType indexType) implements Sorter {
 		public static @Nullable SodiumSortState create(MeshData meshData) {
 			MeshData.DrawState drawState = meshData.drawState();
-			if (drawState.mode() != VertexFormat.Mode.QUADS) return null;
+			if (drawState.primitiveTopology() != PrimitiveTopology.QUADS) return null;
 
 			CompactVectorArray centroids = unpackQuadCentroids(meshData.vertexBuffer(), drawState.vertexCount(), drawState.format());
 
@@ -48,7 +48,7 @@ public record CompiledMesh(MeshData meshData, @Nullable Sorter sorter) implement
 		}
 
 		private static CompactVectorArray unpackQuadCentroids(final ByteBuffer vertexBuffer, final int vertices, final VertexFormat format) {
-			final int positionOffset = format.getOffset(VertexFormatElement.POSITION);
+			final int positionOffset = format.getOffset(POSITION);
 			if (positionOffset == -1) {
 				throw new IllegalArgumentException("Cannot identify quad centers with no position element");
 			}

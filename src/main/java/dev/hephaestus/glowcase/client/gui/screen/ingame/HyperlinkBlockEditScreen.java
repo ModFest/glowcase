@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditHyperlinkBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
@@ -7,7 +8,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import org.lwjgl.glfw.GLFW;
 
 public class HyperlinkBlockEditScreen extends BlockEditorScreen<HyperlinkBlockEntity> {
 	private EditBox titleEntryWidget;
@@ -38,7 +38,7 @@ public class HyperlinkBlockEditScreen extends BlockEditorScreen<HyperlinkBlockEn
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int keyCode = event.key();
-		if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE) {
+		if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_ESCAPE) {
 			this.onClose();
 			return true;
 		} else if (this.titleEntryWidget.canConsumeInput()) {

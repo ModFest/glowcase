@@ -7,6 +7,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -55,9 +56,9 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 				picker.toggle(false);
 			});
 			colorPickerWidget.setOnCancel(picker -> picker.toggle(false));
-			colorPickerWidget.setPresetListener((color, formatting) -> {
-				if(formatting != null) {
-					insertFormattingTag(formatting);
+			colorPickerWidget.setPresetListener((color, textColor) -> {
+				if (textColor != null) {
+					insertTextColorTag(textColor);
 				} else {
 					insertHexTag(ColorPickerWidget.getHexCode(color));
 				}
@@ -85,10 +86,10 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 	}
 
 	public void insertTag(TextTag tag, boolean findShortest) {
-		if(tag == null) return;
+		if (tag == null) return;
 		//find the alias with the least amount of characters
 		String name = tag.name();
-		if(findShortest && tag.aliases().length > 1) {
+		if (findShortest && tag.aliases().length > 1) {
 			String shortest = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
 			name = Arrays.stream(tag.aliases()).min(Comparator.comparing(String::length)).get();
 		}
@@ -97,7 +98,7 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 		int selectedStart = selectionManager.getCursorPos();
 		int selectedEnd = selectionManager.getSelectionPos();
-		if(selectedStart != selectedEnd) {
+		if (selectedStart != selectedEnd) {
 			int selectedAmount = Math.abs(selectedEnd - selectedStart);
 			//text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
 			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
@@ -117,7 +118,7 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		TextFieldHelper selectionManager = getSelectionManager();
 		int selectedStart = selectionManager.getCursorPos();
 		int selectedEnd = selectionManager.getSelectionPos();
-		if(selectedStart != selectedEnd) {
+		if (selectedStart != selectedEnd) {
 			int selectedAmount = Math.abs(selectedEnd - selectedStart);
 			//text is selected/highlighted - selection is determined based on the direction it happens, so an extra check is needed
 			selectionManager.moveBy(selectedStart < selectedEnd ? 0 : -selectedAmount, false, TextFieldHelper.CursorStep.CHARACTER);
@@ -133,7 +134,13 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 	}
 
 	@Override
-	public void insertFormattingTag(ChatFormatting formatting) {
-		insertTag(TagRegistry.SAFE.getTag(formatting.getName()), false);
+	public void insertTextColorTag(TextColor textColor) {
+		final var serialized = textColor.serialize();
+
+		if (!serialized.startsWith("#")) {
+			insertTag(TagRegistry.SAFE.getTag(serialized), false);
+			return;
+		}
+		insertHexTag(serialized);
 	}
 }

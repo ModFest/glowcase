@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block;
 
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -21,7 +20,6 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -44,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public class ItemAcceptorBlock extends GlowcaseBlock {
-	public static final MapCodec<ItemAcceptorBlock> CODEC = simpleCodec(ItemAcceptorBlock::new);
 	private static final VoxelShape OUTLINE = Shapes.block();
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
@@ -217,10 +214,5 @@ public class ItemAcceptorBlock extends GlowcaseBlock {
 		textConsumer.accept(Component.translatable("block.glowcase.item_acceptor_block.tooltip.1").withStyle(ChatFormatting.BLUE));
 		textConsumer.accept(Component.translatable("block.glowcase.item_acceptor_block.tooltip.2").withStyle(ChatFormatting.BLUE));
 		textConsumer.accept(Component.translatable("block.glowcase.item_acceptor_block.tooltip.3").withStyle(ChatFormatting.DARK_GRAY));
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

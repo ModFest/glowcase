@@ -1,21 +1,20 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.function.BiConsumer;
 
 public class ColorPresetWidget extends AbstractButton {
 	public final ColorPickerWidget colorPickerWidget;
 	public final Color color;
 	@Nullable
-	public ChatFormatting formatting = null;
+	public TextColor textColor = null;
 	public int z = 0;
 
 	public ColorPresetWidget(ColorPickerWidget colorPicker, int x, int y, int width, int height, Color color) {
@@ -31,14 +30,11 @@ public class ColorPresetWidget extends AbstractButton {
 		this.z = z;
 	}
 
-	public static ColorPresetWidget fromFormatting(ColorPickerWidget colorPicker, ChatFormatting formatting) {
-		if (formatting.isColor()) {
-			//noinspection DataFlowIssue
-			ColorPresetWidget presetWidget = new ColorPresetWidget(colorPicker, 0, 0, 0, 0, new Color(formatting.getColor()));
-			presetWidget.formatting = formatting;
-			return presetWidget;
-		}
-		return new ColorPresetWidget(colorPicker, 0, 0, 0, 0, Color.white); //fallback
+	public static ColorPresetWidget fromTextColor(ColorPickerWidget colorPicker, TextColor textColor) {
+		//noinspection DataFlowIssue
+		ColorPresetWidget presetWidget = new ColorPresetWidget(colorPicker, 0, 0, 0, 0, new Color(textColor.getValue()));
+		presetWidget.textColor = textColor;
+		return presetWidget;
 	}
 
 	public static ColorPresetWidget fromColor(ColorPickerWidget colorPicker, Color color) {
@@ -63,11 +59,11 @@ public class ColorPresetWidget extends AbstractButton {
 
 	@Override
 	public void onPress(InputWithModifiers input) {
-		BiConsumer<Color, ChatFormatting> presetListener = this.colorPickerWidget.getPresetListener();
+		var presetListener = this.colorPickerWidget.getPresetListener();
 		if (presetListener != null) {
-			presetListener.accept(this.color, this.formatting != null && this.formatting.isColor() ? this.formatting : null);
+			presetListener.accept(this.color, this.textColor);
 		} else {
-			if (this.formatting != null && formatting.isColor()) {
+			if (this.textColor != null) {
 				this.colorPickerWidget.color = this.color;
 				this.colorPickerWidget.toggle(false);
 			} else {

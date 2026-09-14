@@ -7,9 +7,7 @@ import dev.hephaestus.glowcase.mixinsupport.BufferOOMRecovery;
 import dev.hephaestus.glowcase.util.collections.ObjectPairArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.caffeinemc.mods.sodium.client.util.sorting.VertexSortingExtended;
-import net.caffeinemc.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting.MeshDataAccessor;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -40,7 +38,7 @@ public class BakedBEBufferSource extends MultiBufferSource.BufferSource implemen
 
 	private BufferBuilder createBuilder(RenderType renderType) {
 		final ByteBufferBuilder buffer = this.startedBuffers.computeIfAbsent(renderType, this::createBuffer);
-		return new BufferBuilder(buffer, renderType.mode(), renderType.format());
+		return new BufferBuilder(buffer, renderType.primitiveTopology(), renderType.format());
 	}
 
 	private ByteBufferBuilder createBuffer(RenderType renderType) {

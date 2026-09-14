@@ -77,6 +77,6 @@ public final class ConfigLinkClientUtil {
 	}
 
 	private static Screen notice(Minecraft client, Component title, Component notice) {
-		return new AlertScreen(() -> client.setScreen(null), title, notice, CommonComponents.GUI_OK, true);
+		return new AlertScreen(() -> client.gui.setScreen(null), title, notice, CommonComponents.GUI_OK, true);
 	}
 }

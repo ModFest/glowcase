@@ -56,8 +56,8 @@ class DevCommands {
 						BlockPos pos;
 						if (coordinates instanceof WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z)) {
 							pos = BlockPos.containing(x.get(sourcePos.x), y.get(sourcePos.y), z.get(sourcePos.z));
-						} else if (coordinates instanceof LocalCoordinates(double left, double up, double forwards)){
-							pos = BlockPos.containing(Vec3.applyLocalCoordinatesToRotation(source.getRotation(), new Vec3(left, up, forwards)).add(sourcePos.x, sourcePos.y, sourcePos.z));
+						} else if (coordinates instanceof LocalCoordinates lc){
+							pos = BlockPos.containing(lc.apply(sourcePos, source.getRotation()));
 						} else {
 							throw new IllegalStateException("Invalid input");
 						}
@@ -76,8 +76,8 @@ class DevCommands {
 					BlockPos pos;
 					if (coordinates instanceof WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z)) {
 						pos = BlockPos.containing(x.get(sourcePos.x), y.get(sourcePos.y), z.get(sourcePos.z));
-					} else if (coordinates instanceof LocalCoordinates(double left, double up, double forwards)){
-						pos = BlockPos.containing(Vec3.applyLocalCoordinatesToRotation(source.getRotation(), new Vec3(left, up, forwards)).add(sourcePos.x, sourcePos.y, sourcePos.z));
+					} else if (coordinates instanceof LocalCoordinates lc){
+						pos = BlockPos.containing(lc.apply(sourcePos, source.getRotation()));
 					} else {
 						throw new IllegalStateException("Invalid input");
 					}

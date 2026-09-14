@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block;
 
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
@@ -16,7 +15,6 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public class EntityDisplayBlock extends StackInteractableBlock {
-	public static final MapCodec<EntityDisplayBlock> CODEC = simpleCodec(EntityDisplayBlock::new);
-
 	public EntityDisplayBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
@@ -70,10 +66,5 @@ public class EntityDisplayBlock extends StackInteractableBlock {
 		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.0").withStyle(ChatFormatting.GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.1").withStyle(ChatFormatting.DARK_GRAY));
 		textConsumer.accept(Component.translatable("block.glowcase.entity_display_block.tooltip.2").withStyle(ChatFormatting.DARK_GRAY));
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

@@ -38,40 +38,42 @@ import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
+import java.net.URI;
+
 public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 
 	@Override
 	public void openConfigLinkBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ConfigLinkBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ConfigLinkBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ConfigLinkBlockEditScreen(be));
 		}
 	}
 
 	@Override
 	public void openConfigScreen(String link) {
 		Minecraft client = Minecraft.getInstance();
-		client.setScreen(ConfigLinkClientUtil.getConfigScreen(client, link));
+		client.setScreenAndShow(ConfigLinkClientUtil.getConfigScreen(client, link));
 	}
 
 	@Override
 	public void openHyperlinkBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof HyperlinkBlockEntity be) {
-			Minecraft.getInstance().setScreen(new HyperlinkBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new HyperlinkBlockEditScreen(be));
 		}
 	}
 
 	@Override
-	public void openUrlWithConfirmation(String url) {
-		ConfirmLinkScreen.confirmLinkNow(Minecraft.getInstance().screen, url);
+	public void openUrlWithConfirmation(URI uri) {
+		ConfirmLinkScreen.confirmLinkNow(Minecraft.getInstance().gui.screen(), uri);
 	}
 
 	@Override
 	public void openItemDisplayBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemDisplayBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ItemDisplayEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ItemDisplayEditScreen(be));
 		}
 	}
 
@@ -79,7 +81,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openItemProviderBlockEditScreen(BlockPos pos){
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemProviderBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ItemProviderBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ItemProviderBlockEditScreen(be));
 		}
 	}
 
@@ -87,7 +89,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openTextBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof TextBlockEntity be) {
-			Minecraft.getInstance().setScreen(new TextBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new TextBlockEditScreen(be));
 		}
 	}
 
@@ -95,7 +97,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openPopupBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof PopupBlockEntity be) {
-			Minecraft.getInstance().setScreen(new PopupBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new PopupBlockEditScreen(be));
 		}
 	}
 
@@ -103,7 +105,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openPopupBlockViewScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof PopupBlockEntity be) {
-			Minecraft.getInstance().setScreen(new PopupBlockViewScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new PopupBlockViewScreen(be));
 		}
 	}
 
@@ -111,7 +113,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openScreenBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ScreenBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ScreenBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ScreenBlockEditScreen(be));
 		}
 	}
 
@@ -119,7 +121,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openRecipeBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof RecipeBlockEntity be) {
-			Minecraft.getInstance().setScreen(new RecipeBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new RecipeBlockEditScreen(be));
 		}
 	}
 
@@ -127,7 +129,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openSpriteBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof SpriteBlockEntity be) {
-			Minecraft.getInstance().setScreen(new SpriteBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new SpriteBlockEditScreen(be));
 		}
 	}
 
@@ -135,7 +137,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openOutlineBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof OutlineBlockEntity be) {
-			Minecraft.getInstance().setScreen(new OutlineBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new OutlineBlockEditScreen(be));
 		}
 	}
 
@@ -143,7 +145,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openParticleDisplayBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ParticleDisplayBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ParticleDisplayEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ParticleDisplayEditScreen(be));
 		}
 	}
 
@@ -151,7 +153,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openSoundBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof SoundPlayerBlockEntity be) {
-			Minecraft.getInstance().setScreen(new SoundPlayerBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new SoundPlayerBlockEditScreen(be));
 		}
 	}
 
@@ -159,7 +161,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openItemAcceptorBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof ItemAcceptorBlockEntity be) {
-			Minecraft.getInstance().setScreen(new ItemAcceptorBlockEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new ItemAcceptorBlockEditScreen(be));
 		}
 	}
 
@@ -167,7 +169,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openTabletEditScreen(ItemStack stack) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null) {
-			Minecraft.getInstance().setScreen(new TabletEditScreen(stack));
+			Minecraft.getInstance().setScreenAndShow(new TabletEditScreen(stack));
 		}
 	}
 
@@ -175,7 +177,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openNoteEditScreen(ItemStack stack) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null) {
-			Minecraft.getInstance().setScreen(new NoteEditScreen(stack));
+			Minecraft.getInstance().setScreenAndShow(new NoteEditScreen(stack));
 		}
 	}
 
@@ -183,7 +185,7 @@ public class GlowcaseClientProxy extends GlowcaseCommonProxy {
 	public void openEntityDisplayBlockEditScreen(BlockPos pos) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null && client.level.getBlockEntity(pos) instanceof EntityDisplayBlockEntity be) {
-			Minecraft.getInstance().setScreen(new EntityDisplayEditScreen(be));
+			Minecraft.getInstance().setScreenAndShow(new EntityDisplayEditScreen(be));
 		}
 	}
 }

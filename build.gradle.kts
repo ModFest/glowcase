@@ -14,7 +14,6 @@ base {
 
 repositories {
 	maven("https://maven.nucleoid.xyz/")
-	maven("https://repo.sleeping.town/")
 	maven("https://maven.terraformersmc.com/")
 	maven("https://jitpack.io")
 
@@ -40,6 +39,7 @@ repositories {
 		}
 	}
 
+	maven("https://repo.sleeping.town/")
 	mavenLocal()
 }
 

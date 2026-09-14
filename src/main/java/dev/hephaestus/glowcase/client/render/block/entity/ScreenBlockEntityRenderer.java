@@ -109,27 +109,27 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 	}
 
 	@Override
-	public void submit(ScreenRenderState state, PoseStack matrices, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+	public void submit(ScreenRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos) ||
 			(Minecraft.getInstance().player != null && Minecraft.getInstance().player.getMainHandItem().is(Glowcase.TABLET_ITEM.get()))) {
-			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation, ITEM_TEXTURE, 1.0F, matrices, submitNodeCollector);
+			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector);
 		}
 
-		matrices.pushPose();
+		poseStack.pushPose();
 
 		// Positioning
 
-		matrices.translate(.5f, .5f, .5f);
+		poseStack.translate(.5f, .5f, .5f);
 
 		float rotation = state.rotationInDegrees();
-		matrices.mulPose(Axis.YP.rotationDegrees(rotation + 180));
-		matrices.translate(state.offset.x(), state.offset.y(), state.offset.z());
+		poseStack.rotate(Axis.YP.rotationDegrees(rotation + 180));
+		poseStack.translate(state.offset.x(), state.offset.y(), state.offset.z());
 
-		matrices.mulPose(Quaternionsf.rotateDegreesYXZ(state.yaw, state.pitch, 0));
+		poseStack.rotate(Quaternionsf.rotateDegreesYXZ(state.yaw, state.pitch, 0));
 
-		renderScreen(state, matrices, submitNodeCollector);
+		renderScreen(state, poseStack, submitNodeCollector);
 
-		matrices.popPose();
+		poseStack.popPose();
 	}
 
 	private void renderScreen(ScreenRenderState state, PoseStack poses, SubmitNodeCollector collector) {
@@ -299,11 +299,11 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 		collector.submitText(poses, 0, 0, FACE, true, Font.DisplayMode.NORMAL, light, COLOR_TXT_CRASH, 0, 0);
 	}
 
-	public static void submitTextCentered(Component text, int color, float scr_width, float scr_height, PoseStack matrices, SubmitNodeCollector collector, Font font, int light) {
-		submitTextCentered(text.getVisualOrderText(), color, scr_width, scr_height, matrices, collector, font, light);
+	public static void submitTextCentered(Component text, int color, float scr_width, float scr_height, PoseStack poseStack, SubmitNodeCollector collector, Font font, int light) {
+		submitTextCentered(text.getVisualOrderText(), color, scr_width, scr_height, poseStack, collector, font, light);
 	}
 
-	public static void submitTextCentered(FormattedCharSequence text, int color, float scr_width, float scr_height, PoseStack matrices, SubmitNodeCollector collector, Font font, int light) {
+	public static void submitTextCentered(FormattedCharSequence text, int color, float scr_width, float scr_height, PoseStack poseStack, SubmitNodeCollector collector, Font font, int light) {
 		// Scale font
 		float max_font_width = scr_width / font.width(text);
 		float max_font_height = scr_height / font.lineHeight;
@@ -311,10 +311,10 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 		float font_scale_factor = Math.min(max_font_width, max_font_height) * .6f;
 
 		// Apply
-		matrices.scale(-font_scale_factor, -font_scale_factor, -0.5f);
-		matrices.translate(-font.width(text) / 2f, -font.lineHeight / 2f, .1f); // Remove offset of string
+		poseStack.scale(-font_scale_factor, -font_scale_factor, -0.5f);
+		poseStack.translate(-font.width(text) / 2f, -font.lineHeight / 2f, .1f); // Remove offset of string
 
-		collector.submitText(matrices, 0, 0, text, true, Font.DisplayMode.NORMAL, light, color, 0, 0);
+		collector.submitText(poseStack, 0, 0, text, true, Font.DisplayMode.NORMAL, light, color, 0, 0);
 	}
 
 	/**

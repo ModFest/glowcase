@@ -31,7 +31,7 @@ public final class BlockEntityRenderUtil {
 	public static void renderPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, Quaternionf rotation, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, float zOffset) {
 		poseStack.pushPose();
 		poseStack.translate(0.5, 0.5, 0.5);
-		poseStack.mulPose(rotation);
+		poseStack.rotate(rotation);
 		poseStack.translate(0, 0, zOffset);
 		poseStack.scale(scale, scale, scale);
 		submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutoutCull(texture), (pose, buffer) -> {
@@ -58,30 +58,30 @@ public final class BlockEntityRenderUtil {
 	}
 
 	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
-														  float scale, PoseStack matrices, SubmitNodeCollector vertexConsumers, float zOffset) {
+														  float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers, float zOffset) {
 		renderPlaceholder(entity, texture, scale,
 			Axis.YP.rotationDegrees(-(rotation16 * 360) / 16.0F),
-			matrices, vertexConsumers, zOffset);
+			poseStack, vertexConsumers, zOffset);
 	}
 
 	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
-														  float scale, PoseStack matrices, SubmitNodeCollector vertexConsumers) {
-		renderPlaceholderWithBlockRotation(entity, rotation16, texture, scale, matrices, vertexConsumers, 0F);
+														  float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers) {
+		renderPlaceholderWithBlockRotation(entity, rotation16, texture, scale, poseStack, vertexConsumers, 0F);
 	}
 
 	public static void renderCenteredPlaceholder(BlockEntityRenderState entity, Identifier texture,
-												 float scale, Quaternionf rotation, PoseStack matrices, SubmitNodeCollector submitNodeCollector) {
-		renderPlaceholder(entity, texture, scale, rotation, matrices, submitNodeCollector, 0F);
+												 float scale, Quaternionf rotation, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
+		renderPlaceholder(entity, texture, scale, rotation, poseStack, submitNodeCollector, 0F);
 	}
 
 	public static void renderFacingPlaceholder(BlockEntityRenderState entity, Direction facing, Identifier texture,
-											   float scale, PoseStack matrices, SubmitNodeCollector submitNodeCollector) {
+											   float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
 		renderPlaceholder(
 			entity,
 			texture,
 			scale,
 			facing.getRotation().rotateX(-Mth.HALF_PI),
-			matrices,
+			poseStack,
 			submitNodeCollector,
 			-0.4F
 		);

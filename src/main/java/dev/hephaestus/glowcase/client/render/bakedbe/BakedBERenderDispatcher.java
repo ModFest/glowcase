@@ -150,12 +150,12 @@ public class BakedBERenderDispatcher {
 
 	private static BakedBERenderDispatcher createBakedBERenderDispatcher() {
 		GameRenderer gameRenderer = Minecraft.getInstance().gameRenderer;
-		FeatureRenderDispatcherAccessor renderDispatcherAccessor = (FeatureRenderDispatcherAccessor) gameRenderer.getFeatureRenderDispatcher();
+		FeatureRenderDispatcherAccessor renderDispatcherAccessor = (FeatureRenderDispatcherAccessor) gameRenderer.featureRenderDispatcher();
 		return new BakedBERenderDispatcher(
 			renderDispatcherAccessor.getModelManager(),
 			Minecraft.getInstance().getAtlasManager(),
 			renderDispatcherAccessor.getFont(),
-			gameRenderer.getGameRenderState()
+			gameRenderer.gameRenderState()
 		);
 	}
 

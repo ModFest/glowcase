@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.buffers;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.OutlineBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import org.jspecify.annotations.NullMarked;
 

@@ -70,21 +70,21 @@ public record ItemDisplayBlockEntityRenderer(
 	public void submit(ItemDisplayRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 		poseStack.pushPose();
 		poseStack.translate(0.5D, 0D, 0.5D);
-		poseStack.mulPose(Axis.YP.rotationDegrees(180.0F + state.yaw));
+		poseStack.rotate(Axis.YP.rotationDegrees(180.0F + state.yaw));
 		poseStack.translate(state.offset.x(), state.offset.y(), state.offset.z());
 
 		if (state.renderAsBlock) {
 			poseStack.translate(-0.5D, 0, -0.5D);
 
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
-			poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
+			poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
 
 			state.blockRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		} else {
 			poseStack.translate(0D, 0.5D, 0D);
 
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
-			poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch));
+			poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
 
 			state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		}

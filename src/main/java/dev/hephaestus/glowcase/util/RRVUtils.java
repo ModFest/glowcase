@@ -6,7 +6,6 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.client.recipe.ClientRecipeCache;
 import net.minecraft.resources.Identifier;
 import java.util.List;
-import java.util.Objects;
 
 public class RRVUtils {
 	public static final NotSoConstant<List<Identifier>> RECIPE_LIST = new NotSoConstant<>(() -> List.of()/*EmiApi.getRecipeManager().getRecipes().stream().map(EmiRecipe::getId).filter(Objects::nonNull).toList(), list -> !list.isEmpty()*/);
@@ -18,7 +17,7 @@ public class RRVUtils {
 			return null;
 		}
 
-		return ClientRecipeCache.INSTANCE.getRecipe(recipeId);
+		return ClientRecipeCache.INSTANCE.getRecipeEntry(recipeId);
 	}
 
 	public static void registerDevCommands() {

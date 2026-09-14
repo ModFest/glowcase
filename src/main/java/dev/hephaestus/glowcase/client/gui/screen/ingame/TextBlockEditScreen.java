@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
@@ -24,7 +25,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.List;
@@ -92,7 +92,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				Component.translatable("gui.glowcase.more"),
 				button -> {
 					var optionsScreen = new TextBlockOptionsScreen(this, textBlockEntity);
-					Minecraft.getInstance().setScreen(optionsScreen);
+					Minecraft.getInstance().setScreenAndShow(optionsScreen);
 				})
 			.bounds(middle + 124, innerPadding, 80, 20)
 			.build();
@@ -218,8 +218,8 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		if (this.colorPickerWidget.active) {
 			switch (keyCode) {
-				case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> this.colorPickerWidget.confirmColor();
-				case GLFW.GLFW_KEY_ESCAPE -> this.colorPickerWidget.cancel();
+				case InputConstants.KEY_RETURN -> this.colorPickerWidget.confirmColor();
+				case InputConstants.KEY_ESCAPE -> this.colorPickerWidget.cancel();
 				default -> {
 					final GuiEventListener listener = this.colorPickerWidget.targetElement;
 					if (listener != null) {
@@ -243,14 +243,14 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			this.toggleColorPicker(false);
 			this.setFocused(null);
 
-			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+			if (keyCode == InputConstants.KEY_ESCAPE) {
 				return true;
 			}
 		}
 
 		{
 			setFocused(null);
-			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+			if (keyCode == InputConstants.KEY_RETURN) {
 				this.textBlockEntity.addRawLine(this.currentRow + 1,
 					this.textBlockEntity.getRawLine(this.currentRow).substring(
 						Mth.clamp(this.selectionManager.getCursorPos(), 0, this.textBlockEntity.getRawLine(this.currentRow).length())
@@ -262,42 +262,42 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				++this.currentRow;
 				this.selectionManager.setCursorToStart();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_UP) {
+			} else if (keyCode == InputConstants.KEY_UP) {
 				this.currentRow = Math.max(this.currentRow - 1, 0);
 				this.selectionManager.setCursorToEnd();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
+			} else if (keyCode == InputConstants.KEY_DOWN) {
 				this.currentRow = Math.min(this.currentRow + 1, (this.textBlockEntity.lines.size() - 1));
 				this.selectionManager.setCursorToEnd();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.textBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
+			} else if (keyCode == InputConstants.KEY_BACKSPACE && this.currentRow > 0 && this.textBlockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
 				--this.currentRow;
 				this.selectionManager.setCursorToEnd();
 				deleteLine();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.textBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.textBlockEntity.getRawLine(this.currentRow).length()) {
+			} else if (keyCode == InputConstants.KEY_DELETE && this.currentRow < this.textBlockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.textBlockEntity.getRawLine(this.currentRow).length()) {
 				deleteLine();
 				return true;
 			} else {
 
 				//formatting hotkeys
 				if (event.hasControlDown()) {
-					if (keyCode == GLFW.GLFW_KEY_B) {
+					if (keyCode == InputConstants.KEY_B) {
 						insertTag(TagRegistry.SAFE.getTag("bold"), true);
 						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_I) {
+					} else if (keyCode == InputConstants.KEY_I) {
 						insertTag(TagRegistry.SAFE.getTag("italic"), true);
 						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_U) {
+					} else if (keyCode == InputConstants.KEY_U) {
 						insertTag(TagRegistry.SAFE.getTag("underline"), true);
 						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_5 || keyCode == GLFW.GLFW_KEY_S) {
+					} else if (keyCode == InputConstants.KEY_5 || keyCode == InputConstants.KEY_S) {
 						//There isn't a commonly agreed upon hotkey for strikethrough unlike the rest above
 						//apparently 5 is commonly used for strikethrough ¯\_(ツ)_/¯
 						//Google Docs and Microsoft Word have 5 in their hotkeys, while Discord has S in its hotkey
 						insertTag(TagRegistry.SAFE.getTag("strikethrough"), true);
 						return true;
-					} else if (keyCode == GLFW.GLFW_KEY_O) {
+					} else if (keyCode == InputConstants.KEY_O) {
 						insertTag(TagRegistry.SAFE.getTag("obfuscated"), true);
 						return true;
 					}
@@ -328,7 +328,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 					return val;
 				} catch (StringIndexOutOfBoundsException e) {
 					e.printStackTrace();
-					Minecraft.getInstance().setScreen(null);
+					Minecraft.getInstance().gui.setScreen(null);
 					return false;
 				}
 			}
@@ -358,7 +358,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			final int newColor = ColorUtil.transferAlpha(this.colorEntryPreColorPicker.getRGB(), color.getRGB());
 			textWidget.setValue(ColorUtil.toAlphaHex(newColor));
 		});
-		this.colorPickerWidget.setPresetListener((color, formatting) -> {
+		this.colorPickerWidget.setPresetListener((color, _) -> {
 			this.colorPickerWidget.setColor(color);
 		});
 		ColorUtil.parse(textWidget.getValue(), ColorUtil.WHITE).ifSuccess(color -> {

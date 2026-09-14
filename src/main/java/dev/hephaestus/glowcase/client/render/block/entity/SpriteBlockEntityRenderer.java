@@ -85,29 +85,29 @@ public record SpriteBlockEntityRenderer(
 	}
 
 	@Override
-	public void submit(SpriteRenderState state, PoseStack matrices, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+	public void submit(SpriteRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 		if ((state.sprite == null && state.renderItem.isEmpty()) || BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
-			BlockEntityRenderUtil.renderFacingPlaceholder(state, state.facing, ITEM_TEXTURE, 1.0F, matrices, submitNodeCollector);
+			BlockEntityRenderUtil.renderFacingPlaceholder(state, state.facing, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector);
 		}
 
-		matrices.pushPose();
-		matrices.translate(0.5D, 0.5D, 0.5D);
+		poseStack.pushPose();
+		poseStack.translate(0.5D, 0.5D, 0.5D);
 
-		matrices.mulPose(state.facing.getRotation().rotateX(-Mth.HALF_PI));
-		matrices.mulPose(Axis.ZN.rotationDegrees(state.rotation));
+		poseStack.rotate(state.facing.getRotation().rotateX(-Mth.HALF_PI));
+		poseStack.rotate(Axis.ZN.rotationDegrees(state.rotation));
 
 		switch (state.zOffset) {
-			case FRONT -> matrices.translate(0D, 0D, 0.4D);
-			case BACK -> matrices.translate(0D, 0D, -0.4D);
+			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
+			case BACK -> poseStack.translate(0D, 0D, -0.4D);
 		}
 
-		matrices.scale(state.scale, state.scale, state.scale);
+		poseStack.scale(state.scale, state.scale, state.scale);
 
 		if (!state.renderItem.isEmpty()) {
 			// FIXME: tint
-			state.renderItem.submit(matrices, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+			state.renderItem.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		} else {
-			submitNodeCollector.submitCustomGeometry(matrices, RenderTypes.entityCutout(state.sprite), (pose, vertexConsumer) -> {
+			submitNodeCollector.submitCustomGeometry(poseStack, RenderTypes.entityCutout(state.sprite), (pose, vertexConsumer) -> {
 				vertex(pose, vertexConsumer, vertices[0], 0, 1, state.lightCoords, state.color);
 				vertex(pose, vertexConsumer, vertices[1], 1, 1, state.lightCoords, state.color);
 				vertex(pose, vertexConsumer, vertices[2], 1, 0, state.lightCoords, state.color);
@@ -115,7 +115,7 @@ public record SpriteBlockEntityRenderer(
 			});
 		}
 
-		matrices.popPose();
+		poseStack.popPose();
 	}
 
 	private static Identifier meow(final String sprite) {

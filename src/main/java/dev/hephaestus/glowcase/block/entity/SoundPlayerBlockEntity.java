@@ -99,7 +99,7 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 			soundManager.stop(oldInstance);
 		}
 
-		final Vec3 cameraPos = client.gameRenderer.getMainCamera().position();
+		final Vec3 cameraPos = client.gameRenderer.mainCamera().position();
 		final Vec3 sourcePos = entity.getSourcePos();
 
 		if (cameraPos.distanceToSqr(sourcePos) > entity.distanceSquared()) {
@@ -122,15 +122,15 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 			return offset;
 		}
 
-		return worldPosition.getCenter().add(offset);
+		return Vec3.atCenterOf(worldPosition).add(offset);
 	}
 
 	private Vec3 getSourcePos() {
 		if (relative) {
-			return worldPosition.getCenter();
+			return Vec3.atCenterOf(worldPosition);
 		}
 
-		return worldPosition.getCenter().add(offset);
+		return Vec3.atCenterOf(worldPosition).add(offset);
 	}
 
 	private float distanceSquared() {
@@ -142,7 +142,7 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 		CAMERA {
 			@Override
 			public Vec3 getPosition(final Minecraft client) {
-				return client.gameRenderer.getMainCamera().position();
+				return client.gameRenderer.mainCamera().position();
 			}
 		},
 		PLAYER {
@@ -206,7 +206,7 @@ public class SoundPlayerBlockEntity extends GlowcaseBlockEntity {
 				return;
 			}
 
-			if (!inRange(client.player, client.gameRenderer.getMainCamera())) {
+			if (!inRange(client.player, client.gameRenderer.mainCamera())) {
 				setDone();
 				return;
 			}

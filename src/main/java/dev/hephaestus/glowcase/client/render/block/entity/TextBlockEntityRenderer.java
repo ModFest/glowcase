@@ -122,7 +122,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		poseStack.scale(1, -1, 1);
 
 		float rotation = -(state.rotation16 * 360) / 16.0F;
-		poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+		poseStack.rotate(Axis.YP.rotationDegrees(rotation));
 
 		// Must be done after rotation.
 		// Else it's always along global Z-axis as unintended.

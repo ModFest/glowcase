@@ -50,25 +50,25 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 	}
 
 	@Override
-	public void submit(EntityDisplayRenderState state, PoseStack matrices, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		matrices.pushPose();
-		matrices.translate(0.5D, 0D, 0.5D);
-		matrices.mulPose(Axis.YP.rotationDegrees(state.yaw));
-		matrices.translate(state.offset);
-		matrices.scale(state.scale.x, state.scale.y, state.scale.z);
-		matrices.mulPose(Axis.XP.rotationDegrees(state.pitch));
+	public void submit(EntityDisplayRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+		poseStack.pushPose();
+		poseStack.translate(0.5D, 0D, 0.5D);
+		poseStack.rotate(Axis.YP.rotationDegrees(state.yaw));
+		poseStack.translate(state.offset);
+		poseStack.scale(state.scale.x, state.scale.y, state.scale.z);
+		poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
 		Entity renderEntity = state.entity;
 		if (renderEntity != null) {
 			//noinspection unchecked
 			EntityRenderer<Entity, EntityRenderState> entityRenderer = (EntityRenderer<Entity, EntityRenderState>) context.entityRenderer().getRenderer(renderEntity);
 			EntityRenderState entityRenderState = entityRenderer.createRenderState(renderEntity, 0);
-			entityRenderer.submit(entityRenderState, matrices, submitNodeCollector, camera);
+			entityRenderer.submit(entityRenderState, poseStack, submitNodeCollector, camera);
 		}
 
-		matrices.popPose();
+		poseStack.popPose();
 
 		if (renderEntity == null || BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
-			BlockEntityRenderUtil.renderCenteredPlaceholder(state, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(state.yaw), matrices, submitNodeCollector);
+			BlockEntityRenderUtil.renderCenteredPlaceholder(state, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(state.yaw), poseStack, submitNodeCollector);
 		}
 	}
 

@@ -1,11 +1,10 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.hephaestus.glowcase.client.gui.screen.ingame.ColorPickerIncludedScreen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -17,6 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+// TODO Theres not really a reason to use Color and TextColor, should just use TextColor
 public class ColorPickerWidget extends AbstractButton {
 	static final Identifier CONFIRM_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept");
 	static final Identifier CONFIRM_HIGHLIGHTED_TEXTURE = Identifier.withDefaultNamespace("pending_invite/accept_highlighted");
@@ -44,7 +45,7 @@ public class ColorPickerWidget extends AbstractButton {
 	public IconButtonWidget confirmButton;
 	public IconButtonWidget cancelButton;
 	private Consumer<Color> changeListener;
-	private BiConsumer<Color, @Nullable ChatFormatting> presetListener;
+	private BiConsumer<Color, @Nullable TextColor> presetListener;
 	private Consumer<ColorPickerWidget> onAccept;
 	private Consumer<ColorPickerWidget> onCancel;
 
@@ -133,10 +134,6 @@ public class ColorPickerWidget extends AbstractButton {
 		this.screen.insertHexTag(hex);
 	}
 
-	public void insertFormatting(ChatFormatting formatting) {
-		this.screen.insertFormattingTag(formatting);
-	}
-
 	public void setColor(Color color) {
 		this.color = color;
 		this.updateHSL();
@@ -151,11 +148,11 @@ public class ColorPickerWidget extends AbstractButton {
 		//graphics.setShaderColor(1f, 1f, 1f, this.alpha);
 		/*RenderSystem.enableBlend();
 		RenderSystem.enableDepthTest();*/
-		Matrix3x2fStack matrices = graphics.pose();
+		Matrix3x2fStack poseStack = graphics.pose();
 		//graphics.applyBlur();
 
 		graphics.nextStratum();
-		matrices.pushMatrix();
+		poseStack.pushMatrix();
 
 		int x = this.getX();
 		int y = this.getY();
@@ -188,7 +185,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.cancelButton.extractRenderState(graphics, mouseX, mouseY, delta);
 
 
-		matrices.popMatrix();
+		poseStack.popMatrix();
 
 		//graphics.setShaderColor(1f, 1f, 1f, 1f);
 	}
@@ -320,22 +317,22 @@ public class ColorPickerWidget extends AbstractButton {
 
 	//done manually to keep list order instead of looping through Formatting.values()
 	public void addDefaultPresets() {
-		ColorPresetWidget darkRed = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_RED);
-		ColorPresetWidget red = ColorPresetWidget.fromFormatting(this, ChatFormatting.RED);
-		ColorPresetWidget gold = ColorPresetWidget.fromFormatting(this, ChatFormatting.GOLD);
-		ColorPresetWidget yellow = ColorPresetWidget.fromFormatting(this, ChatFormatting.YELLOW);
-		ColorPresetWidget green = ColorPresetWidget.fromFormatting(this, ChatFormatting.GREEN);
-		ColorPresetWidget darkGreen = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_GREEN);
-		ColorPresetWidget aqua = ColorPresetWidget.fromFormatting(this, ChatFormatting.AQUA);
-		ColorPresetWidget darkAqua = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_AQUA);
-		ColorPresetWidget blue = ColorPresetWidget.fromFormatting(this, ChatFormatting.BLUE);
-		ColorPresetWidget darkBlue = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_BLUE);
-		ColorPresetWidget lightPurple = ColorPresetWidget.fromFormatting(this, ChatFormatting.LIGHT_PURPLE);
-		ColorPresetWidget darkPurple = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_PURPLE);
-		ColorPresetWidget white = ColorPresetWidget.fromFormatting(this, ChatFormatting.WHITE);
-		ColorPresetWidget grey = ColorPresetWidget.fromFormatting(this, ChatFormatting.GRAY);
-		ColorPresetWidget darkGrey = ColorPresetWidget.fromFormatting(this, ChatFormatting.DARK_GRAY);
-		ColorPresetWidget black = ColorPresetWidget.fromFormatting(this, ChatFormatting.BLACK);
+		ColorPresetWidget darkRed = ColorPresetWidget.fromTextColor(this, TextColor.DARK_RED);
+		ColorPresetWidget red = ColorPresetWidget.fromTextColor(this, TextColor.RED);
+		ColorPresetWidget gold = ColorPresetWidget.fromTextColor(this, TextColor.GOLD);
+		ColorPresetWidget yellow = ColorPresetWidget.fromTextColor(this, TextColor.YELLOW);
+		ColorPresetWidget green = ColorPresetWidget.fromTextColor(this, TextColor.GREEN);
+		ColorPresetWidget darkGreen = ColorPresetWidget.fromTextColor(this, TextColor.DARK_GREEN);
+		ColorPresetWidget aqua = ColorPresetWidget.fromTextColor(this, TextColor.AQUA);
+		ColorPresetWidget darkAqua = ColorPresetWidget.fromTextColor(this, TextColor.DARK_AQUA);
+		ColorPresetWidget blue = ColorPresetWidget.fromTextColor(this, TextColor.BLUE);
+		ColorPresetWidget darkBlue = ColorPresetWidget.fromTextColor(this, TextColor.DARK_BLUE);
+		ColorPresetWidget lightPurple = ColorPresetWidget.fromTextColor(this, TextColor.LIGHT_PURPLE);
+		ColorPresetWidget darkPurple = ColorPresetWidget.fromTextColor(this, TextColor.DARK_PURPLE);
+		ColorPresetWidget white = ColorPresetWidget.fromTextColor(this, TextColor.WHITE);
+		ColorPresetWidget grey = ColorPresetWidget.fromTextColor(this, TextColor.GRAY);
+		ColorPresetWidget darkGrey = ColorPresetWidget.fromTextColor(this, TextColor.DARK_GRAY);
+		ColorPresetWidget black = ColorPresetWidget.fromTextColor(this, TextColor.BLACK);
 		this.presetWidgets.addAll(List.of(darkRed, red, gold, yellow, green, darkGreen, aqua, darkAqua,
 			blue, darkBlue, lightPurple, darkPurple, white, grey, darkGrey, black));
 	}
@@ -541,7 +538,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.changeListener = changeListener;
 	}
 
-	public void setPresetListener(BiConsumer<Color, @Nullable ChatFormatting> presetListener) {
+	public void setPresetListener(BiConsumer<Color, @Nullable TextColor> presetListener) {
 		this.presetListener = presetListener;
 	}
 
@@ -553,7 +550,7 @@ public class ColorPickerWidget extends AbstractButton {
 		this.onCancel = onCancel;
 	}
 
-	public BiConsumer<Color, @Nullable ChatFormatting> getPresetListener() {
+	public BiConsumer<Color, @Nullable TextColor> getPresetListener() {
 		return presetListener;
 	}
 

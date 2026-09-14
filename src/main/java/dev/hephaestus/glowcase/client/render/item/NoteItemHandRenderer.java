@@ -30,17 +30,17 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 	private static final int TXT_X_PADDING = 15 * 2;
 
 	@Override
-	public void render(PoseStack matrices, SubmitNodeCollector collector, int light, ItemStack stack) {
-		matrices.pushPose();
-		matrices.mulPose(Axis.YP.rotationDegrees(180.0F));
-		matrices.mulPose(Axis.ZP.rotationDegrees(180.0F));
-		matrices.scale(0.38F, 0.38F, 0.38F);
-		matrices.translate(-0.5F, -0.5F, 0.0F);
-		matrices.scale(0.0078125F, 0.0078125F, 0.0078125F);
+	public void render(PoseStack poseStack, SubmitNodeCollector collector, int light, ItemStack stack) {
+		poseStack.pushPose();
+		poseStack.rotate(Axis.YP.rotationDegrees(180.0F));
+		poseStack.rotate(Axis.ZP.rotationDegrees(180.0F));
+		poseStack.scale(0.38F, 0.38F, 0.38F);
+		poseStack.translate(-0.5F, -0.5F, 0.0F);
+		poseStack.scale(0.0078125F, 0.0078125F, 0.0078125F);
 
 		// Render background
 
-		collector.submitCustomGeometry(matrices, RenderTypes.text(NOTE_TEXTURE), (matrix4f, vertexConsumer) -> {
+		collector.submitCustomGeometry(poseStack, RenderTypes.text(NOTE_TEXTURE), (matrix4f, vertexConsumer) -> {
 			float max_x = 1.0F / BG_SIZE * BG_WIDTH;
 			float max_y = 1.0F / BG_SIZE * BG_HEIGHT;
 
@@ -65,7 +65,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 
 		NoteComponent noteComponent = stack.get(Glowcase.NOTE_COMPONENT.get());
 		if (noteComponent == null) {
-			matrices.popPose();
+			poseStack.popPose();
 			return;
 		}
 
@@ -73,8 +73,8 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 		float off_y = 63F;
 
 		Font textRenderer = Minecraft.getInstance().font;
-		matrices.translate(off_x, off_y, -.01f);
-		matrices.scale(0.67f, 0.67f, 1f);
+		poseStack.translate(off_x, off_y, -.01f);
+		poseStack.scale(0.67f, 0.67f, 1f);
 
 		float width = BG_WIDTH - TXT_X_PADDING;
 
@@ -90,10 +90,10 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 				case RIGHT ->  BG_WIDTH - TXT_X_PADDING - textRenderer.width(text);
 			};
 
-			collector.submitText(matrices, x, textRenderer.lineHeight * i, Language.getInstance().getVisualOrder(text), false, Font.DisplayMode.NORMAL, light, NoteTextColorResource.TXT_COLOR, 0, 0);
+			collector.submitText(poseStack, x, textRenderer.lineHeight * i, Language.getInstance().getVisualOrder(text), false, Font.DisplayMode.NORMAL, light, NoteTextColorResource.TXT_COLOR, 0, 0);
 		}
 
-		matrices.popPose();
+		poseStack.popPose();
 	}
 
 	@Override

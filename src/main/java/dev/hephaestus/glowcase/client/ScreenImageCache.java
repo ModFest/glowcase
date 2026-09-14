@@ -1,8 +1,8 @@
 package dev.hephaestus.glowcase.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.renderpearl.api.textures.GpuTexture;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.util.HTTPException;
 import net.minecraft.client.Minecraft;

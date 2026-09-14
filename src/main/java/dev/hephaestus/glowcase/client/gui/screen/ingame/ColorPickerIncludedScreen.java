@@ -1,11 +1,11 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.ColorPickerWidget;
-import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
 
 public interface ColorPickerIncludedScreen {
 	ColorPickerWidget colorPickerWidget();
 	void toggleColorPicker(boolean active);
 	void insertHexTag(String hex);
-	void insertFormattingTag(ChatFormatting formatting);
+	void insertTextColorTag(TextColor textColor);
 }

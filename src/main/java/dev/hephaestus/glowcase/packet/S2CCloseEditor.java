@@ -33,8 +33,9 @@ public record S2CCloseEditor(ResourceKey<Level> dimension, BlockPos pos) impleme
 	@Environment(EnvType.CLIENT)
 	public void receive(ClientPlayNetworking.Context context) {
 		final Minecraft client = context.client();
+
 		if (
-			!(client.screen instanceof BlockEditor<?> editor)
+			!(client.gui.screen() instanceof BlockEditor<?> editor)
 			|| !editor.contextMatches(this.dimension(), this.pos())
 		) {
 			// Tell the server we don't actually hold a lock there.
@@ -43,7 +44,7 @@ public record S2CCloseEditor(ResourceKey<Level> dimension, BlockPos pos) impleme
 			return;
 		}
 		// Politely closes the editor. Allows the client to save its work before bailing.
-		client.screen.onClose();
-		client.setScreen(null);
+		client.gui.screen().onClose();
+		client.gui.setScreen(null);
 	}
 }

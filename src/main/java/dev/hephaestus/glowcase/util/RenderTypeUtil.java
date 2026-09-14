@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.util;
 
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
 public class RenderTypeUtil {

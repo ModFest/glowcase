@@ -156,7 +156,7 @@ public class TextBlockOptionsScreen extends BlockEditorScreen<TextBlockEntity> {
 	@Override
 	public void onClose() {
 		super.onClose();
-		this.minecraft.setScreen(this.returnScreen);
+		this.minecraft.setScreenAndShow(this.returnScreen);
 	}
 
 	@NullMarked

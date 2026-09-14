@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.block;
 
 import com.mojang.math.Axis;
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
@@ -16,7 +15,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,8 +29,6 @@ import org.joml.Vector3f;
 import java.util.function.Consumer;
 
 public class RecipeBlock extends RotatableBlock {
-	public static final MapCodec<RecipeBlock> CODEC = simpleCodec(RecipeBlock::new);
-
 	public RecipeBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
@@ -78,10 +74,5 @@ public class RecipeBlock extends RotatableBlock {
 		float rotation = -(state.getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F;
 		Vector3f offset = new Vector3f(0, 0, be.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : be.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F).rotate(Axis.YP.rotationDegrees(rotation));
 		return HALF_CUBED.move(offset.x, offset.y, offset.z);
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

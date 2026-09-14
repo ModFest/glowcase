@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block;
 
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -17,7 +16,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -28,8 +26,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class TextBlock extends RotatableBlock {
-	public static final MapCodec<TextBlock> CODEC = simpleCodec(TextBlock::new);
-
 	public TextBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
@@ -75,10 +71,5 @@ public class TextBlock extends RotatableBlock {
 				textConsumer.accept(Component.literal((lineContent.length() > 20 ? "%s...\"" : "%s").formatted(lineContent.substring(0, Math.min(lineContent.length(), 20)))).withStyle(ChatFormatting.DARK_PURPLE));
 			}
 		}
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

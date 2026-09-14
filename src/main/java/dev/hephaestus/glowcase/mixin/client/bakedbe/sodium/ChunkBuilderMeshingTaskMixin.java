@@ -30,12 +30,12 @@ import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.SectionCompiler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -103,8 +103,8 @@ public abstract class ChunkBuilderMeshingTaskMixin extends ChunkBuilderTask<Chun
 				renderState = bakingBlockEntityRenderer.glowcase$tryExtractBakingRenderState(
 					entity,
 					// Sodium's lightCache is in a Sodium-specific format that's ill-suited for here.
-					LevelRenderer.getLightCoords(
-						LevelRenderer.BrightnessGetter.DEFAULT,
+					LightCoordsUtil.getLightCoords(
+						LightCoordsUtil.BrightnessGetter.DEFAULT,
 						lightCache.get().getLevel(),
 						blockState,
 						blockPos

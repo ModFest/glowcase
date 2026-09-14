@@ -1,5 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
@@ -18,7 +19,6 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 //TODO: multi-character selection at some point? it may be a bit complex but it'd be nice
 public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
@@ -185,16 +185,16 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
-		int keyCode = event.key();
+		int key = event.key();
 		if (this.titleEntryWidget.canConsumeInput()) {
-			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+			if (key == InputConstants.KEY_ESCAPE) {
 				this.onClose();
 				return true;
 			} else {
 				return this.titleEntryWidget.keyPressed(event);
 			}
 		} else if (this.colorEntryWidget.canConsumeInput()) {
-			if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+			if (key == InputConstants.KEY_ESCAPE) {
 				this.onClose();
 				return true;
 			} else {
@@ -202,7 +202,7 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 			}
 		} else {
 			setFocused(null);
-			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+			if (key == InputConstants.KEY_RETURN) {
 				this.blockEntity.addRawLine(
 					this.currentRow + 1,
 					this.blockEntity.getRawLine(this.currentRow).substring(
@@ -227,20 +227,20 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 				++this.currentRow;
 				this.selectionManager.setCursorToStart();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_UP) {
+			} else if (key == InputConstants.KEY_UP) {
 				this.currentRow = Math.max(this.currentRow - 1, 0);
 				this.selectionManager.setCursorToEnd();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DOWN) {
+			} else if (key == InputConstants.KEY_DOWN) {
 				this.currentRow = Math.min(this.currentRow + 1, (this.blockEntity.lines.size() - 1));
 				this.selectionManager.setCursorToEnd();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_BACKSPACE && this.currentRow > 0 && this.blockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
+			} else if (key == InputConstants.KEY_BACKSPACE && this.currentRow > 0 && this.blockEntity.lines.size() > 1 && this.selectionManager.getCursorPos() == 0 && this.selectionManager.getSelectionPos() == this.selectionManager.getCursorPos()) {
 				--this.currentRow;
 				this.selectionManager.setCursorToEnd();
 				deleteLine();
 				return true;
-			} else if (keyCode == GLFW.GLFW_KEY_DELETE && this.currentRow < this.blockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.blockEntity.getRawLine(
+			} else if (key == InputConstants.KEY_DELETE && this.currentRow < this.blockEntity.lines.size() - 1 && this.selectionManager.getSelectionPos() == this.blockEntity.getRawLine(
 				this.currentRow).length()) {
 				deleteLine();
 				return true;
@@ -274,7 +274,7 @@ public class PopupBlockEditScreen extends BlockEditorScreen<PopupBlockEntity> {
 					return val;
 				} catch (StringIndexOutOfBoundsException e) {
 					e.printStackTrace();
-					Minecraft.getInstance().setScreen(null);
+					Minecraft.getInstance().gui.setScreen(null);
 					return false;
 				}
 			}

@@ -1,11 +1,12 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.level;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedBERenderDispatcher.ErrorRenderer;
 import dev.hephaestus.glowcase.client.render.bakedbe.BakedMeshes;
@@ -22,7 +23,7 @@ import net.minecraft.ReportedException;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.DynamicUniforms;
+import net.minecraft.client.renderer.DynamicGpuData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.chunk.SectionMesh;
@@ -108,7 +109,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 		}
 
 		int largestIndexCount = 0;
-		List<DynamicUniforms.Transform> transforms = new ObjectArrayList<>();
+		List<DynamicGpuData.Transform> transforms = new ObjectArrayList<>();
 		RenderTypeGroups.Builder renderGroups = new RenderTypeGroups.Builder();
 		DefaultedMapBase<RenderType, Map<Integer, List<RenderPass.Draw<GpuBufferSlice[]>>>> drawGroups = DefaultedMap.openHashMap(
 			_ -> new DefaultedMap<>(
@@ -151,11 +152,11 @@ public class GlowcaseLevelRenderer implements Closeable {
 							.mul(-1);
 
 						transforms.add(
-							new DynamicUniforms.Transform(
+							new DynamicGpuData.Transform(
 								new Matrix4f(modelViewMatrix).translate(renderOffset),
 								new Vector4f(1.0F, 1.0F, 1.0F, 1.0F),
 								new Vector3f(),
-								((RenderTypeAccessor) renderType).getState().textureTransform.getMatrix()
+								((RenderTypeAccessor) renderType).getState().textureTransform.createMatrix()
 							)
 						);
 					}
@@ -171,7 +172,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 
 					int firstIndex = 0;
 					GpuBuffer indexBuffer;
-					VertexFormat.IndexType indexType;
+					IndexType indexType;
 					if (!draw.hasCustomIndexBuffer()) {
 						if (draw.indexCount() > largestIndexCount) {
 							largestIndexCount = draw.indexCount();
@@ -210,7 +211,7 @@ public class GlowcaseLevelRenderer implements Closeable {
 			this.sectionRenderDispatcher.unlock();
 		}
 
-		GpuBufferSlice[] sectionTransforms = RenderSystem.getDynamicUniforms().writeTransforms(transforms.toArray(new DynamicUniforms.Transform[0]));
+		GpuBufferSlice[] sectionTransforms = RenderSystem.getDynamicUniforms().writeTransforms(transforms.toArray(new DynamicGpuData.Transform[0]));
 		this.sectionsToRender = new GlowcaseSectionsToRender(new RenderTypeGroups(renderGroups), drawGroups, largestIndexCount, sectionTransforms);
 	}
 

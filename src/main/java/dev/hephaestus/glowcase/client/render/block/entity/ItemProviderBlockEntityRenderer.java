@@ -155,9 +155,9 @@ public record ItemProviderBlockEntityRenderer(
 			poseStack.translate(0.5D, 0.5D, 0.5D);
 			poseStack.scale(0.5F, 0.5F, 0.5F);
 			if (state.isBlockItem) {
-				poseStack.mulPose(Quaternionsf.rotateYX(BlockEntityRenderUtil.getTracking(camera.pos, state.blockPos)));
+				poseStack.rotate(Quaternionsf.rotateYX(BlockEntityRenderUtil.getTracking(camera.pos, state.blockPos)));
 			} else {
-				poseStack.mulPose(Quaternionsf.rotateDegreesYXZ(-camera.yRot, camera.xRot, 0));
+				poseStack.rotate(Quaternionsf.rotateDegreesYXZ(-camera.yRot, camera.xRot, 0));
 			}
 		} else {
 			poseStack.mulPose(transform);

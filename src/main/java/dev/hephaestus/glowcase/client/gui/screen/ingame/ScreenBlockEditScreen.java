@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Floats;
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.hephaestus.glowcase.block.entity.ScreenBlockEntity;
 import dev.hephaestus.glowcase.packet.C2SEditScreenBlock;
 import dev.hephaestus.glowcase.util.TextUtils;
@@ -13,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 public class ScreenBlockEditScreen extends BlockEditorScreen<ScreenBlockEntity> {
 	private EditBox widthEntryWidget;
@@ -283,7 +283,7 @@ public class ScreenBlockEditScreen extends BlockEditorScreen<ScreenBlockEntity> 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int keyCode = event.key();
-		if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE) {
+		if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_ESCAPE) {
 			this.onClose();
 			return true;
 		} else if (this.widthEntryWidget.canConsumeInput()) {

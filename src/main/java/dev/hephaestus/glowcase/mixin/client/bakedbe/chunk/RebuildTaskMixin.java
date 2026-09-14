@@ -14,7 +14,6 @@ import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
 import net.minecraft.client.renderer.chunk.SectionCompiler.Results;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSection;
-import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSection.CompileTask.SectionTaskResult;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,7 +34,7 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 	@Expression("? = new CompiledSectionMesh(?, ?)")
 	@Inject(at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), method = "doTask", cancellable = true)
 	private void handleResults(
-		CallbackInfoReturnable<SectionTaskResult> cir,
+		CallbackInfoReturnable<RenderSection.SectionTask.SectionTaskResult> cir,
 		@Local(name = "results") Results results,
 		@Local(name = "compiledSectionMesh") CompiledSectionMesh compiledSectionMesh
 	) {
@@ -70,7 +69,7 @@ public abstract class RebuildTaskMixin implements CompileTaskAccessor {
 					} finally {
 						this$0.unlock();
 					}
-					cir.setReturnValue(SectionTaskResult.CANCELLED);
+					cir.setReturnValue(RenderSection.SectionTask.SectionTaskResult.CANCELLED);
 					return;
 				}
 

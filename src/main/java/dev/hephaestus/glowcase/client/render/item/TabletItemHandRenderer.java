@@ -24,19 +24,19 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 	private static final Identifier TABLET_TEXTURE = Glowcase.id("textures/gui/tablet_hand.png");
 
 	@Override
-	public void render(PoseStack matrices, SubmitNodeCollector collector, int light, ItemStack stack) {
-		matrices.pushPose();
+	public void render(PoseStack poseStack, SubmitNodeCollector collector, int light, ItemStack stack) {
+		poseStack.pushPose();
 		//RenderSystem.enableBlend();
 
 		// Render background
 
-		matrices.mulPose(Axis.YP.rotationDegrees(180.0F));
-		matrices.mulPose(Axis.ZP.rotationDegrees(180.0F));
-		matrices.scale(0.38F, 0.38F, 0.38F);
-		matrices.translate(-0.5F, -0.5F, 0.0F);
-		matrices.scale(0.0078125F, 0.0078125F, 0.0078125F);
+		poseStack.rotate(Axis.YP.rotationDegrees(180.0F));
+		poseStack.rotate(Axis.ZP.rotationDegrees(180.0F));
+		poseStack.scale(0.38F, 0.38F, 0.38F);
+		poseStack.translate(-0.5F, -0.5F, 0.0F);
+		poseStack.scale(0.0078125F, 0.0078125F, 0.0078125F);
 
-		collector.submitCustomGeometry(matrices, RenderTypes.text(TABLET_TEXTURE), (matrix4f, vertexConsumer) -> {
+		collector.submitCustomGeometry(poseStack, RenderTypes.text(TABLET_TEXTURE), (matrix4f, vertexConsumer) -> {
 			vertexConsumer.addVertex(matrix4f, -7.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(0.0F, 1.0F).setLight(light);
 			vertexConsumer.addVertex(matrix4f, 135.0F, 135.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 1.0F).setLight(light);
 			vertexConsumer.addVertex(matrix4f, 135.0F, -7.0F, 0.0F).setColor(CommonColors.WHITE).setUv(1.0F, 0.0F).setLight(light);
@@ -44,15 +44,15 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 		});
 
 		if (!stack.has(Glowcase.SLIDESHOW_COMPONENT.get()) || !stack.has(Glowcase.CURRENT_SLIDE_COMPONENT.get())) {
-			matrices.popPose();
+			poseStack.popPose();
 			return;
 		}
 
 		List<Pair<String, String>> slideshow = stack.get(Glowcase.SLIDESHOW_COMPONENT.get());
-		Integer index = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
+		int index = stack.getOrDefault(Glowcase.CURRENT_SLIDE_COMPONENT.get(), 0);
 
 		if (slideshow == null || index >= slideshow.size()) {
-			matrices.popPose();
+			poseStack.popPose();
 			return;
 		}
 
@@ -72,11 +72,11 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 			float off_x = 142f/64f*29.2f - (font_width * font_scale)/2f;
 			float off_y = 142f/64f*8.2f;
 
-			matrices.translate(off_x, off_y, -.01f);
-			matrices.scale(font_scale, font_scale, 1f);
-			collector.submitText(matrices, 0, 0, Language.getInstance().getVisualOrder(literal), false, Font.DisplayMode.NORMAL, light, 0xFFFFFFFF, 0, 0);
-			matrices.translate(-off_x, -off_y, .01f);
-			matrices.scale(1f/font_scale, 1f/font_scale, 1f);
+			poseStack.translate(off_x, off_y, -.01f);
+			poseStack.scale(font_scale, font_scale, 1f);
+			collector.submitText(poseStack, 0, 0, Language.getInstance().getVisualOrder(literal), false, Font.DisplayMode.NORMAL, light, 0xFFFFFFFF, 0, 0);
+			poseStack.translate(-off_x, -off_y, .01f);
+			poseStack.scale(1f/font_scale, 1f/font_scale, 1f);
 		}
 
 		// Render current picture
@@ -86,11 +86,11 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 		ScreenImageCache.ScreenTexture image = GlowcaseClient.screenImageCache.getImage(url, null);
 		Identifier texture = image.getTexture().getSecond();
 		if (texture == null) {
-			matrices.popPose();
+			poseStack.popPose();
 			return;
 		}
 
-		collector.submitCustomGeometry(matrices, RenderTypes.text(texture), (matrix4f, vertexConsumer) -> {
+		collector.submitCustomGeometry(poseStack, RenderTypes.text(texture), (matrix4f, vertexConsumer) -> {
 			float pixel = 142f / 64f;
 
 			float x1 = pixel * -21;
@@ -111,6 +111,6 @@ public class TabletItemHandRenderer extends ItemHandRenderer {
 			vertexConsumer.addVertex(matrix4f, 64 + x2, 64 + y1, -0.01F).setColor(CommonColors.WHITE).setUv(1f, 0f).setLight(light);
 		});
 
-		matrices.popPose();
+		poseStack.popPose();
 	}
 }

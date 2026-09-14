@@ -1,10 +1,10 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import dev.hephaestus.glowcase.block.ItemAcceptorBlock;
 import dev.hephaestus.glowcase.block.entity.ItemAcceptorBlockEntity;
 import dev.hephaestus.glowcase.client.util.Quaternionsf;
@@ -66,10 +66,10 @@ public record ItemAcceptorBlockEntityRenderer(
 
 		if (state.itemRenderState.usesBlockLight()) {
 			poseStack.last().normal().rotate(ITEM_LIGHT_ROTATION_3D);
-			client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
+			client.gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
 		} else {
 			poseStack.last().normal().rotate(ITEM_LIGHT_ROTATION_FLAT);
-			client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_FLAT);
+			client.gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_FLAT);
 		}
 		state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 

@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.block;
 
-import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemProviderBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -17,7 +16,6 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -33,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public class ItemProviderBlock extends StackInteractableBlock {
-	public static final MapCodec<ItemProviderBlock> CODEC = simpleCodec(ItemProviderBlock::new);
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 
 	public ItemProviderBlock(BlockBehaviour.Properties settings) {
@@ -96,10 +93,5 @@ public class ItemProviderBlock extends StackInteractableBlock {
 	public VoxelShape targetedOutlineShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		Vec3i facingOffset = state.getValue(FACING).getUnitVec3i();
 		return HALF_CUBED.move(-facingOffset.getX() / 2.0F, 0, -facingOffset.getZ() / 2.0F);
-	}
-
-	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec() {
-		return CODEC;
 	}
 }

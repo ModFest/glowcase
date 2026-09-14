@@ -3,6 +3,8 @@ package dev.hephaestus.glowcase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 
+import java.net.URI;
+
 public class GlowcaseCommonProxy {
 
 	public void openConfigLinkBlockEditScreen(BlockPos pos) {
@@ -17,7 +19,7 @@ public class GlowcaseCommonProxy {
 		//No-op
 	}
 
-	public void openUrlWithConfirmation(String url) {
+	public void openUrlWithConfirmation(URI uri) {
 		//No-op
 	}
 

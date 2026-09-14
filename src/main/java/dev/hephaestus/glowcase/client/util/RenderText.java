@@ -39,7 +39,7 @@ public final class RenderText {
 	) {
 		poseStack.pushPose();
 		poseStack.translate(0.5D, 0.5D, 0.5D);
-		poseStack.mulPose(Quaternionsf.rotateDegreesYXZ(-camera.yRot, camera.xRot, 180));
+		poseStack.rotate(Quaternionsf.rotateDegreesYXZ(-camera.yRot, camera.xRot, 180));
 		poseStack.translate(0, 0, -z);
 		final float scale = 0.5F * 0.025F;
 		// -Z fixes shadow being rendered in front of actual text

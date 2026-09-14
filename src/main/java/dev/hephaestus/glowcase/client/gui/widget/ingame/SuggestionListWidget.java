@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.textures.FilterMode;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -22,7 +24,6 @@ import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
@@ -31,7 +32,6 @@ import dev.hephaestus.glowcase.util.MathUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
-import org.lwjgl.glfw.GLFW;
 
 public class SuggestionListWidget<T> extends AbstractWidget {
 	public static final Identifier BLUR_ID = Identifier.withDefaultNamespace("blur");
@@ -501,26 +501,26 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 		var keyCode = event.key();
 		boolean affected = switch (keyCode) {
-			case GLFW.GLFW_KEY_UP -> {
+			case InputConstants.KEY_UP -> {
 				if (this.selectedItem == -1) this.selectedItem = 0;
 				this.selectedItem--;
 				yield true;
 			}
-			case GLFW.GLFW_KEY_DOWN -> {
+			case InputConstants.KEY_DOWN -> {
 				this.selectedItem++;
 				yield true;
 			}
-			case GLFW.GLFW_KEY_PAGE_UP -> {
+			case InputConstants.KEY_PAGEUP -> {
 				if (this.selectedItem == -1) this.selectedItem = 0;
 				this.selectedItem = Math.max(this.selectedItem - rows, 0);
 				yield true;
 			}
-			case GLFW.GLFW_KEY_PAGE_DOWN -> {
+			case InputConstants.KEY_PAGEDOWN -> {
 				if (this.selectedItem == -1) this.selectedItem = 0;
 				this.selectedItem = Math.min(this.selectedItem + rows, suggestions.size() - 1);
 				yield true;
 			}
-			case GLFW.GLFW_KEY_ENTER -> {
+			case InputConstants.KEY_RETURN -> {
 				if (this.selectedItem == -1) yield false;
 				onSelect.accept(suggestions.get(selectedItem));
 				yield true;

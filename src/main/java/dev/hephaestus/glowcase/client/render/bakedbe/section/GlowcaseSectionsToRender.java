@@ -1,13 +1,13 @@
 package dev.hephaestus.glowcase.client.render.bakedbe.section;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.IndexType;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.RenderTypeAccessor;
 import dev.hephaestus.glowcase.util.DefaultedMapBase;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -96,9 +96,9 @@ public record GlowcaseSectionsToRender(
 				}
 
 				profiler.popPush("auto_indices"); // 2
-				RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.mode());
+				RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(renderType.primitiveTopology());
 				GpuBuffer defaultIndexBuffer = indexBuffers.computeIfAbsent(autoIndices, _ -> this.maxIndicesRequired == 0 ? null : autoIndices.getBuffer(this.maxIndicesRequired));
-				VertexFormat.IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
+				IndexType indexType = this.maxIndicesRequired == 0 ? null : autoIndices.type();
 
 				profiler.popPush("tex_bind"); // 2
 				for (Texture texture : renderTask.textures) {
@@ -137,10 +137,10 @@ public record GlowcaseSectionsToRender(
 		if (translucent) {
 			renderTarget = minecraft.levelRenderer.getTranslucentTarget();
 		} else {
-			renderTarget = minecraft.getMainRenderTarget();
+			renderTarget = minecraft.gameRenderer.mainRenderTarget();
 		}
 
-		return renderTarget != null ? renderTarget : minecraft.getMainRenderTarget();
+		return renderTarget != null ? renderTarget : minecraft.gameRenderer.mainRenderTarget();
 	}
 
 	private record RenderTask(RenderType renderType, List<String> texturesToRemove, List<String> textureNames, List<Texture> textures) {
