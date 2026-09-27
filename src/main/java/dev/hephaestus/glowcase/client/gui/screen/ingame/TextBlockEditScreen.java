@@ -335,6 +335,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}
 	}
 
+	@Override
+	public void setFocused(@org.jspecify.annotations.Nullable GuiEventListener focused) {
+		super.setFocused(focused);
+		Minecraft.getInstance().onTextInputFocusChange(this, focused == null);
+	}
+
 	private void deleteLine() {
 		this.textBlockEntity.setRawLine(this.currentRow,
 			this.textBlockEntity.getRawLine(this.currentRow) + this.textBlockEntity.getRawLine(this.currentRow + 1)
