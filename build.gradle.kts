@@ -75,7 +75,7 @@ dependencies {
 }
 
 loom {
-	accessWidenerPath.set(file("src/main/resources/glowcase.accesswidener"))
+	accessWidenerPath.set(file("src/main/resources/glowcase.classtweaker"))
 
 	runs {
 		val clientMixinSwap = register("clientMixinSwap") {

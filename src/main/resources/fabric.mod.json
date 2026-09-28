@@ -20,7 +20,7 @@
 	"mixins": [
 		"${modId}.mixins.json"
 	],
-	"accessWidener": "glowcase.accesswidener",
+	"accessWidener": "glowcase.classtweaker",
 	"depends": {
 		"minecraft": ">=${mc}",
 		"fabricloader": ">=${fl}",
