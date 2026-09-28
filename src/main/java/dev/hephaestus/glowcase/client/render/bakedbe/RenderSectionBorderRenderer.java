@@ -1,14 +1,10 @@
 package dev.hephaestus.glowcase.client.render.bakedbe;
 
-import dev.hephaestus.glowcase.Glowcase;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.debug.DebugEntryNoop;
-import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.debug.DebugRenderer;
 import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.debug.DebugValueAccess;
 import net.minecraft.world.entity.Entity;

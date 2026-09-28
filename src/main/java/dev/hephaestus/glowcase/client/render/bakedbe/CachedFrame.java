@@ -1,10 +1,8 @@
 package dev.hephaestus.glowcase.client.render.bakedbe;
 
-import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.commands.RenderPass;
@@ -16,11 +14,9 @@ import dev.hephaestus.glowcase.mixin.client.bakedbe.FeatureRendererMapAccessor;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.StagedVertexBuffer$DrawAccessor;
 import dev.hephaestus.glowcase.mixin.client.bakedbe.StagedVertexBufferAccessor;
 import dev.hephaestus.glowcase.mixinsupport.BakeryDrawInfo;
-import dev.hephaestus.glowcase.mixinsupport.BakeryDynamicUniforms;
 import dev.hephaestus.glowcase.mixinsupport.RenderTypeInfoForBaking;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.DynamicGpuData;
-import net.minecraft.client.renderer.DynamicGpuDataStorage;
 import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.feature.FeatureFrameContext;
@@ -32,13 +28,9 @@ import net.minecraft.client.renderer.feature.phase.FeatureRenderPhase;
 import net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase;
 import net.minecraft.client.renderer.feature.submit.SubmitNode;
 import net.minecraft.client.renderer.oit.OitStage;
-import net.minecraft.core.Vec3i;
-import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.ByteBuffer;
