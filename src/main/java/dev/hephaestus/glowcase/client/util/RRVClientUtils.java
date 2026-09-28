@@ -8,7 +8,9 @@ import cc.cassian.rrv.common.overlay.itemlist.view.ItemViewOverlay;
 import dev.hephaestus.glowcase.util.RequiresRRVLoaded;
 import java.util.concurrent.atomic.AtomicReference;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.resources.Identifier;
 
 public class RRVClientUtils {
@@ -16,7 +18,9 @@ public class RRVClientUtils {
 		if (recipeId == null) {
 			return;
 		}
-		ItemViewOverlay.INSTANCE.openRecipeView(recipeId, false);
+
+		// FIXME: instantly crashes the game
+		// ItemViewOverlay.INSTANCE.openRecipeView(recipeId, false);
 	}
 
 	public static void updateWidgetHolder(String recipeId, AtomicReference<RequiresRRVLoaded> widgetHolder) {
