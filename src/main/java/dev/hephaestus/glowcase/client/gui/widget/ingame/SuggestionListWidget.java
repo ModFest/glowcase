@@ -7,35 +7,32 @@ import java.util.function.Function;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.textures.FilterMode;
+import dev.hephaestus.glowcase.client.render.gui.RenderStateFlag;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.hephaestus.glowcase.util.MathUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3x2fStack;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+@NullMarked
 public class SuggestionListWidget<T> extends AbstractWidget {
 	public static final Identifier BLUR_ID = Identifier.withDefaultNamespace("blur");
-	public static final RenderTarget FRAMEBUFFER = new TextureTarget("Glowcase Suggestions", 1, 1, false);
+	public static final RenderTarget BLUR_TEXTURE = new TextureTarget("Glowcase Suggestions", 1, 1, GpuFormat.RGBA8_UNORM, null);
 	public static final CrossFrameResourcePool POOL = new CrossFrameResourcePool(3);
 	private final Font textRenderer;
 	private final Minecraft client;
@@ -43,7 +40,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 	private final List<T> suggestions = new ArrayList<>();
 	private int selectedItem = -1;
 	private final @Nullable EditBox textFieldWidget;
-	private @NotNull String filter = "";
+	private String filter = "";
 	private int scrollOffset = 0;
 
 	private final int baseLineHeight;
@@ -131,7 +128,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 		scrollOffset = 0;
 
 		if (suggestions.isEmpty()) {
-			FRAMEBUFFER.resize(1, 1);
+			BLUR_TEXTURE.resize(1, 1);
 		}
 
 		this.setFocused(!suggestions.isEmpty());
@@ -146,41 +143,6 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 			this.setFocused(false);
 		}
 
-		graphics.nextStratum();
-		graphics.guiRenderState.addGuiElement(new GuiElementRenderState() {
-			@Override
-			public void buildVertices(VertexConsumer vertices) {
-				Matrix3x2fStack matrix = graphics.pose();
-				vertices.addVertexWith2DPose(matrix, 0, 0).setUv(0, 0).setColor(0xFFFFFFFF);
-				vertices.addVertexWith2DPose(matrix, 0, 1).setUv(0, 1).setColor(0xFFFFFFFF);
-				vertices.addVertexWith2DPose(matrix, 1, 1).setUv(1, 1).setColor(0xFFFFFFFF);
-				vertices.addVertexWith2DPose(matrix, 1, 0).setUv(1, 0).setColor(0xFFFFFFFF);
-			}
-
-			@Override
-			public RenderPipeline pipeline() {
-				return RenderPipelines.MOJANG_LOGO;
-			}
-
-			@Override
-			public TextureSetup textureSetup() {
-				return TextureSetup.singleTexture(FRAMEBUFFER.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-			}
-
-			@Override
-			public @Nullable ScreenRectangle scissorArea() {
-				return null;
-			}
-
-			@Override
-			public @Nullable ScreenRectangle bounds() {
-				return ScreenRectangle.empty();
-			}
-		});
-
-		graphics.nextStratum();
-		graphics.pose().pushMatrix();
-
 		int bgColor = 0x90000000;
 		int adjustedLineHeight = baseLineHeight + padding * 2;
 		int rows = Math.min(suggestions.size(), maxRows);
@@ -193,9 +155,21 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 		int x = SuggestionListWidget.this.getX();
 		int y = SuggestionListWidget.this.getY();
+
+		graphics.nextStratum();
+
+		graphics.guiRenderState.addGuiElement(
+			new RenderStateFlag(
+				new ScreenRectangle(x, y, x + listWidth, y + dynamicHeight),
+				BLUR_TEXTURE.getColorTextureView()
+			)
+		);
+
+		graphics.pose().pushMatrix();
+
 		graphics.enableScissor(x, y, x + listWidth, y + dynamicHeight);
 
-		graphics.blit(FRAMEBUFFER.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1);
+		graphics.blit(BLUR_TEXTURE.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST),0, 0, BLUR_TEXTURE.width / this.client.getWindow().getGuiScale(), BLUR_TEXTURE.height / this.client.getWindow().getGuiScale(), 0, 1, 1, 0);
 
 		graphics.fill(x, y, x + listWidth, y + dynamicHeight, bgColor);
 
@@ -239,7 +213,7 @@ public class SuggestionListWidget<T> extends AbstractWidget {
 
 			graphics.enableScissor(sbX, y, sbX + scrollbarWidth, y + dynamicHeight);
 
-			graphics.blit(FRAMEBUFFER.getColorTextureView(),RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST), 0, 0, FRAMEBUFFER.width / this.client.getWindow().getGuiScale(), FRAMEBUFFER.height / this.client.getWindow().getGuiScale(), 0, 1, 0, 1);
+			graphics.blit(BLUR_TEXTURE.getColorTextureView(),RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST), 0, 0, BLUR_TEXTURE.width / this.client.getWindow().getGuiScale(), BLUR_TEXTURE.height / this.client.getWindow().getGuiScale(), 0, 1, 1, 0);
 
 			graphics.fill(sbX, y, sbX + scrollbarWidth, y + dynamicHeight, bgColor);
 			graphics.disableScissor();

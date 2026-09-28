@@ -278,6 +278,8 @@ public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplay
 		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && particleId.isFocused()) {
 			return suggestionWidget.mouseClicked(event, doubleClick);
+		} else if (particleId.isMouseOver(mouseX, mouseY)) {
+			particleId.onValueChange(particleId.getValue());
 		} else {
 			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 		}

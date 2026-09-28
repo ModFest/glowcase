@@ -6,24 +6,17 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import com.mojang.renderpearl.api.commands.RenderPass;
-import com.mojang.renderpearl.api.pipeline.IndexType;
-import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
-import com.mojang.renderpearl.api.textures.FilterMode;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
+import dev.hephaestus.glowcase.mixin.client.bakedbe.TextureSetupAccessor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.GuiRenderer;
+import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.RenderPipelines;
-import org.joml.Matrix3x2f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,122 +26,121 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 @Mixin(GuiRenderer.class)
 public abstract class GuiRendererMixin {
-	@Unique private final GpuBuffer texColorBuffer = RenderSystem.getDevice().createBuffer(() -> "TexColorQuad", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, 16 * DefaultVertexFormat.POSITION_TEX_COLOR.getVertexSize());
+	@Shadow private @Final List<GuiRenderer.Draw> draws;
 
-	@Shadow @Final private List<GuiRenderer.Draw> draws;
-	@Shadow @Final private ByteBufferBuilder byteBufferBuilder;
+	@Shadow protected abstract void executeDrawRange(Supplier<String> label, RenderTarget mainRenderTarget, GpuBufferSlice dynamicTransforms, int startIndex, int endIndex);
 
-	@Shadow protected abstract void executeDrawRange(Supplier debugGroup, RenderTarget renderTarget, GpuBufferSlice fog, GpuBufferSlice dynamicTransforms, GpuBuffer buffer, IndexType indexType, int start, int end);
-
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicUniforms;writeTransform(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;", shift = At.Shift.AFTER), method = "draw")
-	private void findBlurDraw(GpuBufferSlice fogBuffer, CallbackInfo ci, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer) {
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicGpuData;writeTransform(Lorg/joml/Matrix4f;)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;", shift = At.Shift.AFTER), method = "draw")
+	private void findBlurDraw(CallbackInfo ci, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("viewsToReplace") LocalRef<ObjectArrayList<GuiRenderer.Draw>> viewsToReplace) {
 		suggestionBlurLayer.set(Integer.MAX_VALUE);
+		var views = new ObjectArrayList<GuiRenderer.Draw>();
+		viewsToReplace.set(views);
+
+		if ((float) Minecraft.getInstance().options.getMenuBackgroundBlurriness() < 1.0F) {
+			return;
+		}
+
+		boolean layerFound = false;
 		for (int i = 0; i < this.draws.size(); i++) {
 			GuiRenderer.Draw draw = draws.get(i);
-			if (draw.textureSetup().texure0() == SuggestionListWidget.FRAMEBUFFER.getColorTextureView() && draw.pipeline() == RenderPipelines.MOJANG_LOGO) {
-				suggestionBlurLayer.set(i);
-				this.draws.remove(draw);
-				break;
+			if (draw.textureSetup().texure0() != SuggestionListWidget.BLUR_TEXTURE.getColorTextureView()) continue;
+
+			if (layerFound || draw.pipeline() != RenderPipelines.MOJANG_LOGO) {
+				views.add(draw);
+				continue;
 			}
+
+			layerFound = true;
+			suggestionBlurLayer.set(i);
+		}
+
+		if (layerFound) {
+			this.draws.remove(suggestionBlurLayer.get().intValue());
 		}
 	}
 
+	@WrapOperation(at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(II)I", ordinal = 0), method = "draw")
+	private int splitForSuggestionBlur(int a, int b, Operation<Integer> original, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("beforeBlurLimit") LocalRef<Integer> beforeBlurLimit) {
+		Integer i = original.call(a, b);
+		beforeBlurLimit.set(i); // Save it for mod compat (in case another mod also changes it)
+		return Math.min(suggestionBlurLayer.get(), i);
+	}
+
 	@WrapOperation(at = @At(value = "INVOKE", target = "Ljava/util/List;size()I", ordinal = 2), method = "draw")
-	private int renderBeforeSuggestionBlurAfterBlur(List<GuiRenderer.Draw> instance, Operation<Integer> original, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("afterBlurLimit") LocalRef<Integer> afterBlurLimit) {
+	private int splitForSuggestionBlur(List<GuiRenderer.Draw> instance, Operation<Integer> original, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("afterBlurLimit") LocalRef<Integer> afterBlurLimit) {
 		Integer i = original.call(instance);
 		afterBlurLimit.set(i); // Save it for mod compat (in case another mod also changes it)
 		return Math.min(suggestionBlurLayer.get(), i);
 	}
 
-	@WrapOperation(at = @At(value = "INVOKE", target = "Ljava/util/List;size()I", ordinal = 0), method = "draw")
-	private int renderBeforeSuggestionBlurBeforeBlur(List<GuiRenderer.Draw> instance, Operation<Integer> original, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("beforeBlurLimit") LocalRef<Integer> beforeBlurLimit) {
-		Integer i = original.call(instance);
-		beforeBlurLimit.set(i); // Save it for mod compat (in case another mod also changes it)
-		return Math.min(suggestionBlurLayer.get(), i);
-	}
-
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;executeDrawRange(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/pipeline/RenderTarget;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/buffers/GpuBuffer;Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;II)V", ordinal = 0, shift = At.Shift.AFTER), method = "draw")
-	private void renderSuggestionsBlurBeforeBlur(GpuBufferSlice fogBuffer, CallbackInfo ci, @Local GpuBuffer gpuBuffer, @Local IndexType indexType, @Local(ordinal = 1) GpuBufferSlice gpuBufferSlice, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("beforeBlurLimit") LocalRef<Integer> beforeBlurLimit) {
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;executeDrawRange(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/pipeline/RenderTarget;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;II)V", ordinal = 0, shift = At.Shift.AFTER), method = "draw")
+	private void processSuggestionsBlurBeforeBlur(
+		CallbackInfo ci,
+		@Local(name = "mainRenderTarget") RenderTarget mainRenderTarget,
+		@Local(name = "dynamicTransforms") GpuBufferSlice dynamicTransforms,
+		@Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer,
+		@Share("beforeBlurLimit") LocalRef<Integer> beforeBlurLimit,
+		@Share("viewsToReplace") LocalRef<ObjectArrayList<GuiRenderer.Draw>> viewsToReplace
+	) {
+		Integer limit = beforeBlurLimit.get();
 		Integer layer = suggestionBlurLayer.get();
-		if (this.draws.size() > layer) {
-			renderSuggestionsBlur(() -> "GUI before blur", fogBuffer, gpuBuffer, indexType, gpuBufferSlice, layer, beforeBlurLimit.get());
+		if (limit > layer) {
+			glowcase$processSuggestionsBlur(() -> "GUI before blur", mainRenderTarget, dynamicTransforms, layer, limit, viewsToReplace.get());
 		}
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;executeDrawRange(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/pipeline/RenderTarget;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/buffers/GpuBuffer;Lcom/mojang/blaze3d/vertex/VertexFormat$IndexType;II)V", ordinal = 1, shift = At.Shift.AFTER), method = "draw")
-	private void renderSuggestionsBlurAfterBlur(GpuBufferSlice fogBuffer, CallbackInfo ci, @Local GpuBuffer gpuBuffer, @Local IndexType indexType, @Local(ordinal = 1) GpuBufferSlice gpuBufferSlice, @Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer, @Share("afterBlurLimit") LocalRef<Integer> afterBlurLimit) {
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;executeDrawRange(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/pipeline/RenderTarget;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;II)V", ordinal = 1, shift = At.Shift.AFTER), method = "draw")
+	private void processSuggestionsBlurAfterBlur(
+		CallbackInfo ci,
+		@Local(name = "mainRenderTarget") RenderTarget mainRenderTarget,
+		@Local(name = "dynamicTransforms") GpuBufferSlice dynamicTransforms,
+		@Share("suggestionBlurLayer") LocalRef<Integer> suggestionBlurLayer,
+		@Share("afterBlurLimit") LocalRef<Integer> afterBlurLimit,
+		@Share("viewsToReplace") LocalRef<ObjectArrayList<GuiRenderer.Draw>> viewsToReplace
+	) {
+		Integer limit = afterBlurLimit.get();
 		Integer layer = suggestionBlurLayer.get();
-		if (this.draws.size() > layer) {
-			renderSuggestionsBlur(() -> "GUI after blur", fogBuffer, gpuBuffer, indexType, gpuBufferSlice, layer, afterBlurLimit.get());
+		if (limit > layer) {
+			glowcase$processSuggestionsBlur(() -> "GUI after blur", mainRenderTarget, dynamicTransforms, layer, limit, viewsToReplace.get());
 		}
 	}
 
 	@Unique
-	private void renderSuggestionsBlur(Supplier<String> nameSupplier, GpuBufferSlice fogBuffer, GpuBuffer indexBuffer, IndexType indexType, GpuBufferSlice dynamicTransformsBuffer, int from, int to) {
-		RenderSystem.getDevice().createCommandEncoder().clearColorTexture(SuggestionListWidget.FRAMEBUFFER.getColorTexture(), 0);
+	private void glowcase$processSuggestionsBlur(
+		Supplier<String> nameSupplier,
+		RenderTarget mainRenderTarget,
+		GpuBufferSlice dynamicTransforms,
+		int startIndex,
+		int endIndex,
+		ObjectArrayList<GuiRenderer.Draw> viewsToReplace
+	) {
+		RenderTarget blurRenderTarget = SuggestionListWidget.BLUR_TEXTURE;
+		if (blurRenderTarget.width != mainRenderTarget.width || blurRenderTarget.height != mainRenderTarget.height || blurRenderTarget.getColorTextureView().isClosed()) {
+			blurRenderTarget.resize(mainRenderTarget.width, mainRenderTarget.height);
 
-		Minecraft client = Minecraft.getInstance();
-		RenderTarget framebuffer = SuggestionListWidget.FRAMEBUFFER;
-		RenderTarget clientFramebuffer = client.gameRenderer.mainRenderTarget();
-		if (framebuffer.width != clientFramebuffer.width || framebuffer.height != clientFramebuffer.height) {
-			framebuffer.resize(clientFramebuffer.width, clientFramebuffer.height);
-
-			int width = client.getWindow().getGuiScaledWidth();
-			int height = client.getWindow().getGuiScaledHeight();
-
-			Matrix3x2f pose = new Matrix3x2f();
-			BufferBuilder bufferBuilder = new BufferBuilder(this.byteBufferBuilder, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-			bufferBuilder.addVertexWith2DPose(pose, 0, 	0).setUv(0, 0).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(pose, 0, 	height).setUv(0, 1).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(pose, width, 	height).setUv(1, 1).setColor(0XFFFFFFFF);
-			bufferBuilder.addVertexWith2DPose(pose, width, 	0).setUv(1, 0).setColor(0XFFFFFFFF);
-
-			try (MeshData builtBuffer = bufferBuilder.buildOrThrow()) {
-				RenderSystem.getDevice().createCommandEncoder().writeToBuffer(texColorBuffer.slice(), builtBuffer.vertexBuffer());
+			for (var draw : viewsToReplace) {
+				((TextureSetupAccessor) (Object) draw.textureSetup()).setTexure0(blurRenderTarget.getColorTextureView());
 			}
 		}
 
-		copyTexture(clientFramebuffer, framebuffer, dynamicTransformsBuffer);
-		if ((float) client.options.getMenuBackgroundBlurriness() >= 1.0F) {
-			renderBlur(framebuffer);
-		}
+		blurRenderTarget.copyColorFrom(mainRenderTarget);
 
-		this.executeDrawRange(nameSupplier, clientFramebuffer, fogBuffer, dynamicTransformsBuffer, indexBuffer, indexType, from, to);
+		glowcase$processBlur(blurRenderTarget);
+
+		this.executeDrawRange(nameSupplier, mainRenderTarget, dynamicTransforms, startIndex, endIndex);
 	}
 
-	@Unique
-	public void copyTexture(RenderTarget sourceBuffer, RenderTarget targetBuffer, GpuBufferSlice dynamicTransformsBuffer) {
-		RenderSystem.assertOnRenderThread();
-		RenderSystem.AutoStorageIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
-		GpuBuffer indexBuffer = shapeIndexBuffer.getBuffer(6);
-
-		try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-			() -> "Copy render target",
-			targetBuffer.getColorTextureView(), OptionalInt.empty()
-		)) {
-			renderPass.setPipeline(RenderPipelines.GUI_TEXTURED);
-			RenderSystem.bindDefaultUniforms(renderPass);
-			renderPass.setUniform("DynamicTransforms", dynamicTransformsBuffer);
-			renderPass.setIndexBuffer(indexBuffer, shapeIndexBuffer.type());
-			renderPass.setVertexBuffer(0, texColorBuffer);
-			renderPass.bindTexture("Sampler0", sourceBuffer.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-
-			renderPass.drawIndexed(0, 0, 6, 1);
-		}
-	}
-
-	@Inject(at = @At("RETURN"), method = "draw")
-	private void decrementPool(GpuBufferSlice fogBuffer, CallbackInfo ci) {
+	@Inject(at = @At("RETURN"), method = "render")
+	private void decrementPool(CallbackInfo ci) {
 		SuggestionListWidget.POOL.endFrame();
 	}
 
 	@Unique
-	public void renderBlur(RenderTarget framebuffer) {
+	public void glowcase$processBlur(RenderTarget framebuffer) {
 		PostChain postEffectProcessor = Minecraft.getInstance().getShaderManager().getPostChain(SuggestionListWidget.BLUR_ID, LevelTargetBundle.MAIN_TARGETS);
 		if (postEffectProcessor != null) {
 			postEffectProcessor.process(framebuffer, SuggestionListWidget.POOL);

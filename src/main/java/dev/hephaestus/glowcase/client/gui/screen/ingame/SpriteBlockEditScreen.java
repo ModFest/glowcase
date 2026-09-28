@@ -153,9 +153,11 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 		double mouseY = event.y();
         if (suggestionWidget.isMouseOver(mouseX, mouseY) && spriteWidget.isFocused()) {
             return suggestionWidget.mouseClicked(event, doubleClick);
+        } else if (!spriteWidget.isMouseOver(mouseX, mouseY)) {
+			spriteWidget.onValueChange(spriteWidget.getValue());
         } else {
-            suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
-        }
+			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
+		}
 
         return super.mouseClicked(event, doubleClick);
     }

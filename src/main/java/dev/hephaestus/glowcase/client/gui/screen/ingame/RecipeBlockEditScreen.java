@@ -147,8 +147,6 @@ public class RecipeBlockEditScreen extends BlockEditorScreen<RecipeBlockEntity> 
 			baseY + 40,
 			0xFFFFFFFF
 		);
-		// render the list over everything
-		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		if (GlowcaseClient.RRV_LOADED && glowcaseWidgetHolder.get() != null) {
 			int baseYForRecipe = (baseY + fontHeight + 95);
@@ -167,6 +165,9 @@ public class RecipeBlockEditScreen extends BlockEditorScreen<RecipeBlockEntity> 
 
 			matrixStack.popMatrix();
 		}
+
+		// render the list over everything
+		suggestionWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 	}
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -174,6 +175,8 @@ public class RecipeBlockEditScreen extends BlockEditorScreen<RecipeBlockEntity> 
 		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && recipeWidget.isFocused()) {
 			return suggestionWidget.mouseClicked(event, doubleClick);
+		} else if (recipeWidget.isMouseOver(mouseX, mouseY)) {
+			suggestionWidget.updateSuggestions(RRVUtils.RECIPE_LIST.get(), recipeWidget.getValue(), false, this);
 		} else {
 			suggestionWidget.updateSuggestions(NO_SUGGESTIONS, "", this);
 		}

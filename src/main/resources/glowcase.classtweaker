@@ -9,4 +9,4 @@ accessible field net/minecraft/client/data/models/BlockModelGenerators ROTATION_
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor guiRenderState Lnet/minecraft/client/renderer/state/gui/GuiRenderState;
 accessible field net/minecraft/client/renderer/rendertype/RenderSetup textureTransform Lnet/minecraft/client/renderer/rendertype/TextureTransform;
 
-accessible class net/minecraft/client/renderer/chunk/SectionRenderDispatcher$RenderSection$CompileTask
+mutable field net/minecraft/client/gui/render/TextureSetup texure0 Lcom/mojang/renderpearl/api/textures/GpuTextureView;

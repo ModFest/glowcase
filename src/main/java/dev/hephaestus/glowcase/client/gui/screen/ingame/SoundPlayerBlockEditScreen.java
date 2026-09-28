@@ -220,6 +220,8 @@ public class SoundPlayerBlockEditScreen extends BlockEditorScreen<SoundPlayerBlo
 		double mouseY = event.y();
 		if (suggestionWidget.isMouseOver(mouseX, mouseY) && soundId.isFocused()) {
 			return suggestionWidget.mouseClicked(event, doubleClick);
+		} else if (soundId.isMouseOver(mouseX, mouseY)) {
+			soundId.onValueChange(soundId.getValue());
 		} else {
 			suggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 		}
