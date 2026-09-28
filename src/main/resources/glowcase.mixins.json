@@ -19,7 +19,6 @@
     "client.GuiRendererMixin",
     "client.HudMixin",
     "client.KeyboardHandlerMixin",
-    "client.MainMixin",
     "client.TextureManagerAccessor",
     "client.bakedbe.BlockEntityRenderDispatcherMixin",
     "client.bakedbe.BlockEntityRenderStateMixin",
