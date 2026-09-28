@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
@@ -359,15 +358,13 @@ public record ScreenBlockEntityRenderer(BlockEntityRendererProvider.Context cont
 	}
 
 	private static void submitFilledRectangle(int color, Plane plane, SubmitNodeCollector collector, PoseStack poseStack, int light) {
-		collector.submitCustomGeometry(
+		collector.submitTextBackground(
 			poseStack,
-			RenderTypes.textBackground(),
-			(pose, buffer) -> {
-				buffer.addVertex(pose, plane.x1, plane.y1, 0f).setColor(color).setLight(light);
-				buffer.addVertex(pose, plane.x1, plane.y2, 0f).setColor(color).setLight(light);
-				buffer.addVertex(pose, plane.x2, plane.y2, 0f).setColor(color).setLight(light);
-				buffer.addVertex(pose, plane.x2, plane.y1, 0f).setColor(color).setLight(light);
-			}
+			plane.x1, plane.y1,
+			plane.x2, plane.y2,
+			color,
+			Font.DisplayMode.NORMAL,
+			light
 		);
 	}
 
