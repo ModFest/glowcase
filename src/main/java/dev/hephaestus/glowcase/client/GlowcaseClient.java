@@ -70,43 +70,11 @@ public class GlowcaseClient implements ClientModInitializer {
 		ItemTintSources.ID_MAPPER.put(Glowcase.id("auto"), GlowcaseTintSource.CODEC);
 		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(Glowcase.id("note_txt_color"), new NoteTextColorResource());
 
-		/*ModelPredicateProviderRegistryAccessor.callRegister(Identifier.of("glowcase:awakened"), (stack, world, entity, seed) -> {
-			if (!EMI_LOADED) {
-				return 0;
-			}
-			List<ItemStack> testStacks = Lists.newArrayList();
-			if (entity != null) {
-				testStacks.add(entity.getMainHandStack());
-				testStacks.add(entity.getOffHandStack());
-			}
-			MinecraftClient client = MinecraftClient.getInstance();
-			ClientPlayerEntity player = client.player;
-			if (player != null) {
-				ScreenHandler handler = player.currentScreenHandler;
-				if (handler != null) {
-					testStacks.add(handler.getCursorStack());
-				}
-			}
-			for (ItemStack s : testStacks) {
-				if (s == stack) {
-					return 1;
-				}
-			}
-			return 0;
-		});*/
-
 		ScreenEvents.BEFORE_INIT.register(((client, sc, scaledWidth, scaledHeight) -> {
 			if (sc instanceof AbstractContainerScreen<?> hs) {
 				ScreenMouseEvents.allowMouseScroll(hs).register((screen, x, y, h, v) -> allowMouseScroll((AbstractContainerScreen<?>) screen, x, y, v));
 			}
 		}));
-
-		/*if (EMI_LOADED) {
-			ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-				EmiWorldRenderUtils.disposeCache();
-				EmiUtils.RECIPE_LIST.dispose();
-			});
-		}*/
 
 		GlowcaseClientNetworking.init();
 	}
