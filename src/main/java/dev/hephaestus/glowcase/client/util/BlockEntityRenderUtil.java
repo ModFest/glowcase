@@ -42,7 +42,7 @@ public final class BlockEntityRenderUtil {
 	}
 
 	public static void renderBillboardPlaceholder(BlockEntityRenderState entity, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		renderPlaceholder(entity, texture, scale, camera.orientation, poseStack, submitNodeCollector, 0);
+		renderPlaceholder(entity, texture, scale, camera.orientation, poseStack, submitNodeCollector, 0.0001f);
 	}
 
 	public static void renderTrackingPlaceholder(BlockEntityRenderState state, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, Vec3 camera) {
@@ -53,29 +53,27 @@ public final class BlockEntityRenderUtil {
 			getTrackingQuaternion(camera, state.blockPos),
 			poseStack,
 			submitNodeCollector,
-			0
+			0.0001f
 		);
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
-														  float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers, float zOffset) {
-		renderPlaceholder(entity, texture, scale,
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers, float zOffset) {
+		renderPlaceholder(
+			entity, texture, scale,
 			Axis.YP.rotationDegrees(-(rotation16 * 360) / 16.0F),
-			poseStack, vertexConsumers, zOffset);
+			poseStack, vertexConsumers, zOffset
+		);
 	}
 
-	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture,
-														  float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers) {
-		renderPlaceholderWithBlockRotation(entity, rotation16, texture, scale, poseStack, vertexConsumers, 0F);
+	public static void renderPlaceholderWithBlockRotation(BlockEntityRenderState entity, int rotation16, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector vertexConsumers) {
+		renderPlaceholderWithBlockRotation(entity, rotation16, texture, scale, poseStack, vertexConsumers, 0.0001f);
 	}
 
-	public static void renderCenteredPlaceholder(BlockEntityRenderState entity, Identifier texture,
-												 float scale, Quaternionf rotation, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
-		renderPlaceholder(entity, texture, scale, rotation, poseStack, submitNodeCollector, 0F);
+	public static void renderCenteredPlaceholder(BlockEntityRenderState entity, Identifier texture, float scale, Quaternionf rotation, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
+		renderPlaceholder(entity, texture, scale, rotation, poseStack, submitNodeCollector, 0.0001f);
 	}
 
-	public static void renderFacingPlaceholder(BlockEntityRenderState entity, Direction facing, Identifier texture,
-											   float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
+	public static void renderFacingPlaceholder(BlockEntityRenderState entity, Direction facing, Identifier texture, float scale, PoseStack poseStack, SubmitNodeCollector submitNodeCollector) {
 		renderPlaceholder(
 			entity,
 			texture,
