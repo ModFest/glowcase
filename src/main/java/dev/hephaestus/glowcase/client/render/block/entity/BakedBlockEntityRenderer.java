@@ -1,69 +1,35 @@
 package dev.hephaestus.glowcase.client.render.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.hephaestus.glowcase.client.render.bakedbe.level.GlowcaseLevelRenderer;
-import dev.hephaestus.glowcase.mixinsupport.BakingRendererExtension;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 @NullMarked
-public interface BakedBlockEntityRenderer<T extends BlockEntity, U extends BlockEntityRenderState, B extends BlockEntityRenderState> extends BlockEntityRenderer<T, U>, BakingRendererExtension {
-	/// The extract stage for the unbaked rendering
-	@Override
-	default void extractRenderState(T blockEntity, U state, float partialTicks, Vec3 cameraPosition, @Nullable CrumblingOverlay breakProgress) {
-		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
-	}
-
-	B createBakedRenderState();
-
-	/// The extract stage for the baked rendering \
-	/// This takes the block light as a param as BE rendering uses the uncached light from the level, which is not thread safe
-	default void extractBakingRenderState(final T blockEntity, final B state, final int light) {
-		BlockEntityRenderState.extractBase(blockEntity, state, null);
-		state.lightCoords = light == -1 ? LightCoordsUtil.FULL_BRIGHT : light;
-	}
-
-	/// Internal override of the submit method for renaming it into a clearer one
+public interface BakedBlockEntityRenderer<T extends BlockEntity, S extends BlockEntityRenderState> extends BlockEntityRenderer<T, S> {
+	/// An identity for the render state, used for the baked rendering, similar to how the model identity used by the GUI item atlas.
 	///
-	/// @deprecated Don't call directly, use {@link #submitForRendering} or {@link #submitForBaking}
-	@Deprecated
-	@ApiStatus.Internal
-	@ApiStatus.NonExtendable
-	default void submit(U state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		submitForRendering(state, poseStack, submitNodeCollector, camera);
-	}
+	/// This is the key for getting the cached mesh, a different value will cause the mesh to be rebaked. \
+	/// The returned objects must be comparable with {@link #equals}
+	Object renderStateIdentity(final S state);
 
 	/// Submit steps for unbaked rendering. This works exactly the same way as a normal BER render method, and can be used for dynamic
-	/// rendering that changes every frame. \
-	/// In this method you can also check for render invalidation and call {@link GlowcaseLevelRenderer#setBlockDirty} as appropriate.
-	void submitForRendering(U state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera);
+	/// rendering that changes every frame.
+	@Override
+	void submit(S state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera);
 
 	/// Submit steps for baking into the render region. This method will be called every time the render region is rebuilt - so
-	/// you should only render vertices that don't move here. You can call {@link GlowcaseLevelRenderer#setBlockDirty} to
-	/// cause the render region to be rebuilt, but do not call this too frequently as it will affect performance. \
+	/// you should only render vertices that don't move here. \
 	/// You must use the provided SubmitNodeCollector and PoseStack to render your vertices - any use of Tesselator
 	/// or RenderSystem here will not work.
-	void submitForBaking(B state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector);
+	void submitForBaking(S state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector);
 
-	/// Defines if the part should be baked. This is only checked when baking is required.
+	/// Defines if baking should be done for this block entity.
 	///
-	/// @param blockEntity The part being checked
-	/// @return if part should be baked
-	boolean shouldBake(T blockEntity);
-
-	@Override
-	@ApiStatus.Internal
-	@ApiStatus.NonExtendable
-	default boolean glowcase$isBakingRenderer() {
-		return true;
-	}
+	/// @param state The render state
+	/// @return if it should be baked
+	boolean shouldBake(S state);
 }

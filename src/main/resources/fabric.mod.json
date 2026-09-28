@@ -30,9 +30,6 @@
 	"suggests": {
 		"polydex": "*"
 	},
-	"breaks": {
-		"sodium": "<0.9"
-	},
 	"entrypoints": {
 		"fabric-datagen": [
 			"dev.hephaestus.glowcase.datagen.GlowcaseDataGen"
@@ -42,9 +39,6 @@
 		],
 		"client": [
 			"dev.hephaestus.glowcase.client.GlowcaseClient"
-		],
-		"mm:early_risers": [
-			"dev.hephaestus.glowcase.asm.GlowcaseAsm"
 		]
 	}
 }

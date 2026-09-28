@@ -1,6 +1,7 @@
 package dev.hephaestus.glowcase.client;
 
 import dev.hephaestus.glowcase.Glowcase;
+import dev.hephaestus.glowcase.client.render.bakedbe.DebugEntryBakedBEStats;
 import dev.hephaestus.glowcase.client.render.block.entity.ConfigLinkBlockEntityRenderer;
 import dev.hephaestus.glowcase.client.render.block.entity.EntityDisplayBlockEntityRenderer;
 import dev.hephaestus.glowcase.client.render.block.entity.HyperlinkBlockEntityRenderer;
@@ -31,6 +32,8 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemTintSources;
+import net.minecraft.client.gui.components.debug.DebugEntryNoop;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.resources.Identifier;
@@ -39,6 +42,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class GlowcaseClient implements ClientModInitializer {
+	public static final Identifier RENDER_SECTION_BORDERS = DebugScreenEntries.register(Glowcase.id("render_section_borders"), new DebugEntryNoop());
+	public static final Identifier BAKED_BE_STATS = DebugScreenEntries.register(Glowcase.id("baked_be_stats"), new DebugEntryBakedBEStats());
 	public static final Boolean RRV_LOADED = FabricLoader.getInstance().isModLoaded("rrv");
 	public static final Identifier PROVIDER_CROSSHAIR_TEXTURE = Glowcase.id("hud/provider_crosshair");
 	public static final ScreenImageCache screenImageCache = new ScreenImageCache();

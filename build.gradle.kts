@@ -58,9 +58,6 @@ dependencies {
 	implementation(libs.kaleidoConfig)
 	include(libs.kaleidoConfig)
 
-	implementation(libs.asm)
-	include(libs.asm)
-
 	/*compileOnly(libs.emi)
 	localRuntime(libs.emi)*/
 
@@ -71,7 +68,7 @@ dependencies {
 	localRuntime(libs.modmenu)
 
 	compileOnly(libs.sodium)
-	localRuntime(libs.sodium)
+	// localRuntime(libs.sodium)
 }
 
 loom {

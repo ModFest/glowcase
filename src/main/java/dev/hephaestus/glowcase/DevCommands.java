@@ -6,7 +6,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import dev.hephaestus.glowcase.client.render.bakedbe.section.RenderSectionPos;
+import dev.hephaestus.glowcase.client.render.bakedbe.RenderSectionPos;
 import dev.hephaestus.glowcase.util.DataFlow;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
@@ -17,19 +17,27 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.blocks.BlockInput;
-import net.minecraft.commands.arguments.coordinates.*;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.commands.arguments.coordinates.LocalCoordinates;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinate;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
 import java.util.List;
 
 class DevCommands {
+	public static final AABB SECTION_ORIGIN_BOUNDING_BOX = new AABB(0, 0, 0, SectionPos.SECTION_SIZE, SectionPos.SECTION_SIZE, SectionPos.SECTION_SIZE);
+
 	static void registerDevCommands() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			copyFill(dispatcher);
@@ -46,7 +54,7 @@ class DevCommands {
 				.then(ClientCommands.argument("pos", BlockPosArgument.blockPos())
 					.suggests((context, builder) -> {
 						Vec3 position = context.getSource().getPosition();
-						RenderSectionPos pos = new RenderSectionPos(BlockPos.containing(position));
+						RenderSectionPos pos = RenderSectionPos.fromVec3i(BlockPos.containing(position));
 						return SharedSuggestionProvider.suggest(List.of(pos.toCommandString()), builder);
 					})
 					.executes(context -> {
@@ -62,7 +70,7 @@ class DevCommands {
 							throw new IllegalStateException("Invalid input");
 						}
 
-						RenderSectionPos sectionPos = RenderSectionPos.fromVec3i(pos);
+						RenderSectionPos sectionPos = new RenderSectionPos(pos);
 						source.getLevel().setSectionRangeDirty(sectionPos.getX(), sectionPos.getY(), sectionPos.getZ(), sectionPos.getX(), sectionPos.getY(), sectionPos.getZ());
 
 						return 0;
@@ -76,8 +84,8 @@ class DevCommands {
 					BlockPos pos;
 					if (coordinates instanceof WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z)) {
 						pos = BlockPos.containing(x.get(sourcePos.x), y.get(sourcePos.y), z.get(sourcePos.z));
-					} else if (coordinates instanceof LocalCoordinates lc){
-						pos = BlockPos.containing(lc.apply(sourcePos, source.getRotation()));
+					} else if (coordinates instanceof LocalCoordinates localCoords) {
+						pos = BlockPos.containing(localCoords.apply(sourcePos, source.getRotation()));
 					} else {
 						throw new IllegalStateException("Invalid input");
 					}
@@ -95,34 +103,7 @@ class DevCommands {
 	private static void copyFill(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("copyfill")
 			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-			.then(Commands.literal("render_section")
-				.then(Commands.argument("pos", BlockPosArgument.blockPos())
-					.suggests((context, builder) -> {
-						Vec3 position = context.getSource().getPosition();
-						RenderSectionPos pos = new RenderSectionPos(BlockPos.containing(position));
-						return SharedSuggestionProvider.suggest(List.of(pos.toCommandString()), builder);
-					})
-					.then(Commands.argument("source", BlockPosArgument.blockPos())
-						.then(Commands.argument("strict", BoolArgumentType.bool())
-							.executes(context -> {
-								CommandSourceStack source = context.getSource();
-								BlockPos pos = BlockPosArgument.getBlockPos(context, "pos");
-								BlockPos sourcePos = BlockPosArgument.getLoadedBlockPos(context, "source");
-								ServerLevel level = source.getLevel();
-								BlockState blockState = level.getBlockState(sourcePos);
-								var nbt = DataFlow.nullable(level.getBlockEntity(sourcePos), blockEntity -> blockEntity.saveWithoutMetadata(source.registryAccess()));
-								BlockInput input = new BlockInput(blockState, new HashSet<>(blockState.getProperties()), nbt);
-								return fillBlocks(
-									source,
-									RenderSectionPos.fromVec3i(pos).structuralBoundingBox(),
-									input,
-									BoolArgumentType.getBool(context, "strict")
-								);
-							})
-						)
-					)
-				)
-			).then(Commands.argument("from", BlockPosArgument.blockPos())
+			.then(Commands.argument("from", BlockPosArgument.blockPos())
 				.then(Commands.argument("to", BlockPosArgument.blockPos())
 					.then(Commands.argument("source", BlockPosArgument.blockPos())
 						.then(Commands.argument("strict", BoolArgumentType.bool())
