@@ -45,12 +45,11 @@ public class TextBlock extends RotatableBlock {
 	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 
 		if (world.getBlockEntity(pos) instanceof TextBlockEntity be) { // Wish we had ctx.side right now...
-			if (be.zOffset == ZOffset.CENTER && Math.abs(placer.getXRot()) < 30) {
-				be.zOffset = ZOffset.BACK;
-			} else if (be.zOffset == ZOffset.BACK && Math.abs(placer.getXRot()) > 60) {
-				be.zOffset = ZOffset.CENTER;
+			final var offset = be.offset;
+			be.offset = ZOffset.adjustPlacement(be.offset, placer.getXRot());
+			if (offset != be.offset) {
+				be.setChanged();
 			}
-			be.setChanged();
 		}
 	}
 

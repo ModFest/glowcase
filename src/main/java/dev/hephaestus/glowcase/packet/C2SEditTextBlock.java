@@ -2,8 +2,8 @@ package dev.hephaestus.glowcase.packet;
 
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.util.Anchor;
 import dev.hephaestus.glowcase.util.TextJustify;
-import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -20,9 +20,8 @@ import java.util.List;
 
 public record C2SEditTextBlock(
 	BlockPos pos,
-	TextJustify alignment,
-	TextBlockEntity.HorizontalAlignment horizontalAlignment,
-	ZOffset zOffset,
+	TextJustify justify,
+	Anchor anchor,
 	Vec3 renderOffsets,
 	Vec3 rotation,
 	TextBlockValues values
@@ -31,10 +30,8 @@ public record C2SEditTextBlock(
 	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditTextBlock> PACKET_CODEC = StreamCodec.composite(
 		BlockPos.STREAM_CODEC, C2SEditTextBlock::pos,
 		ByteBufCodecs.BYTE.map(index -> TextJustify.values()[index], textAlignment -> (byte) textAlignment.ordinal()),
-		C2SEditTextBlock::alignment,
-		TextBlockEntity.HorizontalAlignment.STREAM_CODEC, C2SEditTextBlock::horizontalAlignment,
-		ByteBufCodecs.BYTE.map(index -> ZOffset.values()[index], zOffset -> (byte) zOffset.ordinal()),
-		C2SEditTextBlock::zOffset,
+		C2SEditTextBlock::justify,
+		Anchor.STREAM_CODEC, C2SEditTextBlock::anchor,
 		Vec3.STREAM_CODEC, C2SEditTextBlock::renderOffsets,
 		Vec3.STREAM_CODEC, C2SEditTextBlock::rotation,
 		TextBlockValues.PACKET_CODEC, C2SEditTextBlock::values,
@@ -45,8 +42,7 @@ public record C2SEditTextBlock(
 		return new C2SEditTextBlock(
 			be.getBlockPos(),
 			be.textAlignment,
-			be.horizontalAlignment,
-			be.zOffset,
+			be.anchor,
 			be.offset,
 			be.rotation,
 			new TextBlockValues(be.shadow, be.scale, be.backgroundColor, be.color, be.lines)
@@ -65,11 +61,10 @@ public record C2SEditTextBlock(
 		be.shadow = this.values().shadow();
 		be.scale = this.values().scale();
 		be.lines = this.values().lines();
-		be.textAlignment = this.alignment();
-		be.horizontalAlignment = this.horizontalAlignment();
+		be.textAlignment = this.justify();
+		be.anchor = this.anchor();
 		be.backgroundColor = this.values().backgroundColor();
 		be.color = this.values().color();
-		be.zOffset = this.zOffset();
 		be.offset = this.renderOffsets();
 		be.rotation = this.rotation();
 

@@ -6,8 +6,8 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.client.util.Quaternionsf;
+import dev.hephaestus.glowcase.util.Anchor;
 import dev.hephaestus.glowcase.util.TextJustify;
-import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -20,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
@@ -41,14 +42,20 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		public int rotation16;
 		public List<FormattedCharSequence> lines = List.of();
 		public TextJustify textAlignment;
-		public TextBlockEntity.HorizontalAlignment horizontalAlignment;
-		public ZOffset zOffset;
+		public Anchor anchor;
 		public boolean shadow;
 		public float scale = 1;
 		public int color;
 		public int backgroundColor;
 		public Vec3 offset;
 		public Vec3 rotation; // Yaw, pitch, roll
+
+		public float zOffset() {
+			if (offset.z() - (offset.z() % 0.01D) == 0.D) {
+				return 0.01F;
+			}
+			return Mth.clamp((float) offset.z(), -0.4F, 0.4F);
+		}
 	}
 
 	// Unbaked rendering
@@ -75,7 +82,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	public void extractRenderState(TextBlockEntity blockEntity, TextRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
 		BakedBlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress);
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
-		state.zOffset = blockEntity.zOffset;
+		state.offset = blockEntity.offset;
 	}
 
 	@Override
@@ -87,7 +94,7 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 			1.0F,
 			poseStack,
 			submitNodeCollector,
-			state.zOffset.offset
+			state.zOffset()
 		);
 	}
 
@@ -96,14 +103,12 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	@Override
 	public void extractBakingRenderState(TextBlockEntity blockEntity, TextRenderState state, int light) {
 		BakedBlockEntityRenderer.super.extractBakingRenderState(blockEntity, state, light);
-		state.zOffset = blockEntity.zOffset;
 		state.rotation16 = blockEntity.getBlockState().getValue(BlockStateProperties.ROTATION_16);
 
 		state.lines = blockEntity.lines.stream().map(Component::getVisualOrderText).toList();
 		// TODO (AC) - Anchor variables, and related rendering (unsure where that would be, so mentioning it here instead)
 		state.textAlignment = blockEntity.textAlignment;
-		state.horizontalAlignment = blockEntity.horizontalAlignment;
-		state.zOffset = blockEntity.zOffset;
+		state.anchor = blockEntity.anchor;
 		state.shadow = blockEntity.shadow;
 		state.scale = blockEntity.scale;
 		state.color = blockEntity.color;
@@ -140,31 +145,32 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 		float rotation = -(state.rotation16 * 360) / 16.0F;
 		poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
 
-		// Must be done after rotation.
-		// Else it's always along global Z-axis as unintended.
-		if (state.zOffset != ZOffset.CENTER) {
-			poseStack.translate(0D, 0D, state.zOffset.offset);
-		}
-
 		// Translate extra offsets (negative y to match Minecraft's coordinates)
 		poseStack.translate(state.offset.x(), -state.offset.y(), state.offset.z());
 
 		// Apply extra rotations
-		poseStack.mulPose(Quaternionsf.rotateDegreesYXZ((float) state.rotation.x(), (float) state.rotation.y(), (float) state.rotation.z()));
+		poseStack.mulPose(Quaternionsf.rotateDegreesXYZ(
+			(float) state.rotation.x(),
+			(float) state.rotation.y(),
+			(float) state.rotation.z()
+		));
 
 		// Scale for parity with older versions of Glowcase.
 		// Unless Mojang ever changes the rendering scale, this shall remain.
 		final float scale = 0.010416667F * state.scale;
 		poseStack.scale(scale, scale, scale);
 
-		// Adjusts the text positioning to parity. For some reason, the text moved up;
-		// 24/26.d is roughly the required movement down for 100% parity.
-		poseStack.translate(0, Math.fma(state.lines.size(), height / -2.d, 24.d / 16.d), 0D);
-
-		switch (state.horizontalAlignment) {
-			case LEFT -> poseStack.translate(-maxWidth / 2F, 0, 0);
-			case RIGHT -> poseStack.translate(maxWidth / 2F, 0, 0);
-		}
+		poseStack.translate(
+			state.anchor.getX() * maxWidth / -2F,
+			// 2.d required for alignment against the block border.
+			state.anchor.getY() == 1 ? 2.d :
+				state.anchor.getY() == -1 ?
+					Math.fma(state.lines.size(), -height, 2.d) :
+					// Adjusts the text positioning to parity. For some reason, the text moved up;
+					// 24/26.d is roughly the required movement down for 100% parity.
+					Math.fma(state.lines.size(), height / -2.d, 24.d / 16.d),
+			0D
+		);
 
 		for (int i = 0; i < state.lines.size(); ++i) {
 			var line = state.lines.get(i);

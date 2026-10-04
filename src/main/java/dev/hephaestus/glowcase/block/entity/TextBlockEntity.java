@@ -26,10 +26,8 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 	public static final int PLATE_BACKGROUND = 0x44000000;
 
 	public List<Component> lines = new ArrayList<>();
-	// TODO (AC) - Anchor related field changes/additions (don't forget to save & load them!)
 	public TextJustify textAlignment = TextJustify.CENTER;
-	public HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
-	public ZOffset zOffset = ZOffset.CENTER;
+	public Anchor anchor = Anchor.MIDDLE;
 	public boolean shadow = true;
 	public float scale = 1F;
 	public int color = ColorUtil.WHITE;
@@ -51,8 +49,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		view.putInt("background_color", this.backgroundColor);
 
 		view.store("text_alignment", TextJustify.CODEC, this.textAlignment);
-		view.store("horizontal_alignment", HorizontalAlignment.CODEC, this.horizontalAlignment);
-		view.store("z_offset", ZOffset.CODEC, this.zOffset);
+		view.store("anchor", Anchor.CODEC, this.anchor);
 		view.putBoolean("shadow", this.shadow);
 
 		view.store("lines", ComponentSerialization.CODEC.listOf(), this.lines);
@@ -73,13 +70,26 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
-		// TODO (AC) - Handle loading old data alignment and converting it into new justify/anchor/whatever data
+		Anchor anchor = null;
 		this.textAlignment = view.read("text_alignment", TextJustify.CODEC).orElse(TextJustify.CENTER);
-		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
-		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
+		switch (this.textAlignment) {
+			case CENTER_LEFT, CENTER_RIGHT -> {
+				anchor = this.textAlignment.anchor;
+				this.textAlignment = TextJustify.CENTER;
+			}
+		}
+		if (anchor == null) {
+			anchor = view.read("horizontal_alignment", HorizontalAlignment.CODEC)
+				.map(HorizontalAlignment::getAnchor)
+				.or(() -> view.read("anchor", Anchor.CODEC))
+				.orElse(this.anchor);
+		}
+		this.anchor = anchor;
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
 
-		this.offset = view.read("offset", Vec3.CODEC).orElse(Vec3.ZERO);
+		this.offset = view.read("offset", Vec3.CODEC)
+			.or(() -> view.read("z_offset", ZOffset.CODEC).map(z -> z.setZ(Vec3.ZERO)))
+			.orElse(Vec3.ZERO);
 		this.rotation = view.read("rotation", Vec3.CODEC).orElse(Vec3.ZERO);
 
 		this.rebake(false);
@@ -103,6 +113,10 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 		HorizontalAlignment(final Anchor anchor) {
 			this.anchor = anchor;
+		}
+
+		public final Anchor getAnchor() {
+			return this.anchor;
 		}
 
 		@Override

@@ -13,7 +13,6 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
-import dev.hephaestus.glowcase.util.Anchor;
 import dev.hephaestus.glowcase.util.TextJustify;
 import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.client.Minecraft;
@@ -202,30 +201,29 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.updateSelectedJustifyButton();
 
 		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
-			this.textBlockEntity.zOffset = ZOffset.FRONT;
+			this.textBlockEntity.offset = ZOffset.FRONT.setZ(this.textBlockEntity.offset);
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.zCenterButton = Button.builder(Component.translatable("gui.glowcase.center"), button -> {
-			this.textBlockEntity.zOffset = ZOffset.CENTER;
+			this.textBlockEntity.offset = ZOffset.CENTER.setZ(this.textBlockEntity.offset);
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.zBackButton = Button.builder(Component.translatable("gui.glowcase.back"), button -> {
-			this.textBlockEntity.zOffset = ZOffset.BACK;
+			this.textBlockEntity.offset = ZOffset.BACK.setZ(this.textBlockEntity.offset);
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.updateSelectedZButton();
 
-		// TODO (AC) - Use block entity anchor value instead of horizontal alignment
-		Anchor fakeAnchor = Anchor.fromHorizontalAlignment(this.textBlockEntity.horizontalAlignment);
-		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, fakeAnchor, anchor -> {
-			// TODO (AC) - Set block anchor variables here
-			if (anchor.getY() == 0) {
-				this.textBlockEntity.horizontalAlignment = TextBlockEntity.HorizontalAlignment.values()[anchor.getX() + 1];
+		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(
+			0,
+			0,
+			this.textBlockEntity.anchor,
+			anchor -> {
+				this.textBlockEntity.anchor = anchor;
 				this.textBlockEntity.rebake(true);
-			}
 		});
 
 		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
@@ -336,10 +334,10 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	public void updateSelectedZButton() {
-		ZOffset zOffset = this.textBlockEntity.zOffset;
-		this.zFrontButton.active = zOffset != ZOffset.FRONT;
-		this.zCenterButton.active = zOffset != ZOffset.CENTER;
-		this.zBackButton.active = zOffset != ZOffset.BACK;
+		final double z = this.textBlockEntity.offset.z();
+		this.zFrontButton.active = z != ZOffset.FRONT.offset;
+		this.zCenterButton.active = z != ZOffset.CENTER.offset;
+		this.zBackButton.active = z != ZOffset.BACK.offset;
 	}
 
 	@Override

@@ -7,12 +7,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * Z Offset
- *
- * @deprecated Will be replaced with general positioning.
- * 	This will only remain for migration and GUI purposes.
+ * Z Offset. Historically for general positioning, soon to remain only for
+ * GUI use and migration purposes, and the oddball text utility.
  **/
-@Deprecated
 public enum ZOffset implements StringRepresentable {
 	FRONT(0.4F),
 	CENTER(0.01F), // but, why?
@@ -22,8 +19,6 @@ public enum ZOffset implements StringRepresentable {
 
 	private static final List<ZOffset> VALUES = List.of(ZOffset.values());
 
-	// actually forPrivatization, but it's to be eventually removed anyways.
-	@Deprecated(forRemoval = true)
 	public final float offset;
 
 	ZOffset(final float offset) {
@@ -44,6 +39,16 @@ public enum ZOffset implements StringRepresentable {
 
 	public ZOffset next() {
 		return VALUES.get((this.ordinal() + 1) % VALUES.size());
+	}
+
+	public static Vec3 adjustPlacement(final Vec3 current, final float xRot) {
+		if (MathUtils.equals(current.z, 0.0, 0.1) && Math.abs(xRot) < 30) {
+			return BACK.setZ(current);
+		}
+		if (MathUtils.equals(current.z, -0.4, 0.1) && Math.abs(xRot) > 60) {
+			return CENTER.setZ(current);
+		}
+		return current;
 	}
 
 	@Override
