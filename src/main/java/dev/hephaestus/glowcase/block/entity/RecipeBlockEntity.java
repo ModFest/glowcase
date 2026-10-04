@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.block.entity;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.util.RRVClientUtils;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
@@ -14,7 +15,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 
 public class RecipeBlockEntity extends GlowcaseBlockEntity {
 	public String recipe = "diamond_sword";
-	public TextBlockEntity.ZOffset zOffset = TextBlockEntity.ZOffset.CENTER;
+	public ZOffset zOffset = ZOffset.CENTER;
 
 	//TODO: maybe move XYZ rotation to nbt? or use vec2f
 	public float rotationX = 0f;
@@ -42,7 +43,7 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 		super.saveAdditional(view);
 
 		view.putString("recipe", this.recipe);
-		view.store("z_offset", TextBlockEntity.ZOffset.CODEC, this.zOffset);
+		view.store("z_offset", ZOffset.CODEC, this.zOffset);
 		view.putFloat("rotationX", this.rotationX);
 		view.putFloat("rotationY", this.rotationY);
 	}
@@ -57,7 +58,7 @@ public class RecipeBlockEntity extends GlowcaseBlockEntity {
 		super.loadAdditional(view);
 
 		this.recipe = view.getStringOr("recipe", "diamond_sword");
-		this.zOffset = view.read("z_offset", TextBlockEntity.ZOffset.CODEC).orElse(TextBlockEntity.ZOffset.CENTER);
+		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
 		this.rotationX = view.getFloatOr("rotationX", 0);
 		this.rotationY = view.getFloatOr("rotationY", 0);
 	}

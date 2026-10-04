@@ -3,19 +3,23 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.OutlineBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.packet.C2SEditOutlineBlock;
 import dev.hephaestus.glowcase.util.InputFilters;
 import dev.hephaestus.glowcase.util.TextUtils;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity> {
+public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity> implements ColorPickerIncludedScreen {
 	private StringWidget offsetTextWidget;
 	private StringWidget scaleTextWidget;
 	private StringWidget colorTextWidget;
@@ -27,8 +31,10 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 	private GlowcaseEditBox xScaleWidget;
 	private GlowcaseEditBox yScaleWidget;
 	private GlowcaseEditBox zScaleWidget;
-	private GlowcaseEditBox colorWidget;
+	private HexColorEditBox colorWidget;
 	private GlowcaseEditBox widthWidget;
+
+	private ColorPickerWidget colorPickerWidget;
 
 	public OutlineBlockEditScreen(OutlineBlockEntity blockEntity) {
 		super(blockEntity);
@@ -121,12 +127,14 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 		this.yScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.y"));
 		this.zScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.z"));
 
-		this.colorWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
-		this.colorWidget.setValue("#" + String.format("%1$06X", this.blockEntity.color & 0x00FFFFFF));
-		this.colorWidget.setResponder(string -> {
-			TextColor.parseColor(this.colorWidget.getValue())
-				.ifSuccess(color -> this.blockEntity.color = color.getValue() | 0xFF000000);
-		});
+		this.colorPickerWidget = this.createColorPickerWidget();
+
+		this.colorWidget = HexColorEditBox.builder(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset),
+				() -> this.blockEntity.color, color -> this.blockEntity.color = color
+			)
+			.setWidth(50)
+			.setColorPickerWidget(this.colorPickerWidget)
+			.build();
 
 		this.widthWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
 		this.widthWidget.setValue(String.valueOf(this.blockEntity.width));
@@ -148,7 +156,30 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 	}
 
 	@Override
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(graphics, mouseX, mouseY, delta);
+		this.extractColorPicker(graphics, mouseX, mouseY, delta);
+	}
+
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (this.mouseClickedColorPicker(event, doubleClick)) return true;
+		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	public boolean keyPressed(KeyEvent event) {
+		if (this.keyPressedColorPicker(event)) return true;
+		return super.keyPressed(event);
+	}
+
+	@Override
 	public @Nullable CustomPacketPayload getUpdatePayload() {
 		return C2SEditOutlineBlock.of(blockEntity);
+	}
+
+	@Override
+	public ColorPickerWidget getColorPickerWidget() {
+		return this.colorPickerWidget;
 	}
 }

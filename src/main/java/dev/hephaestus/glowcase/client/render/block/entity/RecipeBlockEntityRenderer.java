@@ -3,8 +3,8 @@ package dev.hephaestus.glowcase.client.render.block.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -21,7 +21,7 @@ public record RecipeBlockEntityRenderer(
 	private static final Identifier ITEM_TEXTURE = Glowcase.id("textures/item/recipe_block.png");
 
 	public static class RecipeRenderState extends BlockEntityRenderState {
-		public TextBlockEntity.ZOffset zOffset;
+		public ZOffset zOffset;
 		public int rotation16;
 	}
 
@@ -40,7 +40,15 @@ public record RecipeBlockEntityRenderer(
 	@Override
 	public void submit(RecipeRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
 //		if (BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
-			BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
+		BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(
+			state,
+			state.rotation16,
+			ITEM_TEXTURE,
+			1F,
+			poseStack,
+			submitNodeCollector,
+			state.zOffset.offset
+		);
 //		}
 	}
 // FIXME 26.1

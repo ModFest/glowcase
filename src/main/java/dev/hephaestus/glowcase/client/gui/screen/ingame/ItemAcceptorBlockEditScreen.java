@@ -34,8 +34,8 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 			this.itemWidget.setValue((this.blockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
-		this.itemWidget.setFilter((currentValue, newChar, cursorPos) -> {
-			if (!InputFilters.assertOptionalPrefix('#', currentValue, newChar, cursorPos)) return false;
+		this.itemWidget.setFilter((currentValue, newChar, cursorPos, highlightPos) -> {
+			if (!InputFilters.assertOptionalPrefix('#', currentValue, newChar, cursorPos, highlightPos)) return false;
 			if (newChar == '#' && cursorPos == 0) return true;
 
 			return this.isValidCharacterForName(currentValue, newChar, cursorPos);

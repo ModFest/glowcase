@@ -4,6 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 import java.util.Optional;
+
+import dev.hephaestus.glowcase.block.TextBlock;
+import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -29,6 +32,6 @@ public record NoteComponent(List<Component> lines, Alignment alignment, Optional
 		.build();
 
 	public enum Alignment {
-		LEFT, CENTER, RIGHT
+		LEFT, CENTER, RIGHT;
 	}
 }

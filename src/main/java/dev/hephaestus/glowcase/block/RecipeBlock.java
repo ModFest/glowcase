@@ -3,7 +3,6 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -72,7 +71,7 @@ public class RecipeBlock extends RotatableBlock {
 	public VoxelShape targetedOutlineShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		if (!(world.getBlockEntity(pos) instanceof RecipeBlockEntity be)) return Shapes.empty();
 		float rotation = -(state.getValue(BlockStateProperties.ROTATION_16) * 360) / 16.0F;
-		Vector3f offset = new Vector3f(0, 0, be.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : be.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F).rotate(Axis.YP.rotationDegrees(rotation));
+		Vector3f offset = new Vector3f(0, 0, be.zOffset.offset).rotate(Axis.YP.rotationDegrees(rotation));
 		return HALF_CUBED.move(offset.x, offset.y, offset.z);
 	}
 }
