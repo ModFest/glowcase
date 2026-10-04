@@ -2,7 +2,6 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import com.google.common.primitives.Floats;
 import dev.hephaestus.glowcase.block.entity.RecipeBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.GlowcaseClient;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
@@ -82,11 +81,7 @@ public class RecipeBlockEditScreen extends BlockEditorScreen<RecipeBlockEntity> 
 		});
 
 		this.zOffsetToggle = Button.builder(Component.literal(this.blockEntity.zOffset.name()), action -> {
-			switch (blockEntity.zOffset) {
-				case FRONT -> blockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> blockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> blockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
-			}
+			blockEntity.zOffset = blockEntity.zOffset.next();
 
 			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 75, baseY + fontHeight + 75, 150, 20).build();

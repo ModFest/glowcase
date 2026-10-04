@@ -7,7 +7,7 @@ import com.mojang.serialization.DynamicOps;
 import dev.hephaestus.glowcase.block.entity.ParticleDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.packet.C2SEditParticleDisplayBlock;
 import dev.hephaestus.glowcase.util.DeviatedInteger;
 import dev.hephaestus.glowcase.util.DeviatedVec3d;
@@ -95,42 +95,30 @@ public class ParticleDisplayEditScreen extends BlockEditorScreen<ParticleDisplay
 		// endregion
 
 		// region Position
-		positionMean = new Vec3FieldsWidget(
-			width / 10, height / 2 - 60,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.position.mean()
-		);
-
+		positionMean = Vec3FieldsWidget.builder(this.font, blockEntity.position.mean())
+			.setPos(width / 10, height / 2 - 60)
+			.setWidth((4 * width / 10) - 6)
+			.build();
 		this.addRenderableWidget(positionMean);
 
-		positionStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, height / 2 - 60,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.position.stdDev()
-		);
-
+		this.positionStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.position.stdDev())
+			.setPos(width / 10 + (4 * width / 10) + 6, height / 2 - 60)
+			.setWidth((4 * width / 10) - 6)
+			.build();
 		this.addRenderableWidget(positionStdDev);
 		// endregion
 
 		// region Velocity
-		velocityMean = new Vec3FieldsWidget(
-			width / 10, (height / 2) - 10,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.velocity.mean()
-		);
-
+		this.velocityMean = Vec3FieldsWidget.builder(this.font, blockEntity.velocity.mean())
+			.setPos(width / 10, (height / 2) - 10)
+			.setWidth((4 * width / 10) - 6)
+			.build();
 		this.addRenderableWidget(velocityMean);
 
-		velocityStdDev = new Vec3FieldsWidget(
-			width / 10 + (4 * width / 10) + 6, (height / 2) - 10,
-			(4 * width / 10) - 6, 20,
-			this.minecraft,
-			blockEntity.velocity.stdDev()
-		);
-
+		this.velocityStdDev = Vec3FieldsWidget.builder(this.font, blockEntity.velocity.stdDev())
+			.setPos(width / 10 + (4 * width / 10) + 6, (height / 2) - 10)
+			.setWidth((4 * width / 10) - 6)
+			.build();
 		this.addRenderableWidget(velocityStdDev);
 		// endregion
 
