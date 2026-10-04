@@ -30,7 +30,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 	private final boolean isRotation;
 	private final int editBoxCharacterLimit;
 	@Nullable
-	private Tooltip[] tooltips;
+	private final Tooltip[] tooltips;
 	@Nullable
 	private final Consumer<Vec3> onValueChange;
 
@@ -122,11 +122,17 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		this.positionWidgets();
 	}
 
-//	public void setVec(Vec3 newVec) {
-//		this.xEditBox.setValue(String.valueOf(newVec.x));
-//		this.yEditBox.setValue(String.valueOf(newVec.y));
-//		this.zEditBox.setValue(String.valueOf(newVec.z));
-//	}
+	/**
+	 * Directly sets the edit boxes without calling the value change listener.
+	 *
+	 * @deprecated Use {@link #updateValue(Vec3)}
+	 */
+	@Deprecated
+	public void setVec(Vec3 newVec) {
+		this.xEditBox.setValue(String.valueOf(newVec.x));
+		this.yEditBox.setValue(String.valueOf(newVec.y));
+		this.zEditBox.setValue(String.valueOf(newVec.z));
+	}
 
 	@Override
 	protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {

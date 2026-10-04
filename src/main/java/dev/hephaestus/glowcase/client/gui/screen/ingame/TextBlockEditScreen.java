@@ -33,6 +33,7 @@ import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -57,6 +58,11 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private IconButtonWidget justifyCenterButton;
 	private IconButtonWidget justifyRightButton;
 	private Button insertFontButton;
+
+	private AnchorPositionGridWidget anchorGrid;
+	private CycleButton<Boolean> textShadowButton;
+	private Vec3FieldsWidget offsetWidgets;
+	private Vec3FieldsWidget rotationWidgets;
 
 	public TextBlockEditScreen(TextBlockEntity textBlockEntity) {
 		this.textBlockEntity = textBlockEntity;
@@ -217,16 +223,49 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		}).size(50, 20).build();
 		this.updateSelectedZButton();
 
-		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(
+		this.anchorGrid = new AnchorPositionGridWidget(
 			0,
 			0,
 			this.textBlockEntity.anchor,
 			anchor -> {
+				final boolean shift = this.minecraft.hasShiftDown();
+				final boolean alt = this.minecraft.hasAltDown();
+
+				// shift = suppress syncing offset to anchor
+				// alt = only set offset, keep anchor as-is
+				// alt+shift = always sync offset to anchor
+
+				final var oldAnchor = this.textBlockEntity.anchor;
+
+				if (!shift | alt) {
+					final double oldX = oldAnchor.getX() * 0.5d;
+					final double oldY = oldAnchor.getY() * 0.5d;
+					final var oldOffset = this.textBlockEntity.offset;
+
+					if (alt || oldOffset.x() == oldX && oldOffset.y() == oldY) {
+						final var newOffset = new Vec3(
+							anchor.getX() * 0.5d,
+							anchor.getY() * 0.5d,
+							oldOffset.z()
+						);
+
+						this.textBlockEntity.offset = newOffset;
+						this.offsetWidgets.setVec(newOffset);
+					}
+				}
+
 				this.textBlockEntity.anchor = anchor;
+				/*
+				TODO: make the logic friendly to alt-only.
+				if (!alt | shift) {
+				} else {
+					this.anchorGrid.anchor = oldAnchor;
+				}
+				*/
 				this.textBlockEntity.rebake(true);
 		});
 
-		CycleButton<Boolean> textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
+		this.textShadowButton = CycleButton.onOffBuilder(this.textBlockEntity.shadow).create(
 			Component.translatable("gui.glowcase.text_shadow"),
 			(button, shadow) -> {
 				this.textBlockEntity.shadow = shadow;
@@ -260,7 +299,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 		this.fontSuggestionWidget.updateSuggestions(new ArrayList<>(), "", this);
 
-		Vec3FieldsWidget offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
+		this.offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
 			.setWidth(106)
 			.setEditBoxCharacterLimit(5)
 			.setTooltips(
@@ -273,7 +312,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				this.textBlockEntity.rebake(true);
 			})
 			.build();
-		Vec3FieldsWidget rotationWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.rotation)
+		this.rotationWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.rotation)
 			.setWidth(106)
 			.setRotation(true)
 			.setEditBoxCharacterLimit(5)
