@@ -1,9 +1,9 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.text;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
 import dev.hephaestus.glowcase.client.util.GuiGraphicsUtil;
+import dev.hephaestus.glowcase.util.TextJustify;
 import eu.pb4.placeholders.api.parsers.tag.TextTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -87,7 +87,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.textField = this.formatTextField;
 	}
 
-	public void updateSettings(int textColor, boolean textShadow, TextBlockEntity.TextAlignment textAlignment) {
+	public void updateSettings(int textColor, boolean textShadow, TextJustify textAlignment) {
 		this.textColor = textColor;
 		this.textShadow = textShadow;
 		this.formatTextField.setTextAlignment(textAlignment);
@@ -101,7 +101,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		this.textShadow = textShadow;
 	}
 
-	public void setTextAlignment(TextBlockEntity.TextAlignment textAlignment) {
+	public void setTextAlignment(TextJustify textAlignment) {
 		this.formatTextField.setTextAlignment(textAlignment);
 	}
 
@@ -240,7 +240,7 @@ public class GlowcaseMultilineEditBox extends MultiLineEditBox {
 		if (super.charTyped(event)) {
 			int cursorLineIndex = this.formatTextField.getLineAtCursor();
 			MultilineTextField.StringView cursorLineView = this.formatTextField.getLineView(cursorLineIndex);
-			int cursorLineWidth = this.font.width(this.formatTextField.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex()));;
+			int cursorLineWidth = this.font.width(this.formatTextField.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex()));
 
 			if (cursorLineWidth >= this.width) {
 				this.formatTextField.cursorOverflowX -= this.font.width(event.codepointAsString());

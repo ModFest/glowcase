@@ -6,10 +6,10 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.SpriteBlock;
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.client.util.ModMetaUtil;
 import dev.hephaestus.glowcase.mixin.client.TextureManagerAccessor;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
@@ -55,7 +55,7 @@ public record SpriteBlockEntityRenderer(
 		public Direction facing;
 		public int color;
 		public float rotation;
-		public TextBlockEntity.ZOffset zOffset;
+		public ZOffset zOffset;
 		public float scale;
 	}
 
@@ -96,9 +96,8 @@ public record SpriteBlockEntityRenderer(
 		matrices.mulPose(state.facing.getRotation().rotateX(-Mth.HALF_PI));
 		matrices.mulPose(Axis.ZN.rotationDegrees(state.rotation));
 
-		switch (state.zOffset) {
-			case FRONT -> matrices.translate(0D, 0D, 0.4D);
-			case BACK -> matrices.translate(0D, 0D, -0.4D);
+		if (state.zOffset != ZOffset.CENTER) {
+			matrices.translate(0D, 0D, state.zOffset.offset);
 		}
 
 		matrices.scale(state.scale, state.scale, state.scale);

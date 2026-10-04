@@ -6,6 +6,8 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.client.util.Quaternionsf;
+import dev.hephaestus.glowcase.util.TextJustify;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -38,9 +40,9 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 	public static class TextRenderState extends BlockEntityRenderState {
 		public int rotation16;
 		public List<FormattedCharSequence> lines = List.of();
-		public TextBlockEntity.TextAlignment textAlignment;
+		public TextJustify textAlignment;
 		public TextBlockEntity.HorizontalAlignment horizontalAlignment;
-		public TextBlockEntity.ZOffset zOffset;
+		public ZOffset zOffset;
 		public boolean shadow;
 		public float scale = 1;
 		public int color;
@@ -78,7 +80,15 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 	@Override
 	public void submitForRendering(TextRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-		BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(state, state.rotation16, ITEM_TEXTURE, 1.0F, poseStack, submitNodeCollector, state.zOffset == TextBlockEntity.ZOffset.CENTER ? 0.01F : state.zOffset == TextBlockEntity.ZOffset.FRONT ? 0.4F : -0.4F);
+		BlockEntityRenderUtil.renderPlaceholderWithBlockRotation(
+			state,
+			state.rotation16,
+			ITEM_TEXTURE,
+			1.0F,
+			poseStack,
+			submitNodeCollector,
+			state.zOffset.offset
+		);
 	}
 
 	// Baked rendering
@@ -132,9 +142,8 @@ public class TextBlockEntityRenderer implements BakedBlockEntityRenderer<TextBlo
 
 		// Must be done after rotation.
 		// Else it's always along global Z-axis as unintended.
-		switch (state.zOffset) {
-			case FRONT -> poseStack.translate(0D, 0D, 0.4D);
-			case BACK -> poseStack.translate(0D, 0D, -0.4D);
+		if (state.zOffset != ZOffset.CENTER) {
+			poseStack.translate(0D, 0D, state.zOffset.offset);
 		}
 
 		// Translate extra offsets (negative y to match Minecraft's coordinates)

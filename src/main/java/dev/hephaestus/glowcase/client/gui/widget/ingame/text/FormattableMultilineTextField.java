@@ -1,6 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.text;
 
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.util.TextJustify;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.NodeParser;
 import eu.pb4.placeholders.api.parsers.TagParser;
@@ -45,7 +45,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 	public boolean truncateText = false;
 	public int cursorOverflowX = 0;
 	public int selectCursorOverflowX = 0;
-	public TextBlockEntity.TextAlignment textAlignment = TextBlockEntity.TextAlignment.CENTER;
+	public TextJustify textAlignment = TextJustify.CENTER;
 
 	public FormattableMultilineTextField(Font font, List<Component> parsedLines, int x, int width, int sideAlignmentPadding, Consumer<List<Component>> parsedUpdateListener) {
 		super(font, width);
@@ -168,7 +168,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 
 		int cursorLineIndex = this.getLineAtCursor();
 		StringView cursorLineView = this.getLineView(cursorLineIndex);
-		int cursorLineWidth = this.font.width(this.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex()));;
+		int cursorLineWidth = this.font.width(this.value().substring(cursorLineView.beginIndex(), cursorLineView.endIndex()));
 
 		if (cursorLineWidth >= this.width) {
 			String beforeCursor = this.value().substring(cursorLineView.beginIndex(), this.cursor());
@@ -186,7 +186,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		// Very strange (& mildly brute-forced) on the caps but it works
 		// FIXME - This could still be better, especially for note screen
 		int safeZoneWidth = this.sideAlignmentPadding == 0 ? 32 : this.sideAlignmentPadding;
-		boolean leftAligned = this.textAlignment == TextBlockEntity.TextAlignment.LEFT && this.sideAlignmentPadding > 0;
+		boolean leftAligned = this.textAlignment == TextJustify.LEFT && this.sideAlignmentPadding > 0;
 		int min = -cursorLineWidth + this.width
 			- safeZoneWidth * (leftAligned ? 2 : 1);
 		int max = leftAligned ? 0 : safeZoneWidth;
@@ -237,7 +237,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		Component parsedLine = this.parsedLines.get(lineIndex);
 		if (this.truncateText && this.font.width(parsedLine) >= this.width) {
 			int ellipsisWidth = this.font.width(ELLIPSIS_SYMBOL);
-			int alignmentWidth = this.textAlignment == TextBlockEntity.TextAlignment.LEFT || this.textAlignment == TextBlockEntity.TextAlignment.RIGHT
+			int alignmentWidth = this.textAlignment == TextJustify.LEFT || this.textAlignment == TextJustify.RIGHT
 				? this.sideAlignmentPadding : 0;
 
 			return FormattedText.composite(
@@ -386,7 +386,7 @@ public class FormattableMultilineTextField extends MultilineTextField {
 		return insert;
 	}
 
-	public void setTextAlignment(TextBlockEntity.TextAlignment textAlignment) {
+	public void setTextAlignment(TextJustify textAlignment) {
 		this.textAlignment = textAlignment;
 	}
 }

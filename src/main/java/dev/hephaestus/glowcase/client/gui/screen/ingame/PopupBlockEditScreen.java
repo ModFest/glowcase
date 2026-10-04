@@ -2,12 +2,12 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.HyperlinkBlockEntity;
 import dev.hephaestus.glowcase.block.entity.PopupBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
+import dev.hephaestus.glowcase.util.TextJustify;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
@@ -62,10 +62,9 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 			this.popupBlockEntity.textAlignment
 		), action -> {
 			switch (popupBlockEntity.textAlignment) {
-				case LEFT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
-				case CENTER, CENTER_LEFT, CENTER_RIGHT ->
-					popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
-				case RIGHT -> popupBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
+				case LEFT -> popupBlockEntity.textAlignment = TextJustify.CENTER;
+				case CENTER, CENTER_LEFT, CENTER_RIGHT -> popupBlockEntity.textAlignment = TextJustify.RIGHT;
+				case RIGHT -> popupBlockEntity.textAlignment = TextJustify.LEFT;
 			}
 			this.popupBlockEntity.renderDirty = true;
 

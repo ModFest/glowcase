@@ -1,6 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.text;
 
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.util.TextJustify;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractScrollArea;
@@ -21,12 +21,21 @@ public class MultilineTextViewArea extends AbstractTextAreaWidget {
 	public final Font font;
 	public List<Component> lines;
 	public int textColor;
-	public TextBlockEntity.TextAlignment textAlignment;
+	public TextJustify textAlignment;
 
 	public int sideAlignmentPadding;
 	public int lineHeight = 12;
 
-	public MultilineTextViewArea(Font font, List<Component> lines, int x, int y, int width, int height, int textColor, TextBlockEntity.TextAlignment textAlignment) {
+	public MultilineTextViewArea(
+		Font font,
+		List<Component> lines,
+		int x,
+		int y,
+		int width,
+		int height,
+		int textColor,
+		TextJustify textAlignment
+	) {
 		super(x, y, width, height, Component.empty(), AbstractScrollArea.defaultSettings((int)(9.0 / 2.0)), false, true);
 		this.font = font;
 		this.lines = lines;

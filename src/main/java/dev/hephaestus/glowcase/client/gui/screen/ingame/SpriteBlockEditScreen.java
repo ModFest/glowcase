@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.block.entity.SpriteBlockEntity;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.SuggestionListWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
@@ -66,11 +65,7 @@ public class SpriteBlockEditScreen extends BlockEditorScreen<SpriteBlockEntity> 
 		}).bounds(width / 2 - 90, height / 2 - 25, 180, 20).build();
 
 		this.zOffsetToggle = Button.builder(Component.literal(this.blockEntity.zOffset.name()), action -> {
-			switch (blockEntity.zOffset) {
-				case FRONT -> blockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
-				case CENTER -> blockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
-				case BACK -> blockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
-			}
+			blockEntity.zOffset = blockEntity.zOffset.next();
 
 			this.zOffsetToggle.setMessage(Component.literal(this.blockEntity.zOffset.name()));
 		}).bounds(width / 2 - 90, height / 2 + 5, 180, 20).build();

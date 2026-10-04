@@ -1,7 +1,6 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.FormattableMultilineTextField;
@@ -9,6 +8,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEd
 import dev.hephaestus.glowcase.client.util.NoteTextColorResource;
 import dev.hephaestus.glowcase.item.component.NoteComponent;
 import dev.hephaestus.glowcase.packet.C2SEditNoteItem;
+import dev.hephaestus.glowcase.util.TextJustify;
 import eu.pb4.placeholders.api.ParserContext;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -263,11 +263,11 @@ public class NoteEditScreen extends TextEditorScreen {
 		);
 	}
 
-	public static TextBlockEntity.TextAlignment getTextBlockAlignment(NoteComponent.Alignment noteAlignment) {
+	public static TextJustify getTextBlockAlignment(NoteComponent.Alignment noteAlignment) {
 		return switch (noteAlignment) {
-			case LEFT -> TextBlockEntity.TextAlignment.LEFT;
-			case RIGHT -> TextBlockEntity.TextAlignment.RIGHT;
-			default -> TextBlockEntity.TextAlignment.CENTER;
+			case LEFT -> TextJustify.LEFT;
+			case RIGHT -> TextJustify.RIGHT;
+			default -> TextJustify.CENTER;
 		};
 	}
 

@@ -1,7 +1,7 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame;
 
 import dev.hephaestus.glowcase.Glowcase;
-import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.util.Anchor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.AbstractScrollArea;
@@ -29,24 +29,24 @@ public class AnchorPositionGridWidget extends AbstractContainerWidget {
 	public static final List<Identifier> TEXTURES = List.of(TOP_LEFT_ID, TOP_ID, TOP_RIGHT_ID, MIDDLE_LEFT_ID, MIDDLE_ID, MIDDLE_RIGHT_ID, BOTTOM_LEFT_ID, BOTTOM_ID, BOTTOM_RIGHT_ID);
 
 	public final List<Button> anchorButtons = new ArrayList<>();
-	public final Consumer<TextBlockEntity.Anchor> onClick;
-	public TextBlockEntity.Anchor anchor;
+	public final Consumer<Anchor> onClick;
+	public Anchor anchor;
 
-	public AnchorPositionGridWidget(int x, int y, TextBlockEntity.Anchor anchor, Consumer<TextBlockEntity.Anchor> onClick) {
+	public AnchorPositionGridWidget(int x, int y, Anchor anchor, Consumer<Anchor> onClick) {
 		// Two rows of normal buttons (20 * 2) + button row padding (2) = 42px
 		// Each anchor button here is 14x14px (42 / 3 = 14)
 		this(x, y, 42, 42, anchor, onClick);
 	}
 
-	private AnchorPositionGridWidget(int x, int y, int width, int height, TextBlockEntity.Anchor anchor, Consumer<TextBlockEntity.Anchor> onClick) {
+	private AnchorPositionGridWidget(int x, int y, int width, int height, Anchor anchor, Consumer<Anchor> onClick) {
 		super(x, y, width, height, Component.empty(), AbstractScrollArea.defaultSettings(9));
 		this.onClick = onClick;
 		this.anchor = anchor;
 
 		int anchorButtonSize = 14; // 42 / 3
-		TextBlockEntity.Anchor[] values = TextBlockEntity.Anchor.values();
+		Anchor[] values = Anchor.values();
 		for (int i = 0; i < values.length; i++) {
-			TextBlockEntity.Anchor anchorPos = values[i];
+			Anchor anchorPos = values[i];
 			Button button = IconButtonWidget.builder(TEXTURES.get(i), button1 -> {
 					this.onClick.accept(anchorPos);
 					this.anchor = anchorPos;
@@ -61,9 +61,9 @@ public class AnchorPositionGridWidget extends AbstractContainerWidget {
 	}
 
 	public void updateSelectedButton() {
-		TextBlockEntity.Anchor[] values = TextBlockEntity.Anchor.values();
+		Anchor[] values = Anchor.values();
 		for (int i = 0; i < values.length; i++) {
-			TextBlockEntity.Anchor anchorPos = values[i];
+			Anchor anchorPos = values[i];
 			boolean isSelected = anchorPos == this.anchor;
 			this.anchorButtons.get(i).active = !isSelected;
 		}
@@ -71,9 +71,9 @@ public class AnchorPositionGridWidget extends AbstractContainerWidget {
 
 	public void setButtonPositions() {
 		int anchorButtonSize = 14;
-		TextBlockEntity.Anchor[] values = TextBlockEntity.Anchor.values();
+		Anchor[] values = Anchor.values();
 		for (int i = 0; i < values.length; i++) {
-			TextBlockEntity.Anchor anchorPos = values[i];
+			Anchor anchorPos = values[i];
 			int buttonX = this.getX() + anchorButtonSize * (anchorPos.getX() + 1);
 			int buttonY = this.getY() + anchorButtonSize * (anchorPos.getY() * -1 + 1);
 			this.anchorButtons.get(i).setPosition(buttonX, buttonY);

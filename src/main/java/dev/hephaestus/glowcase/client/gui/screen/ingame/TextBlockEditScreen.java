@@ -13,6 +13,9 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
+import dev.hephaestus.glowcase.util.Anchor;
+import dev.hephaestus.glowcase.util.TextJustify;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -168,9 +171,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 
 		this.justifyLeftButton = IconButtonWidget.builder(
 				Glowcase.id("text_alignment/left"), button -> {
-					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.LEFT;
+					this.textBlockEntity.textAlignment = TextJustify.LEFT;
 					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.LEFT);
+					this.glowcaseEditBox.setTextAlignment(TextJustify.LEFT);
 					this.updateSelectedJustifyButton();
 				})
 				.dimensions(0, 0, 20, 20, 16, 16)
@@ -178,9 +181,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.justifyLeftButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_left")));
 		this.justifyCenterButton = IconButtonWidget.builder(
 				Glowcase.id("text_alignment/center"), button -> {
-					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.CENTER;
+					this.textBlockEntity.textAlignment = TextJustify.CENTER;
 					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.CENTER);
+					this.glowcaseEditBox.setTextAlignment(TextJustify.CENTER);
 					this.updateSelectedJustifyButton();
 				})
 			.dimensions(0, 0, 20, 20, 16, 16)
@@ -188,9 +191,9 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.justifyCenterButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_center")));
 		this.justifyRightButton = IconButtonWidget.builder(
 				Glowcase.id("text_alignment/right"), button -> {
-					this.textBlockEntity.textAlignment = TextBlockEntity.TextAlignment.RIGHT;
+					this.textBlockEntity.textAlignment = TextJustify.RIGHT;
 					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextBlockEntity.TextAlignment.RIGHT);
+					this.glowcaseEditBox.setTextAlignment(TextJustify.RIGHT);
 					this.updateSelectedJustifyButton();
 				})
 			.dimensions(0, 0, 20, 20, 16, 16)
@@ -199,24 +202,24 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.updateSelectedJustifyButton();
 
 		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
-			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.FRONT;
+			this.textBlockEntity.zOffset = ZOffset.FRONT;
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.zCenterButton = Button.builder(Component.translatable("gui.glowcase.center"), button -> {
-			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.CENTER;
+			this.textBlockEntity.zOffset = ZOffset.CENTER;
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.zBackButton = Button.builder(Component.translatable("gui.glowcase.back"), button -> {
-			this.textBlockEntity.zOffset = TextBlockEntity.ZOffset.BACK;
+			this.textBlockEntity.zOffset = ZOffset.BACK;
 			this.textBlockEntity.rebake(true);
 			this.updateSelectedZButton();
 		}).size(50, 20).build();
 		this.updateSelectedZButton();
 
 		// TODO (AC) - Use block entity anchor value instead of horizontal alignment
-		TextBlockEntity.Anchor fakeAnchor = TextBlockEntity.Anchor.fromHorizontalAlignment(this.textBlockEntity.horizontalAlignment);
+		Anchor fakeAnchor = Anchor.fromHorizontalAlignment(this.textBlockEntity.horizontalAlignment);
 		AnchorPositionGridWidget anchorGrid = new AnchorPositionGridWidget(0, 0, fakeAnchor, anchor -> {
 			// TODO (AC) - Set block anchor variables here
 			if (anchor.getY() == 0) {
@@ -326,17 +329,17 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	}
 
 	public void updateSelectedJustifyButton() {
-		TextBlockEntity.TextAlignment justify = this.textBlockEntity.textAlignment;
-		this.justifyLeftButton.active = justify != TextBlockEntity.TextAlignment.LEFT;
-		this.justifyCenterButton.active = justify != TextBlockEntity.TextAlignment.CENTER;
-		this.justifyRightButton.active = justify != TextBlockEntity.TextAlignment.RIGHT;
+		TextJustify justify = this.textBlockEntity.textAlignment;
+		this.justifyLeftButton.active = justify != TextJustify.LEFT;
+		this.justifyCenterButton.active = justify != TextJustify.CENTER;
+		this.justifyRightButton.active = justify != TextJustify.RIGHT;
 	}
 
 	public void updateSelectedZButton() {
-		TextBlockEntity.ZOffset zOffset = this.textBlockEntity.zOffset;
-		this.zFrontButton.active = zOffset != TextBlockEntity.ZOffset.FRONT;
-		this.zCenterButton.active = zOffset != TextBlockEntity.ZOffset.CENTER;
-		this.zBackButton.active = zOffset != TextBlockEntity.ZOffset.BACK;
+		ZOffset zOffset = this.textBlockEntity.zOffset;
+		this.zFrontButton.active = zOffset != ZOffset.FRONT;
+		this.zCenterButton.active = zOffset != ZOffset.CENTER;
+		this.zBackButton.active = zOffset != ZOffset.BACK;
 	}
 
 	@Override

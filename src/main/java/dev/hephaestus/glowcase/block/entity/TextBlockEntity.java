@@ -3,14 +3,13 @@ package dev.hephaestus.glowcase.block.entity;
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
-import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.api.parsers.NodeParser;
-import eu.pb4.placeholders.api.parsers.TagParser;
+import dev.hephaestus.glowcase.util.Anchor;
+import dev.hephaestus.glowcase.util.TextJustify;
+import dev.hephaestus.glowcase.util.ZOffset;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.network.chat.Style;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
@@ -28,7 +27,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 	public List<Component> lines = new ArrayList<>();
 	// TODO (AC) - Anchor related field changes/additions (don't forget to save & load them!)
-	public TextAlignment textAlignment = TextAlignment.CENTER;
+	public TextJustify textAlignment = TextJustify.CENTER;
 	public HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
 	public ZOffset zOffset = ZOffset.CENTER;
 	public boolean shadow = true;
@@ -51,7 +50,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		view.putInt("color", this.color);
 		view.putInt("background_color", this.backgroundColor);
 
-		view.store("text_alignment", TextAlignment.CODEC, this.textAlignment);
+		view.store("text_alignment", TextJustify.CODEC, this.textAlignment);
 		view.store("horizontal_alignment", HorizontalAlignment.CODEC, this.horizontalAlignment);
 		view.store("z_offset", ZOffset.CODEC, this.zOffset);
 		view.putBoolean("shadow", this.shadow);
@@ -75,7 +74,7 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
 		// TODO (AC) - Handle loading old data alignment and converting it into new justify/anchor/whatever data
-		this.textAlignment = view.read("text_alignment", TextAlignment.CODEC).orElse(TextAlignment.CENTER);
+		this.textAlignment = view.read("text_alignment", TextJustify.CODEC).orElse(TextJustify.CENTER);
 		this.horizontalAlignment = view.read("horizontal_alignment", HorizontalAlignment.CODEC).orElse(HorizontalAlignment.CENTER);
 		this.zOffset = view.read("z_offset", ZOffset.CODEC).orElse(ZOffset.CENTER);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
@@ -91,84 +90,25 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 		this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), immediate ? Block.UPDATE_IMMEDIATE : 0);
 	}
 
-	// TODO (AC) - Rename into TextJustify?
-	public enum TextAlignment implements StringRepresentable {
-		LEFT,
-		CENTER,
-		@Deprecated
-		CENTER_LEFT,
-		@Deprecated
-		CENTER_RIGHT,
-		RIGHT;
-
-		public static final Codec<TextAlignment> CODEC = StringRepresentable.fromEnum(TextAlignment::values);
-
-		@Override
-		public String getSerializedName() {
-			return name().toLowerCase();
-		}
-	}
-
-	// TODO (AC Idea) - Rename to "ZAnchor" to provide a clear distinction between xyz offset and this?
-	//  If done, fields/variables and translations for the edit screen should be updated
-	public enum ZOffset implements StringRepresentable {
-		FRONT, CENTER, BACK;
-
-		public static final Codec<ZOffset> CODEC = StringRepresentable.fromEnum(ZOffset::values);
-
-		@Override
-		public String getSerializedName() {
-			return name().toLowerCase();
-		}
-	}
-
-	@Deprecated
+	@Deprecated(forRemoval = true)
 	public enum HorizontalAlignment implements StringRepresentable {
-		LEFT, CENTER, RIGHT;
+		LEFT(Anchor.MIDDLE_LEFT),
+		CENTER(Anchor.MIDDLE),
+		RIGHT(Anchor.MIDDLE_RIGHT);
 
 		public static final Codec<HorizontalAlignment> CODEC = StringRepresentable.fromEnum(HorizontalAlignment::values);
 		public static final StreamCodec<ByteBuf, HorizontalAlignment> STREAM_CODEC = ByteBufCodecs.BYTE.map(index -> TextBlockEntity.HorizontalAlignment.values()[index], textAlignment -> (byte) textAlignment.ordinal());
 
+		public final Anchor anchor;
+
+		HorizontalAlignment(final Anchor anchor) {
+			this.anchor = anchor;
+		}
+
 		@Override
 		public String getSerializedName() {
 			return name().toLowerCase();
 		}
 	}
 
-	public enum Anchor implements StringRepresentable {
-		TOP_LEFT(-1, 1), TOP(0, 1), TOP_RIGHT(1, 1),
-		MIDDLE_LEFT(-1, 0), MIDDLE(0, 0), MIDDLE_RIGHT(1, 0),
-		BOTTOM_LEFT(-1, -1), BOTTOM(0, -1), BOTTOM_RIGHT(1, -1);
-
-		public static final Codec<Anchor> CODEC = StringRepresentable.fromEnum(Anchor::values);
-		public static final StreamCodec<ByteBuf, Anchor> STREAM_CODEC = ByteBufCodecs.BYTE.map(index -> Anchor.values()[index], anchor -> (byte) anchor.ordinal());
-
-		public static Anchor fromHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
-			return switch (horizontalAlignment) {
-				case LEFT -> MIDDLE_LEFT;
-				case RIGHT -> MIDDLE_RIGHT;
-				default -> MIDDLE;
-			};
-		}
-
-		private final int x;
-		private final int y;
-		Anchor(int x, int y) {
-			this.x = x;
-			this.y = y;
-		}
-
-		public int getX() {
-			return this.x;
-		}
-
-		public int getY() {
-			return this.y;
-		}
-
-		@Override
-		public String getSerializedName() {
-			return this.name().toLowerCase();
-		}
-	}
 }

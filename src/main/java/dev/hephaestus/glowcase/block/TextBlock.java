@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.block;
 import com.mojang.serialization.MapCodec;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
+import dev.hephaestus.glowcase.util.ZOffset;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -44,10 +45,10 @@ public class TextBlock extends RotatableBlock {
 	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 
 		if (world.getBlockEntity(pos) instanceof TextBlockEntity be) { // Wish we had ctx.side right now...
-			if (be.zOffset == TextBlockEntity.ZOffset.CENTER && Math.abs(placer.getXRot()) < 30) {
-				be.zOffset = TextBlockEntity.ZOffset.BACK;
-			} else if (be.zOffset == TextBlockEntity.ZOffset.BACK && Math.abs(placer.getXRot()) > 60) {
-				be.zOffset = TextBlockEntity.ZOffset.CENTER;
+			if (be.zOffset == ZOffset.CENTER && Math.abs(placer.getXRot()) < 30) {
+				be.zOffset = ZOffset.BACK;
+			} else if (be.zOffset == ZOffset.BACK && Math.abs(placer.getXRot()) > 60) {
+				be.zOffset = ZOffset.CENTER;
 			}
 			be.setChanged();
 		}
