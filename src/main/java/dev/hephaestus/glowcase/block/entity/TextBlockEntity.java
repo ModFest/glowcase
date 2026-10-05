@@ -70,26 +70,22 @@ public class TextBlockEntity extends GlowcaseBlockEntity {
 
 		this.backgroundColor = view.getIntOr("background_color", 0);
 		this.shadow = view.getBooleanOr("shadow", true);
-		Anchor anchor = null;
 		this.textAlignment = view.read("text_alignment", TextJustify.CODEC).orElse(TextJustify.CENTER);
 		switch (this.textAlignment) {
 			case CENTER_LEFT, CENTER_RIGHT -> {
-				anchor = this.textAlignment.anchor;
+				this.offset = new Vec3(this.textAlignment.anchor.getX() * 0.5, this.offset.y, this.offset.z);
 				this.textAlignment = TextJustify.CENTER;
 			}
 		}
-		if (anchor == null) {
-			anchor = view.read("horizontal_alignment", HorizontalAlignment.CODEC)
-				.map(HorizontalAlignment::getAnchor)
-				.or(() -> view.read("anchor", Anchor.CODEC))
-				.orElse(this.anchor);
-		}
-		this.anchor = anchor;
+		this.anchor = view.read("anchor", Anchor.CODEC)
+			.or(() -> view.read("horizontal_alignment", HorizontalAlignment.CODEC)
+				.map(HorizontalAlignment::getAnchor))
+			.orElse(this.anchor);
 		this.lines = new ArrayList<>(view.read("lines", ComponentSerialization.CODEC.listOf()).orElseGet(List::of));
 
 		this.offset = view.read("offset", Vec3.CODEC)
-			.or(() -> view.read("z_offset", ZOffset.CODEC).map(z -> z.setZ(Vec3.ZERO)))
-			.orElse(Vec3.ZERO);
+			.or(() -> view.read("z_offset", ZOffset.CODEC).map(z -> z.setZ(this.offset)))
+			.orElse(this.offset);
 		this.rotation = view.read("rotation", Vec3.CODEC).orElse(Vec3.ZERO);
 
 		this.rebake(false);
