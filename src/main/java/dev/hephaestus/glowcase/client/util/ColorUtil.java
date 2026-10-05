@@ -51,14 +51,57 @@ public final class ColorUtil {
 		return color;
 	}
 
+	/**
+	 * Parses alpha and non-alpha colour values.
+	 * <p>
+	 * Accepts all the following formats:
+	 * <ul>
+	 *     <li>{@code #321} - RGB, alpha carried from {@code reference}. Is equivalent to {@code #332211}.</li>
+	 *     <li>{@code #332211} - RGB, alpha carried from {@code reference}.</li>
+	 *     <li>{@code #4321} - ARGB. {@code reference} is ignored. Is equivalent to {@code #44332211}.</li>
+	 *     <li>{@code #44332211} - ARGB. {@code reference} is ignored.</li>
+	 *     <li>Named values valid to {@link TextColor#parseColor(String)}.</li>
+	 * </ul>
+	 *
+	 * @param string    The value to parse.
+	 * @param reference The original colour to use as a reference.
+	 * @return The parsed integer result, if any.
+	 */
 	public static DataResult<Integer> parse(String string, int reference) {
-		var result = TextColor.parseColor(string);
+		// MAINTENANCE NOTE: There is no vanilla equivalent to the hex parser.
+		// This accepts #RGB, #ARGB, #RRGGBB and #AARRGGBB along with parsing the name of colours.
+		if (string.startsWith("#")) {
+			try {
+				final int color = Integer.parseUnsignedInt(string, 1, string.length(), 16);
 
-		return result.map(textColor -> {
-			int rgb = textColor.getValue() & RGB_MASK;
-			int a = reference & ALPHA_MASK;
-			return a | rgb;
-		});
+				return switch (string.length()) {
+					case 4 -> {
+						int rgb = upcast(color);
+						int a = reference & ALPHA_MASK;
+
+						yield DataResult.success(a | rgb);
+					}
+					case 5 -> DataResult.success(upcast(color));
+					case 7 -> {
+						int a = reference & ALPHA_MASK;
+
+						yield DataResult.success(a | color);
+					}
+					case 9 -> DataResult.success(color);
+					default -> DataResult.error(() -> "Unexpected value: " + string);
+				};
+			} catch (NumberFormatException ignored) {
+				return DataResult.error(() -> "Not a number: " + string);
+			}
+		} else {
+			var result = TextColor.parseColor(string);
+
+			return result.map(textColor -> {
+				int rgb = textColor.getValue() & RGB_MASK;
+				int a = reference & ALPHA_MASK;
+				return a | rgb;
+			});
+		}
 	}
 
 	public static String toAlphaHex(int color) {
