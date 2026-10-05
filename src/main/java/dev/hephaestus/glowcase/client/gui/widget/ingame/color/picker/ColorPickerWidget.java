@@ -59,6 +59,7 @@ public class ColorPickerWidget extends AbstractButton {
 	public Consumer<Integer> confirmListener = null;
 	public boolean showAlpha = false;
 	public float minAlpha = 0f;
+	public float defaultAlpha = 1f;
 
 	public final List<PickerArea> clickableAreas;
 	public PickerArea previewArea;
@@ -279,8 +280,30 @@ public class ColorPickerWidget extends AbstractButton {
 		this.target(widget, initColor, showAlpha, minAlpha, false, pickedColorListener);
 	}
 
+	public void target(
+		AbstractWidget widget,
+		int initColor,
+		boolean showAlpha,
+		float minAlpha,
+		float defaultAlpha,
+		ColorSetter pickedColorListener
+	) {
+		this.target(widget, initColor, showAlpha, minAlpha, defaultAlpha, false, pickedColorListener);
+	}
+
 	public void target(AbstractWidget widget, int initColor, boolean showAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
 		this.target(widget, initColor, showAlpha, 0f, rightAligned, pickedColorListener);
+	}
+
+	public void target(
+		AbstractWidget widget,
+		int initColor,
+		boolean showAlpha,
+		@Range(from = 0, to = 1) float minAlpha,
+		boolean rightAligned,
+		ColorSetter pickedColorListener
+	) {
+		this.target(widget, initColor, showAlpha, minAlpha, 1f, rightAligned, pickedColorListener);
 	}
 
 	/**
@@ -292,7 +315,15 @@ public class ColorPickerWidget extends AbstractButton {
 	 * @param rightAligned If the Color Picker Widget should align itself to the right side of the widget instead of the left side  .
 	 * @param pickedColorListener What to do with the picked color, as an integer.
 	 */
-	public void target(AbstractWidget widget, int initColor, boolean showAlpha, @Range(from = 0, to = 1) float minAlpha, boolean rightAligned, ColorSetter pickedColorListener) {
+	public void target(
+		final AbstractWidget widget,
+		final int initColor,
+		final boolean showAlpha,
+		@Range(from = 0, to = 1) final float minAlpha,
+		@Range(from = 0, to = 1) final float defaultAlpha,
+		final boolean rightAligned,
+		final ColorSetter pickedColorListener
+	) {
 		Screen screen = Minecraft.getInstance().screen;
 		this.visible = true;
 		this.active = true;
@@ -311,6 +342,7 @@ public class ColorPickerWidget extends AbstractButton {
 
 		this.showAlpha = showAlpha;
 		this.minAlpha = minAlpha;
+		this.defaultAlpha = defaultAlpha;
 		this.setHeight(this.showAlpha ? DEFAULT_ALPHA_HEIGHT : DEFAULT_HEIGHT);
 
 		this.pickedColorListener = pickedColorListener;
@@ -319,7 +351,15 @@ public class ColorPickerWidget extends AbstractButton {
 				this.alpha = Math.max(preset.getAlpha(), this.minAlpha);
 				this.updateAreaThumbs();
 			} else {
-				this.setColor(preset.getPresetColor(), false);
+				final boolean updateAlpha;
+				int color = preset.getPresetColor();
+				if (this.alpha == 0 && this.defaultAlpha != 0) {
+					color = ColorUtil.withAlpha(color, this.defaultAlpha);
+					updateAlpha = true;
+				} else {
+					updateAlpha = false;
+				}
+				this.setColor(color, updateAlpha);
 			}
 		};
 		this.confirmListener = null;

@@ -4,6 +4,7 @@ import com.mojang.serialization.DataResult;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Range;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -37,38 +38,67 @@ public final class ColorUtil {
 
 	public static int alphaFallback(int color) {
 		if ((color & ALPHA_MASK) == TRANSPARENT) {
-			return color & RGB_MASK | ALPHA_MASK;
+			return color | ALPHA_MASK;
 		}
 
 		return color;
+	}
+
+	public static int alphaFallback(int color, @Range(from = 0, to = 255) int alpha) {
+		if ((color & ALPHA_MASK) == TRANSPARENT) {
+			return color | (alpha << RGB_BITS);
+		}
+
+		return color;
+	}
+
+	public static int alphaFallback(int color, float alpha) {
+		return alphaFallback(color, ARGB.as8BitChannel(alpha));
 	}
 
 	public static int minAlpha(int color, int minAlpha) {
 		if ((color >>> RGB_BITS) < minAlpha) {
-			return (color & RGB_MASK) | (minAlpha << RGB_CHANNELS);
+			return transferAlpha(minAlpha << RGB_BITS, color);
 		}
 
 		return color;
 	}
 
+	public static int withAlpha(int color, @Range(from = 0, to = 255) int alpha) {
+		return transferAlpha(alpha << RGB_BITS, color);
+	}
+
+	public static int withAlpha(int color, float alpha) {
+		return withAlpha(color, ARGB.as8BitChannel(alpha));
+	}
+
+	/**
+	 * Parses alpha and non-alpha colour values.
+	 * <p>
+	 * Accepts all the following formats:
+	 * <ul>
+	 *     <li>{@code #321} - RGB, alpha carried from {@code reference}. Is equivalent to {@code #332211}.</li>
+	 *     <li>{@code #332211} - RGB, alpha carried from {@code reference}.</li>
+	 *     <li>{@code #4321} - ARGB. {@code reference} is ignored. Is equivalent to {@code #44332211}.</li>
+	 *     <li>{@code #44332211} - ARGB. {@code reference} is ignored.</li>
+	 *     <li>Named values valid to {@link ChatFormatting#getByName(String)}.</li>
+	 * </ul>
+	 *
+	 * @param string    The value to parse.
+	 * @param reference The original colour to use as a reference.
+	 * @return The parsed integer result, if any.
+	 */
 	public static DataResult<Integer> parse(String string, int reference) {
+		// MAINTENANCE NOTE: There is no vanilla equivalent to the hex parser.
+		// This accepts #RGB, #ARGB, #RRGGBB and #AARRGGBB along with parsing the name of colours.
 		if (string.startsWith("#")) {
 			try {
 				final int color = Integer.parseUnsignedInt(string, 1, string.length(), 16);
 
 				return switch (string.length()) {
-					case 4 -> {
-						int rgb = upcast(color);
-						int a = reference & ALPHA_MASK;
-
-						yield DataResult.success(a | rgb);
-					}
+					case 4 -> DataResult.success(transferAlpha(reference, upcast(color)));
 					case 5 -> DataResult.success(upcast(color));
-					case 7 -> {
-						int a = reference & ALPHA_MASK;
-
-						yield DataResult.success(a | color);
-					}
+					case 7 -> DataResult.success(transferAlpha(reference, color));
 					case 9 -> DataResult.success(color);
 					default -> DataResult.error(() -> "Unexpected value: " + string);
 				};
@@ -176,7 +206,7 @@ public final class ColorUtil {
 	 */
 	public static int HSVAtoARGB(float hue, float saturation, float value, float alpha) {
 		if (hue == 1f) hue = 0f;
-		return Mth.hsvToArgb(hue, saturation, value, Mth.floor(alpha * 255f));
+		return Mth.hsvToArgb(hue, saturation, value, ARGB.as8BitChannel(alpha));
 	}
 
 	/**
