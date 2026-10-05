@@ -143,6 +143,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 				}
 			)
 			.setEditableAlpha(true)
+			.setPickerDefaultAlpha(0x40 / 255.f)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
 		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));

@@ -4,6 +4,7 @@ import com.mojang.serialization.DataResult;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Range;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -37,18 +38,38 @@ public final class ColorUtil {
 
 	public static int alphaFallback(int color) {
 		if ((color & ALPHA_MASK) == TRANSPARENT) {
-			return color & RGB_MASK | ALPHA_MASK;
+			return color | ALPHA_MASK;
 		}
 
 		return color;
 	}
 
-	public static int minAlpha(int color, int minAlpha) {
-		if ((color >>> RGB_BITS) < minAlpha) {
-			return (color & RGB_MASK) | (minAlpha << RGB_CHANNELS);
+	public static int alphaFallback(int color, @Range(from = 0, to = 255) int alpha) {
+		if ((color & ALPHA_MASK) == TRANSPARENT) {
+			return color | (alpha << RGB_BITS);
 		}
 
 		return color;
+	}
+
+	public static int alphaFallback(int color, float alpha) {
+		return alphaFallback(color, ARGB.as8BitChannel(alpha));
+	}
+
+	public static int minAlpha(int color, int minAlpha) {
+		if ((color >>> RGB_BITS) < minAlpha) {
+			return transferAlpha(minAlpha << RGB_BITS, color);
+		}
+
+		return color;
+	}
+
+	public static int withAlpha(int color, @Range(from = 0, to = 255) int alpha) {
+		return transferAlpha(alpha << RGB_BITS, color);
+	}
+
+	public static int withAlpha(int color, float alpha) {
+		return withAlpha(color, ARGB.as8BitChannel(alpha));
 	}
 
 	/**
@@ -75,18 +96,9 @@ public final class ColorUtil {
 				final int color = Integer.parseUnsignedInt(string, 1, string.length(), 16);
 
 				return switch (string.length()) {
-					case 4 -> {
-						int rgb = upcast(color);
-						int a = reference & ALPHA_MASK;
-
-						yield DataResult.success(a | rgb);
-					}
+					case 4 -> DataResult.success(transferAlpha(reference, upcast(color)));
 					case 5 -> DataResult.success(upcast(color));
-					case 7 -> {
-						int a = reference & ALPHA_MASK;
-
-						yield DataResult.success(a | color);
-					}
+					case 7 -> DataResult.success(transferAlpha(reference, color));
 					case 9 -> DataResult.success(color);
 					default -> DataResult.error(() -> "Unexpected value: " + string);
 				};
@@ -192,7 +204,7 @@ public final class ColorUtil {
 	 */
 	public static int HSVAtoARGB(float hue, float saturation, float value, float alpha) {
 		if (hue == 1f) hue = 0f;
-		return Mth.hsvToArgb(hue, saturation, value, Mth.floor(alpha * 255f));
+		return Mth.hsvToArgb(hue, saturation, value, ARGB.as8BitChannel(alpha));
 	}
 
 	/**
