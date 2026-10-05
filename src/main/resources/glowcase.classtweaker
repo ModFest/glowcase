@@ -19,7 +19,6 @@ accessible field net/minecraft/client/renderer/feature/RenderTypeFeatureRenderer
 mutable field net/minecraft/client/renderer/StagedVertexBuffer draws Ljava/util/List;
 mutable field net/minecraft/client/gui/render/TextureSetup texure0 Lcom/mojang/renderpearl/api/textures/GpuTextureView;
 
-accessible method net/minecraft/client/gui/components/tabs/TabNavigationBar <init> (ILnet/minecraft/client/gui/components/tabs/TabManager;Ljava/lang/Iterable;)V
 accessible field net/minecraft/client/gui/components/tabs/TabNavigationBar tabButtons Lcom/google/common/collect/ImmutableList;
 mutable field net/minecraft/client/gui/components/tabs/TabNavigationBar tabButtons Lcom/google/common/collect/ImmutableList;
 
