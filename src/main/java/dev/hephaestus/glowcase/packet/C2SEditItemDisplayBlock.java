@@ -18,8 +18,8 @@ public record C2SEditItemDisplayBlock(BlockPos pos, DisplayBlockSettings setting
 		C2SEditItemDisplayBlock::new
 	);
 
-	public static C2SEditEntityDisplayBlock of(DisplayBlockEntity be) {
-		return new C2SEditEntityDisplayBlock(be.getBlockPos(), be.toSettings());
+	public static C2SEditItemDisplayBlock of(DisplayBlockEntity be) {
+		return new C2SEditItemDisplayBlock(be.getBlockPos(), be.toSettings());
 	}
 
 	@Override
