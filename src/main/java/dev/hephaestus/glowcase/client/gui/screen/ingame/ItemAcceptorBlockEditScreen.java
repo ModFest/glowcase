@@ -26,11 +26,11 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 	public void init() {
 		super.init();
 
-		Identifier item = this.blockEntity.getItem();
+		String item = this.blockEntity.getItem();
 
 		this.itemWidget = new GlowcaseEditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
-		if (!item.equals(Identifier.withDefaultNamespace("air"))) {
+		if (!item.equals(Identifier.withDefaultNamespace("air").toString())) {
 			this.itemWidget.setValue((this.blockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
@@ -83,11 +83,11 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 			text = text.substring(1);
 		}
 
-		if (!text.isEmpty() && Identifier.tryParse(text) instanceof Identifier id) {
-			this.blockEntity.setItem(id);
+		if (!text.isEmpty() && ItemAcceptorBlockEntity.isItem(text, this.blockEntity.getLevel().registryAccess())) {
+			this.blockEntity.setItem(text);
 			this.blockEntity.isItemTag = isItemTag;
 		} else {
-			this.blockEntity.setItem(Identifier.withDefaultNamespace("air"));
+			this.blockEntity.setItem("minecraft:air");
 		}
 
 		if (Ints.tryParse(countWidget.getValue()) instanceof Integer integer) {

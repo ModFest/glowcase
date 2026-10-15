@@ -11,11 +11,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public record C2SEditItemAcceptorBlock(BlockPos pos, Identifier item, int count, int pulse, boolean isItemTag, ItemAcceptorBlockEntity.OutputDirection outputDirection) implements C2SEditBlockEntity {
+public record C2SEditItemAcceptorBlock(BlockPos pos, String item, int count, int pulse, boolean isItemTag, ItemAcceptorBlockEntity.OutputDirection outputDirection) implements C2SEditBlockEntity {
 	public static final Type<C2SEditItemAcceptorBlock> ID = new Type<>(Glowcase.id("channel.item_acceptor.save"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, C2SEditItemAcceptorBlock> PACKET_CODEC = StreamCodec.composite(
 		BlockPos.STREAM_CODEC, C2SEditItemAcceptorBlock::pos,
-		Identifier.STREAM_CODEC, C2SEditItemAcceptorBlock::item,
+		ByteBufCodecs.STRING_UTF8, C2SEditItemAcceptorBlock::item,
 		ByteBufCodecs.INT, C2SEditItemAcceptorBlock::count,
 		ByteBufCodecs.INT, C2SEditItemAcceptorBlock::pulse,
 		ByteBufCodecs.BOOL, C2SEditItemAcceptorBlock::isItemTag,
