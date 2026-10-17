@@ -67,10 +67,18 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 
 		this.item = item;
 
-		if (Identifier.tryParse(item) != null) {
-			TagKey<Item> itemTag = TagKey.create(Registries.ITEM, Identifier.parse(item));
-			itemTagList = BuiltInRegistries.ITEM.stream().filter(it -> it.getDefaultInstance().is(itemTag)).toList();
+		if (!this.isItemTag) {
+			return;
 		}
+
+		final Identifier itemTagId = Identifier.tryParse(item);
+
+		if (itemTagId == null) {
+			return;
+		}
+
+		TagKey<Item> itemTag = TagKey.create(Registries.ITEM, itemTagId);
+		itemTagList = BuiltInRegistries.ITEM.stream().filter(it -> it.getDefaultInstance().is(itemTag)).toList();
 	}
 
 	public static boolean isItem(String text, RegistryAccess registryAccess) {

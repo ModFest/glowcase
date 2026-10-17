@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorBlockEntity> {
 	private GlowcaseEditBox itemWidget;
@@ -77,16 +78,24 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 	@Override
 	public CustomPacketPayload getUpdatePayload() {
 		String text = itemWidget.getValue();
-		boolean isItemTag = text.startsWith("#");
-		if (isItemTag) {
-			text = text.substring(1);
-		}
 
-		if (!text.isEmpty() && ItemAcceptorBlockEntity.isItem(text, this.blockEntity.getLevel().registryAccess())) {
+		if (text.startsWith("#")) {
+			text = text.substring(1);
+
+			if (Identifier.tryParse(text) != null) {
+				this.blockEntity.setItem(text);
+				this.blockEntity.isItemTag = true;
+			} else {
+				this.blockEntity.setItem("minecraft:air");
+				this.blockEntity.isItemTag = false;
+			}
+
+		} else if (ItemAcceptorBlockEntity.isItem(text, this.blockEntity.getLevel().registryAccess())) {
 			this.blockEntity.setItem(text);
-			this.blockEntity.isItemTag = isItemTag;
+			this.blockEntity.isItemTag = false;
 		} else {
 			this.blockEntity.setItem("minecraft:air");
+			this.blockEntity.isItemTag = false;
 		}
 
 		if (Ints.tryParse(countWidget.getValue()) instanceof Integer integer) {
