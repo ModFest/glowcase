@@ -74,7 +74,7 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	}
 
 	public static boolean isItem(String text, RegistryAccess registryAccess) {
-		return Identifier.tryParse(text) != null ||  getItemStack(text, registryAccess) != null;
+		return !getItemStack(text, registryAccess).isEmpty();
 	}
 
 	public ItemStack getDisplayItemStack() {
