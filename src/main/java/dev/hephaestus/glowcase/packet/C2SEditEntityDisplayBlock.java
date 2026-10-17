@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public record C2SEditEntityDisplayBlock(BlockPos pos, DisplayBlockSettings settings, Optional<Map<String, PartPoseInfo>> partPoses) implements C2SEditBlockEntity, C2SEditDisplayBlock {
+public record C2SEditEntityDisplayBlock(BlockPos pos, DisplayBlockSettings settings, Optional<Map<String, PartPoseInfo>> partPoses, Optional<Boolean> isBaby) implements C2SEditBlockEntity, C2SEditDisplayBlock {
 	public static final Type<C2SEditEntityDisplayBlock> ID = new Type<>(Glowcase.id("channel.entity_display"));
 
 	private static final StreamCodec<ByteBuf, Map<String, PartPoseInfo>> PART_POSES_CODEC =
@@ -28,12 +28,13 @@ public record C2SEditEntityDisplayBlock(BlockPos pos, DisplayBlockSettings setti
 		BlockPos.STREAM_CODEC, C2SEditEntityDisplayBlock::pos,
 		DisplayBlockSettings.PACKET_CODEC, C2SEditEntityDisplayBlock::settings,
 		ByteBufCodecs.optional(PART_POSES_CODEC), C2SEditEntityDisplayBlock::partPoses,
+		ByteBufCodecs.optional(ByteBufCodecs.BOOL), C2SEditEntityDisplayBlock::isBaby,
 		C2SEditEntityDisplayBlock::new
 	);
 
 	public static C2SEditEntityDisplayBlock of(DisplayBlockEntity be) {
 		EntityDisplayBlockEntity entityDisplayBlock = (EntityDisplayBlockEntity)be;
-		return new C2SEditEntityDisplayBlock(be.getBlockPos(), be.toSettings(), Optional.of(entityDisplayBlock.getPartPoses()));
+		return new C2SEditEntityDisplayBlock(be.getBlockPos(), be.toSettings(), Optional.of(entityDisplayBlock.getPartPoses()), Optional.of(entityDisplayBlock.isBaby()));
 	}
 
 	@Override
@@ -43,8 +44,9 @@ public record C2SEditEntityDisplayBlock(BlockPos pos, DisplayBlockSettings setti
 
 	@Override
 	public void receive(ServerLevel world, BlockEntity blockEntity) {
-		if(blockEntity instanceof  EntityDisplayBlockEntity entityDisplayBlock) {
+		if(blockEntity instanceof EntityDisplayBlockEntity entityDisplayBlock) {
 			partPoses().ifPresent(entityDisplayBlock::loadPartPoses);
+			isBaby().ifPresent(entityDisplayBlock::setBaby);
 		}
 		C2SEditDisplayBlock.super.receive(world, blockEntity);
 	}

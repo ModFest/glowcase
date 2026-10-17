@@ -200,5 +200,6 @@
 	"gui.glowcase.color_text": "Color Text (Via QuickText Tags)",
 	"gui.glowcase.insert_font": "Insert Font (Via QuickText Tags)",
 	"gui.glowcase.model_parts": "Model Parts",
-	"gui.glowcase.rotation": "Rotation"
+	"gui.glowcase.rotation": "Rotation",
+	"gui.glowcase.baby": "Baby"
 }

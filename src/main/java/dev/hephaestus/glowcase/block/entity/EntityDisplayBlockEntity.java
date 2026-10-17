@@ -11,6 +11,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.Level;
@@ -33,6 +34,7 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 	protected @Nullable Entity displayEntity = null;
 	protected @Nullable EntityType<?> entityType = null;
 	protected Map<String, PartPoseInfo> partPoses = new HashMap<>();
+	protected boolean isBaby = false;
 
 	public EntityDisplayBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.ENTITY_DISPLAY_BLOCK_ENTITY.get(), pos, state);
@@ -71,6 +73,7 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 	public void setDisplayEntity(@Nullable Entity displayEntity) {
 		this.displayEntity = displayEntity;
 		this.entityType = displayEntity == null ? null : displayEntity.getType();
+		applyBabyStateToDisplayEntity();
 		this.setChanged();
 	}
 
@@ -113,12 +116,27 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 		this.partPoses.put(name,partPoseInfo);
 	}
 
+	public void setBaby(boolean baby) {
+		this.isBaby = baby;
+		applyBabyStateToDisplayEntity();
+	}
+
+	public void applyBabyStateToDisplayEntity(){
+		if(displayEntity != null && displayEntity instanceof Mob displayMob) {
+			displayMob.setBaby(isBaby());
+		}
+	}
+
+	public boolean isBaby(){
+		return this.isBaby;
+	}
 
 	@Override
 	protected void saveAdditional(ValueOutput view) {
 		super.saveAdditional(view);
 		if (entityType != null) {
 			view.store("type", EntityType.CODEC, entityType);
+			view.store("isBaby", Codec.BOOL, isBaby);
 		}
 		if(!partPoses.isEmpty()) {
 			view.store("partPoses", Codec.unboundedMap(Codec.STRING, PartPoseInfo.CODEC), partPoses);
@@ -132,6 +150,8 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 		this.entityId = view.getIntOr("entityId", 0);
 		this.entityType = view.read("type", EntityType.CODEC).orElse(null);
 		this.displayEntity = null;
+
+		this.isBaby = view.read("isBaby", Codec.BOOL).orElse(false);
 
 		this.partPoses.clear();
 		Optional<Map<String, PartPoseInfo>> optionalStringPartPoseInfoMap = view.read("partPoses", Codec.unboundedMap(Codec.STRING, PartPoseInfo.CODEC));

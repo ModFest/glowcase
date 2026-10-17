@@ -7,11 +7,13 @@ import dev.hephaestus.glowcase.client.util.ModelPartUtil;
 import dev.hephaestus.glowcase.packet.C2SEditEntityDisplayBlock;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -24,7 +26,7 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	private final Set<String> expandedParts = new HashSet<>();
 	private boolean expanded = false;
 	private final int STARTING_X = 10;
-	private final int STARTING_Y = 200;
+	private final int STARTING_Y = 220;
 
 	public EntityDisplayEditScreen(DisplayBlockEntity displayBlock) {
 		super(displayBlock);
@@ -37,7 +39,22 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 
 		int bottom = STARTING_Y + 22;
 		Entity displayEntity = this.entityDisplay.getDisplayEntity();
+		EntityDisplayBlockEntity entityDisplayBlockEntity = ((EntityDisplayBlockEntity)(this.blockEntity));
 		if(displayEntity != null) {
+			if(displayEntity instanceof Mob) {
+				this.addRenderableWidget(Checkbox.builder(Component.translatable("gui.glowcase.baby"), this.minecraft.font)
+					.selected(entityDisplayBlockEntity.isBaby())
+					.onValueChange((_, checked) -> {
+							entityDisplayBlockEntity.setBaby(checked);
+							editDisplayBlock();
+							this.expanded = false;
+							this.rebuildWidgets();
+						}
+					)
+					.pos(STARTING_X, 190)
+					.build());
+			}
+
 			this.addRenderableWidget(Button.builder(
 				Component.literal(this.expanded ? "▼ " : "▶ ").append(Component.translatable("gui.glowcase.model_parts")),
 				_ -> {
