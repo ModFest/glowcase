@@ -10,7 +10,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
 
 public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorBlockEntity> {
 	private GlowcaseEditBox itemWidget;
@@ -30,7 +29,7 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 
 		this.itemWidget = new GlowcaseEditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
-		if (!item.equals(Identifier.withDefaultNamespace("air").toString())) {
+		if (!ItemAcceptorBlockEntity.isInvalid(item)) {
 			this.itemWidget.setValue((this.blockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));

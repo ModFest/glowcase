@@ -4,10 +4,6 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-
-import java.util.List;
-import java.util.Locale;
-
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
@@ -22,6 +18,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+
+import java.util.List;
+import java.util.Locale;
 
 public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	private String item = "minecraft:air";
@@ -90,16 +89,31 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 		}
 	}
 
+	public static boolean isInvalid(final String id) {
+		return id == null || id.isBlank() || id.startsWith("..:") || id.equals("air") || id.equals("minecraft:air");
+	}
+
 	private static ItemStack getItemStack(String text, RegistryAccess registryAccess) {
-		if (!Identifier.isValidPath(text)) {
-			try {
-				return new ItemParser(registryAccess).parse(new StringReader(text.toString())).createItemStack(1);
-			} catch (CommandSyntaxException e) {
-				return ItemStack.EMPTY;
-			}
-		} else if (Identifier.tryParse(text) != null) {
-			return BuiltInRegistries.ITEM.getValue(Identifier.parse(text)).getDefaultInstance();
+		if (isInvalid(text)) {
+			return ItemStack.EMPTY;
 		}
+
+		final Identifier parsed = Identifier.tryParse(text);
+
+		if (parsed != null) {
+			return BuiltInRegistries.ITEM.getValue(parsed).getDefaultInstance();
+		}
+
+		// Admittedly, I might say this should be implemented with a predicate.
+		// It's, not wrong, but I'd check /clear too.
+		try {
+			return new ItemParser(registryAccess)
+				.parse(new StringReader(text))
+				.createItemStack(1);
+		} catch (CommandSyntaxException ignored) {
+			// Optionally log it, or flag an error condition?
+		}
+
 		return ItemStack.EMPTY;
 	}
 
