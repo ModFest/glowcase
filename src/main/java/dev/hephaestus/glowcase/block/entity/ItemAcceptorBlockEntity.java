@@ -1,12 +1,12 @@
 package dev.hephaestus.glowcase.block.entity;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import dev.hephaestus.glowcase.Glowcase;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -19,8 +19,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
+import java.util.List;
+import java.util.Locale;
+
 public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
-	private Identifier item = Identifier.withDefaultNamespace("air");
+	private String item = "minecraft:air";
 	public int count = 1;
 	public int pulse = 4;
 	public OutputDirection outputDirection = OutputDirection.BACK;
@@ -35,10 +38,10 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void saveAdditional(ValueOutput view) {
 		super.saveAdditional(view);
 
-		view.store("item", Identifier.CODEC, this.item);
 		view.putInt("count", this.count);
 		view.putInt("pulse", this.pulse);
 		view.putBoolean("is_item_tag", this.isItemTag);
+		view.store("item", Codec.STRING, this.item);
 		view.store("output_direction", OutputDirection.CODEC, this.outputDirection);
 	}
 
@@ -46,26 +49,40 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void loadAdditional(ValueInput view) {
 		super.loadAdditional(view);
 
-		this.setItem(view.read("item", Identifier.CODEC).orElse(Identifier.withDefaultNamespace("air")));
 		this.count = view.getIntOr("count", 1);
 		this.pulse = view.getIntOr("pulse", 4);
 		this.isItemTag = view.getBooleanOr("is_item_tag", false);
+		this.setItem(view.read("item", Codec.STRING).orElse("minecraft:air"));
 		this.outputDirection = view.read("output_direction", OutputDirection.CODEC).orElse(OutputDirection.BACK);
 	}
 
-	public Identifier getItem() {
+	public String getItem() {
 		return item;
 	}
 
-	public void setItem(Identifier item) {
+	public void setItem(String item) {
 		if (item == null) {
 			return;
 		}
 
 		this.item = item;
 
-		TagKey<Item> itemTag = TagKey.create(Registries.ITEM, item);
+		if (!this.isItemTag) {
+			return;
+		}
+
+		final Identifier itemTagId = Identifier.tryParse(item);
+
+		if (itemTagId == null) {
+			return;
+		}
+
+		TagKey<Item> itemTag = TagKey.create(Registries.ITEM, itemTagId);
 		itemTagList = BuiltInRegistries.ITEM.stream().filter(it -> it.getDefaultInstance().is(itemTag)).toList();
+	}
+
+	public static boolean isItem(String text, RegistryAccess registryAccess) {
+		return !getItemStack(text, registryAccess).isEmpty();
 	}
 
 	public ItemStack getDisplayItemStack() {
@@ -76,16 +93,48 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 
 			return itemTagList.get((int) (Util.getMillis() / 1000f) % itemTagList.size()).getDefaultInstance();
 		} else {
-			return BuiltInRegistries.ITEM.getValue(item).getDefaultInstance();
+			return getItemStack(item, level.registryAccess());
 		}
 	}
 
-	public boolean isItemAccepted(ItemStack stack) {
-		boolean isEqual = isItemTag
-			? stack.is(TagKey.create(Registries.ITEM, item))
-			: stack.is(BuiltInRegistries.ITEM.getValue(item));
+	public static boolean isInvalid(final String id) {
+		return id == null || id.isBlank() || id.startsWith("..:") || id.equals("air") || id.equals("minecraft:air");
+	}
 
-		return isEqual && stack.getCount() >= count;
+	private static ItemStack getItemStack(String text, RegistryAccess registryAccess) {
+		if (isInvalid(text)) {
+			return ItemStack.EMPTY;
+		}
+
+		final Identifier parsed = Identifier.tryParse(text);
+
+		if (parsed != null) {
+			return BuiltInRegistries.ITEM.getValue(parsed).getDefaultInstance();
+		}
+
+		// Admittedly, I might say this should be implemented with a predicate.
+		// It's, not wrong, but I'd check /clear too.
+		try {
+			return new ItemParser(registryAccess)
+				.parse(new StringReader(text))
+				.createItemStack(1);
+		} catch (CommandSyntaxException ignored) {
+			// Optionally log it, or flag an error condition?
+		}
+
+		return ItemStack.EMPTY;
+	}
+
+	public boolean isItemAccepted(ItemStack stack) {
+		if (!Identifier.isValidPath(item)) {
+			return ItemStack.isSameItemSameComponents(stack, getDisplayItemStack()) && stack.getCount() >= count;
+		} else {
+			Identifier parse = Identifier.parse(item);
+			boolean isEqual = isItemTag
+				? stack.is(TagKey.create(Registries.ITEM, parse))
+				: stack.is(BuiltInRegistries.ITEM.getValue(parse));
+			return isEqual && stack.getCount() >= count;
+		}
 	}
 
 	public int getPulse() {

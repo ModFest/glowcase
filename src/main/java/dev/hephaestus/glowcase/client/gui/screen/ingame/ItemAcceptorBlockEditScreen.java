@@ -26,11 +26,11 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 	public void init() {
 		super.init();
 
-		Identifier item = this.blockEntity.getItem();
+		String item = this.blockEntity.getItem();
 
 		this.itemWidget = new GlowcaseEditBox(this.font, width / 2 - 100, height / 2 - 25, 150, 20, Component.empty());
 		this.itemWidget.setMaxLength(128);
-		if (!item.equals(Identifier.withDefaultNamespace("air"))) {
+		if (!ItemAcceptorBlockEntity.isInvalid(item)) {
 			this.itemWidget.setValue((this.blockEntity.isItemTag ? "#" : "") + item);
 		}
 		this.itemWidget.setHint(TextUtils.placeholder("gui.glowcase.item_or_tag"));
@@ -78,16 +78,24 @@ public class ItemAcceptorBlockEditScreen extends BlockEditorScreen<ItemAcceptorB
 	@Override
 	public CustomPacketPayload getUpdatePayload() {
 		String text = itemWidget.getValue();
-		boolean isItemTag = text.startsWith("#");
-		if (isItemTag) {
-			text = text.substring(1);
-		}
 
-		if (!text.isEmpty() && Identifier.tryParse(text) instanceof Identifier id) {
-			this.blockEntity.setItem(id);
-			this.blockEntity.isItemTag = isItemTag;
+		if (text.startsWith("#")) {
+			text = text.substring(1);
+
+			if (Identifier.tryParse(text) != null) {
+				this.blockEntity.setItem(text);
+				this.blockEntity.isItemTag = true;
+			} else {
+				this.blockEntity.setItem("minecraft:air");
+				this.blockEntity.isItemTag = false;
+			}
+
+		} else if (ItemAcceptorBlockEntity.isItem(text, this.blockEntity.getLevel().registryAccess())) {
+			this.blockEntity.setItem(text);
+			this.blockEntity.isItemTag = false;
 		} else {
-			this.blockEntity.setItem(Identifier.withDefaultNamespace("air"));
+			this.blockEntity.setItem("minecraft:air");
+			this.blockEntity.isItemTag = false;
 		}
 
 		if (Ints.tryParse(countWidget.getValue()) instanceof Integer integer) {
