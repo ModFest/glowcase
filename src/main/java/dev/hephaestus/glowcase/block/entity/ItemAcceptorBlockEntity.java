@@ -38,10 +38,10 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void saveAdditional(ValueOutput view) {
 		super.saveAdditional(view);
 
-		view.store("item", Codec.STRING, this.item);
 		view.putInt("count", this.count);
 		view.putInt("pulse", this.pulse);
 		view.putBoolean("is_item_tag", this.isItemTag);
+		view.store("item", Codec.STRING, this.item);
 		view.store("output_direction", OutputDirection.CODEC, this.outputDirection);
 	}
 
@@ -49,10 +49,10 @@ public class ItemAcceptorBlockEntity extends GlowcaseBlockEntity {
 	protected void loadAdditional(ValueInput view) {
 		super.loadAdditional(view);
 
-		this.setItem(view.read("item", Codec.STRING).orElse("minecraft:air"));
 		this.count = view.getIntOr("count", 1);
 		this.pulse = view.getIntOr("pulse", 4);
 		this.isItemTag = view.getBooleanOr("is_item_tag", false);
+		this.setItem(view.read("item", Codec.STRING).orElse("minecraft:air"));
 		this.outputDirection = view.read("output_direction", OutputDirection.CODEC).orElse(OutputDirection.BACK);
 	}
 
