@@ -5,8 +5,11 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.color.functional.ColorGe
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.functional.ColorSetter;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.client.util.TooltipCow;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +25,14 @@ public class HexColorEditBox extends GlowcaseEditBox {
 	public final ColorGetter colorGetter;
 	public final ColorSetter colorSetter;
 	public int color;
-	public boolean editableAlpha;
-	public float pickerMinAlpha;
-	public float pickerDefaultAlpha;
+
+	private ColorUtil.Presentation presentation;
+
+	@Nullable
+	private Tooltip lastTooltip;
+	private boolean editableAlpha;
+	private final float pickerMinAlpha;
+	private final float pickerDefaultAlpha;
 
 	public static HexColorEditBox.Builder builder(Font textRenderer, int x, int y, ColorGetter colorGetter, ColorSetter colorSetter) {
 		return new Builder(textRenderer, x, y, colorGetter, colorSetter);
@@ -50,15 +58,14 @@ public class HexColorEditBox extends GlowcaseEditBox {
 		this.colorGetter = colorGetter;
 		this.colorSetter = colorSetter;
 		this.color = colorGetter.get();
-		this.editableAlpha = editableAlpha;
 		this.pickerMinAlpha = pickerMinAlpha;
 		this.pickerDefaultAlpha = pickerDefaultAlpha;
 
 		this.setResponder(string -> {
-			ColorUtil.parse(string, this.color).ifSuccess(this.colorSetter::set);
+			this.presentation.parse(string).ifPresent(this.colorSetter::set);
 		});
 
-		this.setTextFromColor();
+		this.setEditableAlpha(editableAlpha);
 	}
 
 	@Override
@@ -77,32 +84,79 @@ public class HexColorEditBox extends GlowcaseEditBox {
 	}
 
 	@Override
-	public boolean charTyped(CharacterEvent event) {
-		if(super.charTyped(event)) {
-			if (this.colorPickerWidget != null) {
-				ColorUtil.parse(this.getValue(), this.color).ifSuccess(parsedColor -> {
-					this.color = parsedColor;
-					this.colorPickerWidget.setColor(parsedColor);
-				});
-			}
+	public boolean keyPressed(final KeyEvent event) {
+		if (super.keyPressed(event)) {
+			updatePresentation();
 			return true;
 		}
 		return false;
 	}
 
-	public void setTextFromColor() {
-		String hexString = this.formatColorAsHex(this.color);
-		this.setValue(hexString);
+	@Override
+	public boolean charTyped(CharacterEvent event) {
+		if(super.charTyped(event)) {
+			updatePresentation();
+			return true;
+		}
+		return false;
 	}
 
-	public String formatColorAsHex(int color) {
-		if (this.editableAlpha) return ColorUtil.toAlphaHex(color);
-		return ColorUtil.toHex(color);
+	private void updatePresentation() {
+		if (this.colorPickerWidget != null) {
+			this.presentation.parse(this.getValue()).ifPresent(parsedColor -> {
+				this.color = parsedColor;
+				this.colorPickerWidget.setColor(parsedColor);
+			});
+		}
+	}
+
+	public void setTextFromColor() {
+		String hexString = this.presentation.present(this.color);
+		this.setValue(hexString);
 	}
 
 	public void setColor(int color) {
 		this.color = color;
 		this.setTextFromColor();
+	}
+
+	public void setEditableAlpha(final boolean editableAlpha) {
+		this.editableAlpha = editableAlpha;
+		this.presentation = ColorUtil.getPresentation(editableAlpha);
+		super.setHint(presentation.hint);
+		this.setTextFromColor();
+		this.updateTooltip();
+	}
+
+	@Override
+	public void setTooltip(@Nullable final Tooltip tooltip) {
+		this.lastTooltip = tooltip;
+		this.updateTooltip();
+	}
+
+	private void updateTooltip() {
+		if (this.lastTooltip == null) {
+			super.setTooltip(this.presentation.tooltip);
+			return;
+		}
+
+		if (this.lastTooltip instanceof TooltipCow cow) {
+			super.setTooltip(cow.glowcase$appendLine(this.presentation.component));
+			return;
+		}
+
+		// Our mixin is broken, just pass-through.
+		super.setTooltip(this.lastTooltip);
+	}
+
+
+	/**
+	 * Shall not be called, handled by the presentation.
+	 */
+	@Override
+	@Deprecated(forRemoval = true)
+	public final void setHint(final Component placeholder) {
+		throw new UnsupportedOperationException();
 	}
 
 	public static class Builder {

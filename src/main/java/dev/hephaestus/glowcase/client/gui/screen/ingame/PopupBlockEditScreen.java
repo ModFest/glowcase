@@ -9,7 +9,6 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEd
 import dev.hephaestus.glowcase.packet.C2SEditPopupBlock;
 import dev.hephaestus.glowcase.util.TextJustify;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -21,7 +20,7 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 
 	private GlowcaseMultilineEditBox glowcaseEditBox;
 	private GlowcaseEditBox titleEntryWidget;
-	private Button changeAlignment;
+
 	private HexColorEditBox colorEntryWidget;
 
 	private ColorPickerWidget colorPickerWidget;
@@ -56,28 +55,12 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 			this.popupBlockEntity.renderDirty = true;
 		});
 
-		// startX = middle - (160 + 2 + 50 + 4 + (20 + 2) * 6) / 2 = middle - 174;
-		this.changeAlignment = Button.builder(Component.translatableEscape(
-			"gui.glowcase.alignment",
-			this.popupBlockEntity.textAlignment
-		), action -> {
-			switch (popupBlockEntity.textAlignment) {
-				case LEFT -> popupBlockEntity.textAlignment = TextJustify.CENTER;
-				case CENTER, CENTER_LEFT, CENTER_RIGHT -> popupBlockEntity.textAlignment = TextJustify.RIGHT;
-				case RIGHT -> popupBlockEntity.textAlignment = TextJustify.LEFT;
-			}
-			this.popupBlockEntity.renderDirty = true;
-
-			this.changeAlignment.setMessage(Component.translatableEscape(
-				"gui.glowcase.alignment",
-				this.popupBlockEntity.textAlignment
-			));
-
-			this.glowcaseEditBox.setTextAlignment(this.popupBlockEntity.textAlignment);
-		}).bounds(middle - 174, 20 + innerPadding, 160, 20).build();
+		final int width = (60 + 4) + (50 + 4) + (20 + 2) * 6;
+		final int startX = middle - width / 2;
+		this.initJustifyButtons(startX, 20 + innerPadding, 0);
 
 		this.colorPickerWidget = createColorPickerWidget();
-		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, middle - 174 + 162, 20 + innerPadding,
+		this.colorEntryWidget = HexColorEditBox.builder(this.minecraft.font, startX + 64, 20 + innerPadding,
 			() -> this.popupBlockEntity.color, color -> {
 				this.popupBlockEntity.color = color;
 				this.popupBlockEntity.renderDirty = true;
@@ -87,11 +70,10 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
 
-		this.initFormattingButtons(middle - 174 + 162 + 54, 20 + innerPadding, 0);
+		this.initFormattingButtons(startX + 64 + 54, 20 + innerPadding, 0);
 
 		this.addRenderableWidget(this.glowcaseEditBox);
 		this.addRenderableWidget(this.titleEntryWidget);
-		this.addRenderableWidget(this.changeAlignment);
 		this.addRenderableWidget(this.colorEntryWidget);
 	}
 
@@ -111,6 +93,17 @@ public class PopupBlockEditScreen extends TextEditorScreen implements BlockEdito
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (this.mouseClickedColorPicker(event, doubleClick)) return true;
 		return super.mouseClicked(event, doubleClick);
+	}
+
+	@Override
+	protected TextJustify getJustify() {
+		return this.popupBlockEntity.textAlignment;
+	}
+
+	@Override
+	protected void setJustify(final TextJustify justify) {
+		this.popupBlockEntity.textAlignment = justify;
+		this.glowcaseEditBox.setTextAlignment(justify);
 	}
 
 	@Override

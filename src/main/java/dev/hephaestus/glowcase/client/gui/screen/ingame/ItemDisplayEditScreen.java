@@ -20,7 +20,7 @@ public class ItemDisplayEditScreen extends DisplayBlockEditScreen {
         this.renderAsBlockWidget = Checkbox.builder(Component.translatable("gui.glowcase.render_as_block"), this.minecraft.font)
 			.selected(this.blockEntity.getRenderAsBlock())
 			.onValueChange((checkbox, checked) -> this.blockEntity.setRenderAsBlock(checked))
-			.pos(20, 197)
+			.pos(10, this.rowOffset += ROW)
 			.build();
         
         this.addRenderableWidget(this.renderAsBlockWidget);

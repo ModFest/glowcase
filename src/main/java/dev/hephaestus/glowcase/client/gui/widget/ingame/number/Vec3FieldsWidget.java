@@ -1,6 +1,10 @@
 package dev.hephaestus.glowcase.client.gui.widget.ingame.number;
 
 import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
+import dev.hephaestus.glowcase.client.util.Tooltips;
+import dev.hephaestus.glowcase.util.CollectionUtils;
+import dev.hephaestus.glowcase.util.Components;
+import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
@@ -11,12 +15,15 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class Vec3FieldsWidget extends AbstractContainerWidget {
+
 	private static final int X_COLOR = ARGB.color(255, 75, 75);
 	private static final int Y_COLOR = ARGB.color(75, 255, 75);
 	private static final int Z_COLOR = ARGB.color(75, 75, 255);
@@ -30,11 +37,17 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 	private final boolean isRotation;
 	private final int editBoxCharacterLimit;
 	@Nullable
-	private final Tooltip[] tooltips;
+	private final List<Tooltip> tooltips;
+	@Nullable
+	private final List<Component> hints;
 	@Nullable
 	private final Consumer<Vec3> onValueChange;
 
 	private Vec3 value;
+
+	public static Builder builder(Font font, Vector3f value) {
+		return new Builder(font, new Vec3(value));
+	}
 
 	public static Builder builder(Font font, Vec3 value) {
 		return new Builder(font, value);
@@ -44,13 +57,14 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		Font font, Vec3 defaultValue,
 		int x, int y, int width, int height,
 		boolean colored, boolean isRotation, int editBoxCharacterLimit,
-		@Nullable Tooltip[] tooltips, @Nullable Consumer<Vec3> onValueChange
+		@Nullable List<Tooltip> tooltips, @Nullable List<Component> hints, @Nullable Consumer<Vec3> onValueChange
 	) {
 		super(x, y, width, height, Component.empty(),  AbstractScrollArea.defaultSettings(10));
 		this.font = font;
 		this.colored = colored;
 		this.isRotation = isRotation;
-		this.tooltips = tooltips;
+		this.tooltips = CollectionUtils.ofSizedElse(isRotation ? Tooltips.ROTATIONS : Tooltips.AXES, tooltips);
+		this.hints = CollectionUtils.ofSizedElse(isRotation ? Components.ROTATIONS : Components.AXES, hints);
 		this.editBoxCharacterLimit = editBoxCharacterLimit;
 		this.onValueChange = onValueChange;
 
@@ -63,7 +77,7 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 
 	private GlowcaseEditBox createEditBox(int index) {
 		double[] initValues = { this.value.x(), this.value.y(), this.value.z() };
-		List<Consumer<Float>> changeListeners = List.of(
+		List<FloatConsumer> changeListeners = List.of(
 			xUpdate -> this.updateValue(new Vec3(xUpdate, this.value.y(), this.value.z())),
 			yUpdate -> this.updateValue(new Vec3(this.value.x(), yUpdate, this.value.z())),
 			zUpdate -> this.updateValue(new Vec3(this.value.x(), this.value.y(), zUpdate))
@@ -91,8 +105,11 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			int[] textColors = {X_COLOR, Y_COLOR, Z_COLOR};
 			editBox.setTextColor(textColors[index]);
 		}
-		if (this.tooltips != null && this.tooltips.length == 3) {
-			editBox.setTooltip(this.tooltips[index]);
+		if (this.tooltips != null) {
+			editBox.setTooltip(this.tooltips.get(index));
+		}
+		if (this.hints != null) {
+			editBox.setHint(this.hints.get(index));
 		}
 		return editBox;
 	}
@@ -187,7 +204,9 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 		private int editBoxCharacterLimit = 7;
 
 		@Nullable
-		private Tooltip[] tooltips = null;
+		private List<Tooltip> tooltips = null;
+		@Nullable
+		private List<Component> hints = null;
 		@Nullable
 		private Consumer<Vec3> onValueChange = null;
 
@@ -196,60 +215,92 @@ public class Vec3FieldsWidget extends AbstractContainerWidget {
 			this.value = value;
 		}
 
+		@CheckReturnValue
 		public Builder setPos(int x, int y) {
 			this.x = x;
 			this.y = y;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Builder setWidth(int width) {
 			this.width = width;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Builder setHeight(int height) {
 			this.height = height;
 			return this;
 		}
 
-		public void setSize(int width, int height) {
-			this.setWidth(width);
-			this.setHeight(height);
+		@CheckReturnValue
+		public Builder setSize(int width, int height) {
+			return this.setWidth(width).setHeight(height);
 		}
+
+		@CheckReturnValue
 		public Builder setTooltips(Tooltip xTooltip, Tooltip yTooltip, Tooltip zTooltip) {
-			this.tooltips = new Tooltip[3];
-			this.tooltips[0] = xTooltip;
-			this.tooltips[1] = yTooltip;
-			this.tooltips[2] = zTooltip;
+			this.tooltips = List.of(xTooltip, yTooltip, zTooltip);
 			return this;
 		}
 
+		@CheckReturnValue
+		public Builder setTooltips(List<Tooltip> tooltips) {
+			if (tooltips.size() != 3) {
+				throw new IllegalArgumentException("Must be 3 for XYZ or PYR");
+			}
+			this.tooltips = List.copyOf(tooltips);
+			return this;
+		}
+
+		@CheckReturnValue
+		public Builder setHints(Component xHint, Component yHint, Component zHint) {
+			this.hints = List.of(xHint, yHint, zHint);
+			return this;
+		}
+
+
+		@CheckReturnValue
+		public Builder setHints(List<Component> hints) {
+			if (hints.size() != 3) {
+				throw new IllegalArgumentException("Must be 3 for XYZ or PYR");
+			}
+			this.hints = List.copyOf(hints);
+			return this;
+		}
+
+		@CheckReturnValue
 		public Builder setColored(boolean colored) {
 			this.colored = colored;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Builder setRotation(boolean rotation) {
 			this.rotation = rotation;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Builder setEditBoxCharacterLimit(int editBoxCharacterLimit) {
 			this.editBoxCharacterLimit = editBoxCharacterLimit;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Builder setOnValueChange(@Nullable Consumer<Vec3> onValueChange) {
 			this.onValueChange = onValueChange;
 			return this;
 		}
 
+		@CheckReturnValue
 		public Vec3FieldsWidget build() {
 			return new Vec3FieldsWidget(
 				this.font, this.value,
 				this.x, this.y, this.width, this.height,
 				this.colored, this.rotation, this.editBoxCharacterLimit,
-				this.tooltips, this.onValueChange
+				this.tooltips, this.hints, this.onValueChange
 			);
 		}
 	}

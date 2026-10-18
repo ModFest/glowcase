@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
@@ -13,6 +14,7 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 	private Vector3f scale = new Vector3f(1.0F);
 	private float pitch = 0.0F;
 	private float yaw = 0.0F;
+	private float roll = 0.0F;
 	private boolean renderAsBlock = false;
 
 	public DisplayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -25,6 +27,7 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 			new Vector3f(scale.x(), scale.y(), scale.z()),
 			pitch,
 			yaw,
+			roll,
 			renderAsBlock
 		);
 	}
@@ -34,6 +37,7 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 		this.scale.set(settings.scale().x(), settings.scale().y(), settings.scale().z());
 		this.pitch = settings.pitch();
 		this.yaw = settings.yaw();
+		this.roll = settings.roll();
 		this.renderAsBlock = settings.renderAsBlock();
 		setChanged();
 	}
@@ -59,12 +63,20 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 		return scale;
 	}
 
+	public Vec3 getRotation() {
+		return new Vec3(this.pitch, this.yaw, this.roll);
+	}
+
 	public float getYaw() {
 		return yaw;
 	}
 
 	public float getPitch() {
 		return pitch;
+	}
+
+	public float getRoll() {
+		return roll;
 	}
 
 	public void setOffset(Vector3f offset) {
@@ -87,6 +99,11 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 		setChanged();
 	}
 
+	public void setRoll(float roll) {
+		this.roll = roll;
+		setChanged();
+	}
+
 	public boolean getRenderAsBlock() {
 		return renderAsBlock;
 	}
@@ -94,5 +111,12 @@ public abstract class DisplayBlockEntity extends GlowcaseBlockEntity {
 	public void setRenderAsBlock(boolean renderAsBlock) {
 		this.renderAsBlock = renderAsBlock;
 		setChanged();
+	}
+
+	public void setRotation(final Vec3 rotation) {
+		this.pitch = (float) rotation.x;
+		this.yaw = (float) rotation.y;
+		this.roll = (float) rotation.z;
+		this.setChanged();
 	}
 }

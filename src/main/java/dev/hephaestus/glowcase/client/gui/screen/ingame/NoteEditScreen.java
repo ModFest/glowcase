@@ -43,14 +43,13 @@ public class NoteEditScreen extends TextEditorScreen {
 	private List<Component> lines;
 	private String title = "";
 	private String author = "";
-	private NoteComponent.Alignment textAlignment;
+	private TextJustify textAlignment;
 
 	private boolean signing = false;
 	private boolean finalizing = false;
 
 	private List<AbstractWidget> editingWidgets;
 	private GlowcaseMultilineEditBox glowcaseEditBox;
-	private Button changeAlignment;
 	private Button doneAndCancelButton;
 
 	private List<AbstractWidget> signingWidgets;
@@ -79,7 +78,7 @@ public class NoteEditScreen extends TextEditorScreen {
 			for (int i = 0; i < NoteComponent.LINES_LIMIT; i++)
 				this.lines.add(Component.literal(""));
 
-			this.textAlignment = NoteComponent.Alignment.LEFT;
+			this.textAlignment = TextJustify.LEFT;
 		}
 	}
 
@@ -105,22 +104,21 @@ public class NoteEditScreen extends TextEditorScreen {
 			.setInsetCursorColor(0xCC000000)
 			.setAppendCursorColor(NoteTextColorResource.TXT_COLOR)
 			.build();
-		this.glowcaseEditBox.updateSettings(NoteTextColorResource.TXT_COLOR, false, getTextBlockAlignment(this.textAlignment));
+		this.glowcaseEditBox.updateSettings(NoteTextColorResource.TXT_COLOR, false, this.textAlignment);
 		this.glowcaseEditBox.textField.seekCursor(Whence.ABSOLUTE, 0);
 
-		this.changeAlignment = Button.builder(Component.translatableEscape("gui.glowcase.alignment", textAlignment), action -> {
-			switch (textAlignment) {
-				case LEFT -> textAlignment = NoteComponent.Alignment.CENTER;
-				case CENTER -> textAlignment = NoteComponent.Alignment.RIGHT;
-				case RIGHT -> textAlignment = NoteComponent.Alignment.LEFT;
-			}
-
-			this.changeAlignment.setMessage(Component.translatableEscape("gui.glowcase.alignment", textAlignment));
-			this.glowcaseEditBox.setTextAlignment(getTextBlockAlignment(this.textAlignment));
-		}).bounds(width / 2 - BG_WIDTH / 2, height / 2 - BG_HEIGHT / 2 - offset - 20, BG_WIDTH / 12 * 6 - 3 - 7, 20).build();
+		this.initJustifyButtons(
+			this.width / 2 - BG_WIDTH / 2,
+			height / 2 - BG_HEIGHT / 2 - offset - 20 - 4,
+			0
+		);
 
 		this.colorPickerWidget = this.createColorPickerWidget();
-		this.initFormattingButtons(width / 2 - BG_WIDTH / 2 + BG_WIDTH / 12 * 6 - 5 - 7, height / 2 - BG_HEIGHT / 2 - offset - 20 - 4, width / 100);
+		this.initFormattingButtons(
+			width / 2 - BG_WIDTH / 2 + BG_WIDTH / 12 * 6 - 5,
+			height / 2 - BG_HEIGHT / 2 - offset - 20 - 4,
+			0
+		);
 
 		this.signAndFinalizeButton = Button.builder(Component.translatable("book.signButton"), action -> {
 			if (!this.signing) {
@@ -167,12 +165,13 @@ public class NoteEditScreen extends TextEditorScreen {
 		this.authorEditBox.setTextShadow(false);
 
 		this.addRenderableWidget(this.glowcaseEditBox);
-		this.addRenderableWidget(this.changeAlignment);
 		this.addRenderableWidget(this.doneAndCancelButton);
 		this.addRenderableWidget(this.signAndFinalizeButton);
 		this.editingWidgets = new ArrayList<>();
 		this.editingWidgets.add(this.glowcaseEditBox);
-		this.editingWidgets.add(this.changeAlignment);
+		this.editingWidgets.add(this.justifyLeftButton);
+		this.editingWidgets.add(this.justifyCenterButton);
+		this.editingWidgets.add(this.justifyRightButton);
 		this.editingWidgets.addAll(this.formattingButtons);
 
 		this.addRenderableWidget(this.titleEditBox);
@@ -180,6 +179,17 @@ public class NoteEditScreen extends TextEditorScreen {
 		this.signingWidgets = List.of(this.titleEditBox, this.authorEditBox);
 
 		this.switchToEditing();
+	}
+
+	@Override
+	protected TextJustify getJustify() {
+		return this.textAlignment;
+	}
+
+	@Override
+	protected void setJustify(final TextJustify justify) {
+		this.textAlignment = justify;
+		this.glowcaseEditBox.setTextAlignment(justify);
 	}
 
 	public void switchToSigning() {
@@ -261,14 +271,6 @@ public class NoteEditScreen extends TextEditorScreen {
 			textRenderer.substrByWidth(text, BG_WIDTH - TXT_X_PADDING - textRenderer.width(ellipsis)),
 			ellipsis
 		);
-	}
-
-	public static TextJustify getTextBlockAlignment(NoteComponent.Alignment noteAlignment) {
-		return switch (noteAlignment) {
-			case LEFT -> TextJustify.LEFT;
-			case RIGHT -> TextJustify.RIGHT;
-			default -> TextJustify.CENTER;
-		};
 	}
 
 	@Override

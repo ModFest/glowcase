@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
 import dev.hephaestus.glowcase.mixinsupport.PartPosedRenderState;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -29,6 +30,7 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 	public static class EntityDisplayRenderState extends BlockEntityRenderState {
 		public float yaw;
 		public float pitch;
+		public float roll;
 
 		public Vec3 offset;
 		public Vector3f scale;
@@ -50,6 +52,7 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 		state.scale = new Vector3f(blockEntity.getScale());
 		state.yaw = blockEntity.getYaw();
 		state.pitch = blockEntity.getPitch();
+		state.roll = blockEntity.getRoll();
 		// TODO: hmm, yes, shuttle the *entire entity* to the render state
 		// Perhaps shuttle the entity renderer & its state instead?
 		state.entity = blockEntity.getDisplayEntity();
@@ -63,7 +66,7 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 		poseStack.rotate(Axis.YP.rotationDegrees(state.yaw));
 		poseStack.translate(state.offset);
 		poseStack.scale(state.scale.x, state.scale.y, state.scale.z);
-		poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
+		poseStack.rotate(Quaternionsf.rotateDegreesYXZ(0, state.pitch, state.roll));
 		Entity renderEntity = state.entity;
 		if (renderEntity != null) {
 			//noinspection unchecked

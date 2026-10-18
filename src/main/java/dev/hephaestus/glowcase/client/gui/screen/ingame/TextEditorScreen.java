@@ -5,12 +5,12 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
 import dev.hephaestus.glowcase.client.util.ColorUtil;
+import dev.hephaestus.glowcase.util.TextJustify;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -20,6 +20,11 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 
 	protected Button colorTextButton;
 	protected List<Button> formattingButtons;
+
+	protected IconButtonWidget justifyLeftButton;
+	protected IconButtonWidget justifyCenterButton;
+	protected IconButtonWidget justifyRightButton;
+
 	protected boolean queuedEditBoxFocus = false;
 
 	abstract GlowcaseMultilineEditBox getGlowcaseMultilineEditBox();
@@ -91,6 +96,60 @@ public abstract class TextEditorScreen extends EditorScreen implements ColorPick
 		for (Button formattingButton : formattingButtons) {
 			this.addRenderableWidget(formattingButton);
 		}
+	}
+
+	protected void initJustifyButtons(int x, int y, int innerPadding) {
+		this.initJustifyButtons(x, y, innerPadding, 20, 0);
+	}
+
+	protected void initJustifyButtons(int x, int y, int innerPadding, int buttonSize, int buttonPadding) {
+		int buttonX = x + innerPadding * 2;
+		int buttonY = y + innerPadding;
+		int shiftX = buttonSize + buttonPadding;
+
+		this.justifyLeftButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/left"), button -> {
+					this.setJustify(TextJustify.LEFT);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(buttonX, buttonY, buttonSize, buttonSize, 16, 16)
+			.build();
+
+		this.justifyLeftButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_left")));
+		this.justifyCenterButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/center"), button -> {
+					this.setJustify(TextJustify.CENTER);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(shiftX + buttonX, buttonY, buttonSize, buttonSize, 16, 16)
+			.build();
+
+		this.justifyCenterButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_center")));
+		this.justifyRightButton = IconButtonWidget.builder(
+				Glowcase.id("text_alignment/right"), button -> {
+					this.setJustify(TextJustify.RIGHT);
+					this.updateSelectedJustifyButton();
+				})
+			.dimensions(shiftX * 2 + buttonX, buttonY, buttonSize, buttonSize, 16, 16)
+			.build();
+		this.justifyRightButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_right")));
+
+		this.updateSelectedJustifyButton();
+
+		this.addRenderableWidget(this.justifyLeftButton);
+		this.addRenderableWidget(this.justifyCenterButton);
+		this.addRenderableWidget(this.justifyRightButton);
+	}
+
+	protected abstract TextJustify getJustify();
+
+	protected abstract void setJustify(TextJustify justify);
+
+	protected void updateSelectedJustifyButton() {
+		TextJustify justify = this.getJustify();
+		this.justifyLeftButton.active = justify != TextJustify.LEFT;
+		this.justifyCenterButton.active = justify != TextJustify.CENTER;
+		this.justifyRightButton.active = justify != TextJustify.RIGHT;
 	}
 
 	@Override

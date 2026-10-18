@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.ItemDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
+import dev.hephaestus.glowcase.client.util.Quaternionsf;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.model.BlockDisplayContext;
@@ -35,6 +36,7 @@ public record ItemDisplayBlockEntityRenderer(
 		public boolean shouldRenderPlaceholder;
 		public float yaw;
 		public float pitch;
+		public float roll;
 		public Vector3f offset = new Vector3f(0, 0, 0);
 		public Vector3f scale = new Vector3f(0, 0, 0);
 	}
@@ -53,6 +55,7 @@ public record ItemDisplayBlockEntityRenderer(
 		state.shouldRenderPlaceholder = blockEntity.matchesStack(ItemStack.EMPTY) || BlockEntityRenderUtil.shouldRenderPlaceholder(blockEntity.getBlockPos());
 		state.yaw = blockEntity.getYaw();
 		state.pitch = blockEntity.getPitch();
+		state.roll = blockEntity.getRoll();
 		state.offset = blockEntity.getOffset();
 		state.scale = blockEntity.getScale();
 		if (state.renderAsBlock) {
@@ -77,14 +80,14 @@ public record ItemDisplayBlockEntityRenderer(
 			poseStack.translate(-0.5D, 0, -0.5D);
 
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
-			poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
+			poseStack.rotate(Quaternionsf.rotateDegreesYXZ(0F, state.pitch, state.roll));
 
 			state.blockRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		} else {
 			poseStack.translate(0D, 0.5D, 0D);
 
 			poseStack.scale(state.scale.x(), state.scale.y(), state.scale.z());
-			poseStack.rotate(Axis.XP.rotationDegrees(state.pitch));
+			poseStack.rotate(Quaternionsf.rotateDegreesYXZ(0F, state.pitch, state.roll));
 
 			state.itemRenderState.submit(poseStack, submitNodeCollector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 		}

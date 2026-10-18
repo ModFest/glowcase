@@ -1,18 +1,16 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import com.google.common.primitives.Ints;
 import dev.hephaestus.glowcase.block.entity.OutlineBlockEntity;
-import dev.hephaestus.glowcase.client.gui.widget.ingame.GlowcaseEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.HexColorEditBox;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.color.picker.ColorPickerWidget;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.NumberEditBox;
+import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3iFieldsWidget;
+import dev.hephaestus.glowcase.client.util.Tooltips;
 import dev.hephaestus.glowcase.packet.C2SEditOutlineBlock;
-import dev.hephaestus.glowcase.util.InputFilters;
-import dev.hephaestus.glowcase.util.TextUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +23,10 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 	private StringWidget colorTextWidget;
 	private StringWidget widthTextWidget;
 
-	private GlowcaseEditBox xOffsetWidget;
-	private GlowcaseEditBox yOffsetWidget;
-	private GlowcaseEditBox zOffsetWidget;
-	private GlowcaseEditBox xScaleWidget;
-	private GlowcaseEditBox yScaleWidget;
-	private GlowcaseEditBox zScaleWidget;
+	private Vec3iFieldsWidget offsetWidget;
+	private Vec3iFieldsWidget scaleWidget;
 	private HexColorEditBox colorWidget;
-	private GlowcaseEditBox widthWidget;
+	private NumberEditBox widthWidget;
 
 	private ColorPickerWidget colorPickerWidget;
 
@@ -48,8 +42,11 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 		final int lines = 4;
 		final int initialY = height / 2 - (lineOffset * lines) / 2;
 
+		// Atomic is *way* over the top for this.
 		AtomicInteger widgetY = new AtomicInteger(initialY);
 
+		// TODO: reformat this to not be lang-specific
+		//  The text should go above the given field, not beside it.
 		this.offsetTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.offset"), this.font);
 		this.scaleTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.scale"), this.font);
 		this.colorTextWidget = new StringWidget(width / 2 - 110, widgetY.getAndAdd(lineOffset), 40, 20, Component.translatable("gui.glowcase.color"), this.font);
@@ -58,74 +55,23 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 		// Reposition
 		widgetY.set(initialY);
 
-		this.xOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 65, widgetY.get(), 40, 20, Component.empty());
-		this.yOffsetWidget = new GlowcaseEditBox(this.font, width / 2 - 20, widgetY.get(), 40, 20, Component.empty());
-		this.zOffsetWidget = new GlowcaseEditBox(this.font, width / 2 + 25, widgetY.get(), 40, 20, Component.empty());
+		this.offsetWidget = Vec3iFieldsWidget.builder(this.font, this.blockEntity.offset)
+			.setOnValueChange(value -> this.blockEntity.offset = value)
+			.setPos(width / 2 - 65, widgetY.get())
+			.setSize(150, 20)
+			.setColored(true)
+			.setTooltips(Tooltips.OFFSET_AXES)
+			.build();
 		widgetY.getAndAdd(lineOffset);
 
-		this.xScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 65, widgetY.get(), 40, 20, Component.empty());
-		this.yScaleWidget = new GlowcaseEditBox(this.font, width / 2 - 20, widgetY.get(), 40, 20, Component.empty());
-		this.zScaleWidget = new GlowcaseEditBox(this.font, width / 2 + 25, widgetY.get(), 40, 20, Component.empty());
+		this.scaleWidget = Vec3iFieldsWidget.builder(this.font, this.blockEntity.scale)
+			.setOnValueChange(value -> this.blockEntity.scale = value)
+			.setPos(width / 2 - 65, widgetY.get())
+			.setSize(150, 20)
+			.setColored(true)
+			.setTooltips(Tooltips.SCALE_AXES)
+			.build();
 		widgetY.getAndAdd(lineOffset);
-
-		this.xOffsetWidget.setValue(String.valueOf(this.blockEntity.offset.getX()));
-		this.yOffsetWidget.setValue(String.valueOf(this.blockEntity.offset.getY()));
-		this.zOffsetWidget.setValue(String.valueOf(this.blockEntity.offset.getZ()));
-		this.xScaleWidget.setValue(String.valueOf(this.blockEntity.scale.getX()));
-		this.yScaleWidget.setValue(String.valueOf(this.blockEntity.scale.getY()));
-		this.zScaleWidget.setValue(String.valueOf(this.blockEntity.scale.getZ()));
-
-		this.xOffsetWidget.setFilter(InputFilters::integerNumber);
-		this.yOffsetWidget.setFilter(InputFilters::integerNumber);
-		this.zOffsetWidget.setFilter(InputFilters::integerNumber);
-		this.xScaleWidget.setFilter(InputFilters::integerNumber);
-		this.yScaleWidget.setFilter(InputFilters::integerNumber);
-		this.zScaleWidget.setFilter(InputFilters::integerNumber);
-
-		this.xOffsetWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer x) {
-				Vec3i offset = this.blockEntity.offset;
-				this.blockEntity.offset = new Vec3i(x, offset.getY(), offset.getZ());
-			}
-		});
-		this.yOffsetWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer y) {
-				Vec3i offset = this.blockEntity.offset;
-				this.blockEntity.offset = new Vec3i(offset.getX(), y, offset.getZ());
-			}
-		});
-		this.zOffsetWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer z) {
-				Vec3i offset = this.blockEntity.offset;
-				this.blockEntity.offset = new Vec3i(offset.getX(), offset.getY(), z);
-			}
-		});
-
-		this.xScaleWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer x) {
-				Vec3i scale = this.blockEntity.scale;
-				this.blockEntity.scale = new Vec3i(x, scale.getY(), scale.getZ());
-			}
-		});
-		this.yScaleWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer y) {
-				Vec3i scale = this.blockEntity.scale;
-				this.blockEntity.scale = new Vec3i(scale.getX(), y, scale.getZ());
-			}
-		});
-		this.zScaleWidget.setResponder(string -> {
-			if (Ints.tryParse(string) instanceof Integer z) {
-				Vec3i scale = this.blockEntity.scale;
-				this.blockEntity.scale = new Vec3i(scale.getX(), scale.getY(), z);
-			}
-		});
-
-		this.xOffsetWidget.setHint(TextUtils.placeholder("gui.glowcase.x"));
-		this.yOffsetWidget.setHint(TextUtils.placeholder("gui.glowcase.y"));
-		this.zOffsetWidget.setHint(TextUtils.placeholder("gui.glowcase.z"));
-		this.xScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.x"));
-		this.yScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.y"));
-		this.zScaleWidget.setHint(TextUtils.placeholder("gui.glowcase.z"));
 
 		this.colorPickerWidget = this.createColorPickerWidget();
 
@@ -136,21 +82,21 @@ public class OutlineBlockEditScreen extends BlockEditorScreen<OutlineBlockEntity
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
 
-		this.widthWidget = new GlowcaseEditBox(this.minecraft.font, width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20, Component.empty());
-		this.widthWidget.setValue(String.valueOf(this.blockEntity.width));
-		this.widthWidget.setFilter(InputFilters::naturalNumber);
-		this.widthWidget.setResponder(string -> this.blockEntity.width = Math.clamp(Integer.parseInt(string), 1, 5));
+		this.widthWidget = NumberEditBox.integerBuilder(
+				this.minecraft.font,
+				this.blockEntity.width,
+				value -> this.blockEntity.width = value
+			)
+			.setMinMaxValues(1, 5)
+			.setBounds(width / 2 - 65, widgetY.getAndAdd(lineOffset), 50, 20)
+			.build();
 
 		this.addRenderableWidget(this.offsetTextWidget);
 		this.addRenderableWidget(this.scaleTextWidget);
 		this.addRenderableWidget(this.colorTextWidget);
 		this.addRenderableWidget(this.widthTextWidget);
-		this.addRenderableWidget(this.xOffsetWidget);
-		this.addRenderableWidget(this.yOffsetWidget);
-		this.addRenderableWidget(this.zOffsetWidget);
-		this.addRenderableWidget(this.xScaleWidget);
-		this.addRenderableWidget(this.yScaleWidget);
-		this.addRenderableWidget(this.zScaleWidget);
+		this.addRenderableWidget(this.offsetWidget);
+		this.addRenderableWidget(this.scaleWidget);
 		this.addRenderableWidget(this.colorWidget);
 		this.addRenderableWidget(this.widthWidget);
 	}

@@ -1,6 +1,5 @@
 package dev.hephaestus.glowcase.client.gui.screen.ingame;
 
-import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.TextBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.AnchorPositionGridWidget;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.IconButtonWidget;
@@ -12,6 +11,7 @@ import dev.hephaestus.glowcase.client.gui.widget.ingame.slider.EditableSliderWid
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTab;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.tab.GlowcaseTabNavBar;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.text.GlowcaseMultilineEditBox;
+import dev.hephaestus.glowcase.client.util.Tooltips;
 import dev.hephaestus.glowcase.packet.C2SEditTextBlock;
 import dev.hephaestus.glowcase.util.TextJustify;
 import dev.hephaestus.glowcase.util.ZOffset;
@@ -54,9 +54,6 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 	private Button zFrontButton;
 	private Button zCenterButton;
 	private Button zBackButton;
-	private IconButtonWidget justifyLeftButton;
-	private IconButtonWidget justifyCenterButton;
-	private IconButtonWidget justifyRightButton;
 	private Button insertFontButton;
 
 	private AnchorPositionGridWidget anchorGrid;
@@ -146,7 +143,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.setPickerDefaultAlpha(0x40 / 255.f)
 			.setColorPickerWidget(this.colorPickerWidget)
 			.build();
-		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color_argb")));
+		this.backgroundColorEntryWidget.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.background_color")));
 
 		this.addRenderableWidget(scaleSlider);
 		this.initFormattingButtons(0, 0, 0);
@@ -175,37 +172,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		int firstRowY = 24;
 		int secondRowY = firstRowY + 22;
 
-		this.justifyLeftButton = IconButtonWidget.builder(
-				Glowcase.id("text_alignment/left"), button -> {
-					this.textBlockEntity.textAlignment = TextJustify.LEFT;
-					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextJustify.LEFT);
-					this.updateSelectedJustifyButton();
-				})
-				.dimensions(0, 0, 20, 20, 16, 16)
-				.build();
-		this.justifyLeftButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_left")));
-		this.justifyCenterButton = IconButtonWidget.builder(
-				Glowcase.id("text_alignment/center"), button -> {
-					this.textBlockEntity.textAlignment = TextJustify.CENTER;
-					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextJustify.CENTER);
-					this.updateSelectedJustifyButton();
-				})
-			.dimensions(0, 0, 20, 20, 16, 16)
-			.build();
-		this.justifyCenterButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_center")));
-		this.justifyRightButton = IconButtonWidget.builder(
-				Glowcase.id("text_alignment/right"), button -> {
-					this.textBlockEntity.textAlignment = TextJustify.RIGHT;
-					this.textBlockEntity.rebake(true);
-					this.glowcaseEditBox.setTextAlignment(TextJustify.RIGHT);
-					this.updateSelectedJustifyButton();
-				})
-			.dimensions(0, 0, 20, 20, 16, 16)
-			.build();
-		this.justifyRightButton.setTooltip(Tooltip.create(Component.translatable("gui.glowcase.justify_right")));
-		this.updateSelectedJustifyButton();
+		this.initJustifyButtons(0, 0, 0);
 
 		this.zFrontButton = Button.builder(Component.translatable("gui.glowcase.front"), button -> {
 			this.textBlockEntity.offset = ZOffset.FRONT.setZ(this.textBlockEntity.offset);
@@ -303,11 +270,7 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		this.offsetWidgets = Vec3FieldsWidget.builder(this.font, this.textBlockEntity.offset)
 			.setWidth(106)
 			.setEditBoxCharacterLimit(5)
-			.setTooltips(
-				Tooltip.create(Component.translatable("gui.glowcase.x_offset_label")),
-				Tooltip.create(Component.translatable("gui.glowcase.y_offset_label")),
-				Tooltip.create(Component.translatable("gui.glowcase.z_offset_label"))
-			)
+			.setTooltips(Tooltips.OFFSET_AXES)
 			.setOnValueChange(vec3 -> {
 				this.textBlockEntity.offset = vec3;
 				this.textBlockEntity.rebake(true);
@@ -317,20 +280,12 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 			.setWidth(106)
 			.setRotation(true)
 			.setEditBoxCharacterLimit(5)
-			.setTooltips(
-				Tooltip.create(Component.translatable("gui.glowcase.yaw")),
-				Tooltip.create(Component.translatable("gui.glowcase.pitch")),
-				Tooltip.create(Component.translatable("gui.glowcase.roll"))
-			)
 			.setOnValueChange(vec3 -> {
 				this.textBlockEntity.rotation = vec3;
 				this.textBlockEntity.rebake(true);
 			})
 			.build();
 
-		this.addRenderableWidget(this.justifyLeftButton);
-		this.addRenderableWidget(this.justifyCenterButton);
-		this.addRenderableWidget(this.justifyRightButton);
 		this.addRenderableWidget(zFrontButton);
 		this.addRenderableWidget(zCenterButton);
 		this.addRenderableWidget(zBackButton);
@@ -366,11 +321,15 @@ public class TextBlockEditScreen extends TextEditorScreen implements BlockEditor
 		);
 	}
 
-	public void updateSelectedJustifyButton() {
-		TextJustify justify = this.textBlockEntity.textAlignment;
-		this.justifyLeftButton.active = justify != TextJustify.LEFT;
-		this.justifyCenterButton.active = justify != TextJustify.CENTER;
-		this.justifyRightButton.active = justify != TextJustify.RIGHT;
+	@Override
+	protected TextJustify getJustify() {
+		return this.textBlockEntity.textAlignment;
+	}
+
+	@Override
+	protected void setJustify(final TextJustify justify) {
+		this.textBlockEntity.textAlignment = justify;
+		this.glowcaseEditBox.setTextAlignment(justify);
 	}
 
 	public void updateSelectedZButton() {

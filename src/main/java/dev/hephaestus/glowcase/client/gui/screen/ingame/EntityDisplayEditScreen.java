@@ -4,6 +4,7 @@ import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.util.ModelPartUtil;
+import dev.hephaestus.glowcase.client.util.Tooltips;
 import dev.hephaestus.glowcase.packet.C2SEditEntityDisplayBlock;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
 import net.minecraft.client.gui.components.Button;
@@ -26,7 +27,6 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	private final Set<String> expandedParts = new HashSet<>();
 	private boolean expanded = false;
 	private final int STARTING_X = 10;
-	private final int STARTING_Y = 220;
 
 	public EntityDisplayEditScreen(DisplayBlockEntity displayBlock) {
 		super(displayBlock);
@@ -37,7 +37,7 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	public void init() {
 		super.init();
 
-		int bottom = STARTING_Y + 22;
+		int bottom = this.rowOffset;
 		Entity displayEntity = this.entityDisplay.getDisplayEntity();
 		EntityDisplayBlockEntity entityDisplayBlockEntity = ((EntityDisplayBlockEntity)(this.blockEntity));
 		if(displayEntity != null) {
@@ -51,7 +51,7 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 							this.rebuildWidgets();
 						}
 					)
-					.pos(STARTING_X, 190)
+					.pos(STARTING_X, this.rowOffset += ROW)
 					.build());
 			}
 
@@ -61,11 +61,11 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 					this.expanded = !this.expanded;
 					this.rebuildWidgets();
 				}
-			).bounds(STARTING_X, STARTING_Y, 200, 20).build());
+			).bounds(STARTING_X, this.rowOffset += ROW, 200, 20).build());
 
 			ModelPart root = ModelPartUtil.getModelRoot(displayEntity);
 			if (this.expanded && root != null) {
-				bottom = this.addPartRows("root", root, bottom, 0);
+				bottom = this.addPartRows("root", root, this.rowOffset += ROW, 0);
 			}
 		}
 
@@ -97,8 +97,10 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 				PartPoseInfo partPoseInfo = this.entityDisplay.getPartPostInfo(partPath);
 				this.addRenderableWidget(Vec3FieldsWidget.builder(this.font, new Vec3(isRotation ? partPoseInfo.rotation() : partPoseInfo.offset()))
 					.setPos(STARTING_X + 70, y).
-					setWidth(246).setHeight(18)
+					setWidth(180).setHeight(18)
 					.setRotation(isRotation)
+					.setTooltips(isRotation ? Tooltips.ROTATIONS : Tooltips.OFFSET_AXES)
+					.setEditBoxCharacterLimit(5)
 					.setOnValueChange(vec3 -> {
 					PartPoseInfo current = this.entityDisplay.getPartPostInfo(partPath);
 						this.entityDisplay.setPartPoseInfo(

@@ -86,7 +86,7 @@ public class NoteItemHandRenderer extends ItemHandRenderer {
 
 			float x = switch (noteComponent.alignment()) {
 				case LEFT -> 0;
-				case CENTER -> width/2f - textRenderer.width(text)/2f - 1; // We don't ask why the -1 is there
+				default -> width / 2f - textRenderer.width(text) / 2f - 1; // We don't ask why the -1 is there
 				case RIGHT ->  BG_WIDTH - TXT_X_PADDING - textRenderer.width(text);
 			};
 
