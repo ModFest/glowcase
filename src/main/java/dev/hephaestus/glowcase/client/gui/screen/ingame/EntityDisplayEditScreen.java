@@ -5,17 +5,27 @@ import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
 import dev.hephaestus.glowcase.client.util.ModelPartUtil;
 import dev.hephaestus.glowcase.client.util.Tooltips;
+import dev.hephaestus.glowcase.mixinsupport.PartPosedRenderState;
 import dev.hephaestus.glowcase.packet.C2SEditEntityDisplayBlock;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -27,6 +37,9 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	private final Set<String> expandedParts = new HashSet<>();
 	private boolean expanded = false;
 	private final int STARTING_X = 10;
+	private float displayYaw = 0F;
+	protected Button rotateLeft;
+	protected Button rotateRight;
 
 	public EntityDisplayEditScreen(DisplayBlockEntity displayBlock) {
 		super(displayBlock);
@@ -67,6 +80,16 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 			if (this.expanded && root != null) {
 				bottom = this.addPartRows("root", root, this.rowOffset += ROW, 0);
 			}
+
+			this.rotateLeft = Button.builder(Component.literal("←"), _ -> {
+				displayYaw -= 0.174533F;
+			}).size( 20, 20).build();
+			this.addRenderableWidget(this.rotateLeft);
+
+			this.rotateRight = Button.builder(Component.literal("→"), _ -> {
+				displayYaw += 0.174533F;
+			}).size( 20, 20).build();
+			this.addRenderableWidget(this.rotateRight);
 		}
 
 		this.setMaxScroll(0, bottom + 10 - this.height, false);
@@ -114,6 +137,56 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 			y = this.addPartRows(partPath, entry.getValue(), y, depth + 1);
 		}
 		return y;
+
+	}
+
+	@Override
+	public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float a) {
+		super.extractBackground(graphics,mouseX,mouseY,a);
+		if(entityDisplay.getDisplayEntity() !=  null && entityDisplay.getDisplayEntity() instanceof Mob displayMob) {
+			int centerX = graphics.guiWidth() * 3 / 4;
+			int centerY = graphics.guiHeight() / 3;
+			extractEntity(graphics, centerX - 100, centerY - 140, centerX + 100, centerY + 100, 40, 0, displayMob, this.entityDisplay.getPartPoses());
+		}
+	}
+
+	public void extractEntity(final GuiGraphicsExtractor graphics, final int x0, final int y0, final int x1, final int y1, final int size, final float offsetY, final LivingEntity entity, final Map<String,PartPoseInfo> partPoseInfoMap) {
+		Quaternionf rotation = (new Quaternionf()).rotateZ((float)Math.PI).rotateY(this.displayYaw);
+		EntityRenderState renderState = extractRenderState(entity, partPoseInfoMap);
+		if (renderState instanceof LivingEntityRenderState livingRenderState) {
+			livingRenderState.bodyRot = 180.0F;
+			livingRenderState.yRot = 0.0F;
+			livingRenderState.xRot = 0.0F;
+
+			livingRenderState.boundingBoxWidth /= livingRenderState.scale;
+			livingRenderState.boundingBoxHeight /= livingRenderState.scale;
+			livingRenderState.scale = 1.0F;
+		}
+
+		float pixelHeight = renderState.boundingBoxHeight * size;
+		int rotateX = (graphics.guiWidth() * 3 / 4) - 25;
+		int rotateY = ((graphics.guiHeight() / 3) + 5) + (int) (pixelHeight / 2);
+		setRotateButtonPositions(rotateX, rotateY);
+
+		Vector3f translation = new Vector3f(0.0F, renderState.boundingBoxHeight / 2.0F + offsetY, 0.0F);
+		graphics.entity(renderState, (float)size, translation, rotation, null, x0, y0, x1, y1);
+	}
+
+	private EntityRenderState extractRenderState(final LivingEntity entity, final Map<String, PartPoseInfo> partPoseInfoMap) {
+		EntityRenderDispatcher entityRenderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+		EntityRenderer<? super LivingEntity, ?> renderer = entityRenderDispatcher.getRenderer(entity);
+		EntityRenderState renderState = renderer.createRenderState(entity, 1.0F);
+		((PartPosedRenderState) renderState).glowcase$setPartPoses(partPoseInfoMap.isEmpty() ? null : partPoseInfoMap);
+		renderState.shadowPieces.clear();
+		renderState.outlineColor = 0;
+		return renderState;
+	}
+
+	private void setRotateButtonPositions(int x, int y){
+		if(this.rotateLeft != null && this.rotateRight != null) {
+			this.rotateLeft.setPosition(x, y);
+			this.rotateRight.setPosition(x, y);
+		}
 
 	}
 
