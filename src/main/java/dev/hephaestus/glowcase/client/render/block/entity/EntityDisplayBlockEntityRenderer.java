@@ -6,8 +6,10 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.util.BlockEntityRenderUtil;
 import dev.hephaestus.glowcase.client.util.Quaternionsf;
+import dev.hephaestus.glowcase.mixin.client.ClientMannequinAccessor;
 import dev.hephaestus.glowcase.mixinsupport.PartPosedRenderState;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
+import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -18,11 +20,14 @@ import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Context context) implements BlockEntityRenderer<EntityDisplayBlockEntity, EntityDisplayBlockEntityRenderer.EntityDisplayRenderState> {
 	public static Identifier ITEM_TEXTURE = Glowcase.id("textures/item/entity_display_block.png");
@@ -69,6 +74,7 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 		poseStack.rotate(Quaternionsf.rotateDegreesYXZ(0, state.pitch, state.roll));
 		Entity renderEntity = state.entity;
 		if (renderEntity != null) {
+			applyMannequinSkin(renderEntity);
 			//noinspection unchecked
 			EntityRenderer<Entity, EntityRenderState> entityRenderer = (EntityRenderer<Entity, EntityRenderState>) context.entityRenderer().getRenderer(renderEntity);
 			EntityRenderState entityRenderState = entityRenderer.createRenderState(renderEntity, 0);
@@ -80,6 +86,20 @@ public record EntityDisplayBlockEntityRenderer(BlockEntityRendererProvider.Conte
 
 		if (renderEntity == null || BlockEntityRenderUtil.shouldRenderPlaceholder(state.blockPos)) {
 			BlockEntityRenderUtil.renderCenteredPlaceholder(state, ITEM_TEXTURE, 1.0F, Axis.YP.rotationDegrees(state.yaw), poseStack, submitNodeCollector);
+		}
+	}
+
+	public static void applyMannequinSkin(Entity entity){
+		if (entity instanceof ClientMannequin && entity instanceof ClientMannequinAccessor mannequin) {
+			CompletableFuture<Optional<PlayerSkin>> lookup = mannequin.glowcase$getSkinLookup();
+			if (lookup != null && lookup.isDone()) {
+				mannequin.glowcase$setSkinLookup(null);
+				try {
+					lookup.get().ifPresent(mannequin::glowcase$invokeSetSkin);
+				} catch (Exception e) {
+					Glowcase.LOGGER.error("Failed to apply skin to display entity", e);
+				}
+			}
 		}
 	}
 

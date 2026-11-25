@@ -47,7 +47,8 @@
 		"client.bakedbe.StagedVertexBufferMixin",
 		"client.bakedbe.TextureSetupAccessor",
 		"client.sound.SoundEngineMixin",
-		"client.sound.SoundManagerMixin"
+		"client.sound.SoundManagerMixin",
+		"client.ClientMannequinAccessor"
 	],
 	"server": [],
 	"injectors": {

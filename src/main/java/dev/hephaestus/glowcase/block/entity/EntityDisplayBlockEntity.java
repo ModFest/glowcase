@@ -5,15 +5,16 @@ import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.util.PartPoseInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.PlayerHeadItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -24,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @NullMarked
@@ -35,6 +37,7 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 	protected @Nullable EntityType<?> entityType = null;
 	protected Map<String, PartPoseInfo> partPoses = new HashMap<>();
 	protected boolean isBaby = false;
+	protected @Nullable ResolvableProfile profile = null;
 
 	public EntityDisplayBlockEntity(BlockPos pos, BlockState state) {
 		super(Glowcase.ENTITY_DISPLAY_BLOCK_ENTITY.get(), pos, state);
@@ -42,7 +45,13 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 
 	@Override
 	public boolean matchesStack(ItemStack stack) {
-		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && SpawnEggItem.spawnsEntity( stack, entityType));
+		return (stack.isEmpty() && displayEntity == null) || (stack.getItem() instanceof SpawnEggItem eggItem && SpawnEggItem.spawnsEntity( stack, entityType)) || matchesHead(stack);
+	}
+
+	public boolean matchesHead(ItemStack stack) {
+		return stack.getItem() instanceof PlayerHeadItem
+			&& displayEntity instanceof Mannequin
+			&& Objects.equals(profile, stack.get(DataComponents.PROFILE));
 	}
 
 	@Override
@@ -53,16 +62,24 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 			EntityType<?> type = SpawnEggItem.getType(stack);
 			if (type == null) return;
 
+			this.profile = null;
 			setDisplayEntity(type.create(level, EntitySpawnReason.EVENT));
 			if (displayEntity == null) return;
 
 			setScale(new Vector3f(Math.clamp(Math.round(Math.min(1F / displayEntity.getBbHeight(), 1F / displayEntity.getBbWidth()) * 8F) / 8F, 0.125F, 10F)));
+		}
+		else if(stack.getItem() instanceof PlayerHeadItem) {
+			this.profile = stack.get(DataComponents.PROFILE);
+			Mannequin mannequin = new Mannequin(EntityTypes.MANNEQUIN, level);
+			mannequin.applyComponentsFromItemStack(stack);
+			setDisplayEntity(mannequin);
 		}
 	}
 
 	@Override
 	public void unsetFromStack() {
 		clearPartPoses();
+		this.profile = null;
 		setDisplayEntity(null);
 	}
 
@@ -74,7 +91,14 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 		this.displayEntity = displayEntity;
 		this.entityType = displayEntity == null ? null : displayEntity.getType();
 		applyBabyStateToDisplayEntity();
+		applyProfileToDisplayEntity();
 		this.setChanged();
+	}
+
+	public void applyProfileToDisplayEntity() {
+		if (displayEntity instanceof Mannequin && profile != null) {
+			displayEntity.setComponent(DataComponents.PROFILE, profile);
+		}
 	}
 
 	public static void tick(Level world, BlockPos blockPos, BlockState state, EntityDisplayBlockEntity blockEntity) {
@@ -138,6 +162,9 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 			view.store("type", EntityType.CODEC, entityType);
 			view.store("isBaby", Codec.BOOL, isBaby);
 		}
+		if (profile != null) {
+			view.store("profile", ResolvableProfile.CODEC, profile);
+		}
 		if(!partPoses.isEmpty()) {
 			view.store("partPoses", Codec.unboundedMap(Codec.STRING, PartPoseInfo.CODEC), partPoses);
 		}
@@ -152,6 +179,7 @@ public class EntityDisplayBlockEntity extends DisplayBlockEntity implements Stac
 		this.displayEntity = null;
 
 		this.isBaby = view.read("isBaby", Codec.BOOL).orElse(false);
+		this.profile = view.read("profile", ResolvableProfile.CODEC).orElse(null);
 
 		this.partPoses.clear();
 		Optional<Map<String, PartPoseInfo>> optionalStringPartPoseInfoMap = view.read("partPoses", Codec.unboundedMap(Codec.STRING, PartPoseInfo.CODEC));

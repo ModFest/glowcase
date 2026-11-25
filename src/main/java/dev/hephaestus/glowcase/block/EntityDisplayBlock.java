@@ -3,16 +3,12 @@ package dev.hephaestus.glowcase.block;
 import dev.hephaestus.glowcase.Glowcase;
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
-import dev.hephaestus.glowcase.block.entity.StackInteractable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -51,8 +47,14 @@ public class EntityDisplayBlock extends StackInteractableBlock {
 
 	@Override
 	boolean canTarget(Player player, BlockPos pos) {
-		if (!(player.level().getBlockEntity(pos) instanceof StackInteractable be)) return false;
-		return canEditGlowcase(player, pos) && ((be.matchesStack(ItemStack.EMPTY) && player.getMainHandItem().getItem() instanceof SpawnEggItem) || be.matchesStack(player.getMainHandItem()) || player.getMainHandItem().is(Glowcase.ITEM_TAG));
+		if (!(player.level().getBlockEntity(pos) instanceof EntityDisplayBlockEntity be)) return false;
+		if (!canEditGlowcase(player, pos)) return false;
+
+		ItemStack held = player.getMainHandItem();
+		if (held.is(Glowcase.ITEM_TAG) || be.matchesStack(held)) return true;
+
+		return be.matchesStack(ItemStack.EMPTY)
+			&& (held.getItem() instanceof SpawnEggItem || held.getItem() instanceof PlayerHeadItem);
 	}
 
 	@Nullable
