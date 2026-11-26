@@ -3,6 +3,7 @@ package dev.hephaestus.glowcase.client.gui.screen.ingame;
 import dev.hephaestus.glowcase.block.entity.DisplayBlockEntity;
 import dev.hephaestus.glowcase.block.entity.EntityDisplayBlockEntity;
 import dev.hephaestus.glowcase.client.gui.widget.ingame.number.Vec3FieldsWidget;
+import dev.hephaestus.glowcase.client.render.block.entity.EntityDisplayBlockEntityRenderer;
 import dev.hephaestus.glowcase.client.util.ModelPartUtil;
 import dev.hephaestus.glowcase.client.util.Tooltips;
 import dev.hephaestus.glowcase.mixinsupport.PartPosedRenderState;
@@ -143,10 +144,10 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	@Override
 	public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float a) {
 		super.extractBackground(graphics,mouseX,mouseY,a);
-		if(entityDisplay.getDisplayEntity() !=  null && entityDisplay.getDisplayEntity() instanceof Mob displayMob) {
+		if(entityDisplay.getDisplayEntity() !=  null && entityDisplay.getDisplayEntity() instanceof LivingEntity displayEntity) {
 			int centerX = graphics.guiWidth() * 3 / 4;
 			int centerY = graphics.guiHeight() / 3;
-			extractEntity(graphics, centerX - 100, centerY - 140, centerX + 100, centerY + 100, 40, 0, displayMob, this.entityDisplay.getPartPoses());
+			extractEntity(graphics, centerX - 100, centerY - 140, centerX + 100, centerY + 100, 40, 0, displayEntity, this.entityDisplay.getPartPoses());
 		}
 	}
 
@@ -173,6 +174,7 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	}
 
 	private EntityRenderState extractRenderState(final LivingEntity entity, final Map<String, PartPoseInfo> partPoseInfoMap) {
+		EntityDisplayBlockEntityRenderer.applyMannequinSkin(entity);
 		EntityRenderDispatcher entityRenderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
 		EntityRenderer<? super LivingEntity, ?> renderer = entityRenderDispatcher.getRenderer(entity);
 		EntityRenderState renderState = renderer.createRenderState(entity, 1.0F);
@@ -185,7 +187,7 @@ public class EntityDisplayEditScreen extends DisplayBlockEditScreen {
 	private void setRotateButtonPositions(int x, int y){
 		if(this.rotateLeft != null && this.rotateRight != null) {
 			this.rotateLeft.setPosition(x, y);
-			this.rotateRight.setPosition(x, y);
+			this.rotateRight.setPosition(x + this.rotateLeft.getWidth() + 10, y);
 		}
 
 	}
